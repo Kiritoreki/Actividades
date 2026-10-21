@@ -175,7 +175,7 @@ function reportTV(a){
   return L.join("\n");
 }
 
-let acts=[],col=null,cur=null,q="",confirmDel=false,saveT=null,LS="actividades.v1";
+let offReady=false,acts=[],col=null,cur=null,q="",confirmDel=false,saveT=null,LS="actividades.v1";
 
 function blank(tipo="foco_rojo"){const inst=tipo==="instalacion";return{tipo,creado:Date.now(),estado:"pendiente",pegado:"",tecnico:"",tecnico2:"",soporte:"",cliente:"",direccion:"",tel:"",ip:"",extra:"",
  fibra:false,metros:"",onu:false,onuAnt:"",onuNueva:"",router:false,routerAnt:"",routerNueva:"",rchk:{},
@@ -269,7 +269,8 @@ function renderList(){
   h+=`<section class="sec"><div class="sec-h"><h2>Copia de seguridad</h2><span class="muted">${acts.length} ${acts.length===1?"actividad":"actividades"}</span></div>
     <p class="muted" style="margin:0">Todo se guarda en este teléfono y funciona sin internet. Exporta una copia de vez en cuando (por ejemplo a Archivos o iCloud) para no perder tu historial si cambias de celular.</p>
     <div class="backup"><button id="expBtn">Exportar copia</button><label style="cursor:pointer;padding:10px 14px;border-radius:10px;border:1px solid var(--line);background:var(--card);font-weight:400">Importar copia<input type="file" id="impFile" accept="application/json,.json" hidden></label></div>
-    <p class="muted" id="bkMsg" style="margin:0" role="status"></p></section>`;
+    <p class="muted" id="bkMsg" style="margin:0" role="status"></p></section>
+  <p class="muted" id="offState" style="margin:0">${offReady?"✓ Lista para usar sin internet":"Preparando uso sin internet… mantén la app abierta con internet unos segundos."}</p>`;
   $("app").innerHTML=h;
   const s=$("q");s.oninput=()=>{q=s.value;const pos=s.selectionStart;renderList();const n=$("q");n.focus();n.setSelectionRange(pos,pos)};
 }
@@ -559,6 +560,7 @@ try{acts=JSON.parse(localStorage.getItem(LS)||"[]")}catch{acts=[]}
 renderList();
 if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{});
 if("serviceWorker" in navigator){
+  navigator.serviceWorker.ready.then(()=>{offReady=true;const o=$("offState");if(o)o.textContent="✓ Lista para usar sin internet"});
   navigator.serviceWorker.register("sw.js").then(reg=>{
     const show=w=>{$("upd").hidden=false;$("updBtn").onclick=()=>w.postMessage("skip")};
     if(reg.waiting&&navigator.serviceWorker.controller)show(reg.waiting);
