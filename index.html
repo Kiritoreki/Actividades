@@ -126,14 +126,16 @@ const EVID=[
  ["potD","Potencia final (power meter)"],
  ["equipo","Equipo nuevo: caja con S/N y MAC","eq"],
  ["inst","Instalación final (ONU y router)"],
- ["trace","Traceroute"],["ping","Ping"],["speed","Speed test"]];
+ ["trace","Traceroute"],["ping","Ping"],["speed","Speed test"],
+ ["stRoseta","Sticker en la roseta"],["stRouter","Sticker en el router"],["stBridge","Sticker en el bridge"]];
 const EVID_I=[
  ["nap","NAP con su etiqueta"],
  ["napA","NAP abierta / hilo usado"],
  ["equipo","Cajas de equipos: MAC y GPON SN","eq"],
  ["pot","Potencia (power meter)"],
  ["inst","Instalación final (ONU y router)"],
- ["speed","Speed test"]];
+ ["speed","Speed test"],
+ ["stRoseta","Sticker en la roseta"],["stRouter","Sticker en el router"],["stBridge","Sticker en el bridge"]];
 const TIPOS={foco_rojo:["Foco rojo","b-red"],instalacion:["Inst. alámbrica","b-inst"],tv:["App de TV","b-tv"]};
 const TVSO=[["android","Android TV / Google TV"],["webos","webOS"],["tizen","Tizen"],["vidaa","VIDAA"],["roku","Roku TV"],["otro","No sé"]];
 const NOAPK={webos:1,tizen:1,vidaa:1,roku:1};
@@ -329,8 +331,8 @@ function renderEditor(){
   </section>
   ${notifHTML()}
 
-  <section class="sec"><div class="sec-h"><h2>Evidencias para el grupo</h2><span class="progress" id="eprog"></span></div>
-    <p class="muted" style="margin:0">Solo para acordarte; las fotos van al WhatsApp.</p>
+  <section class="sec"><div class="sec-h"><h2>Checklist y evidencias</h2><span class="progress" id="eprog"></span></div>
+    <p class="muted" style="margin:0">Solo para acordarte (fotos y stickers); las fotos van al WhatsApp.</p>
     <div class="list-chk">${EVID.map(([k,l,c])=>`<div data-eq="${c||""}" ${c==="eq"&&!(cur.onu||cur.router)?"hidden":""}>${chk(k,l,"","evid")}</div>`).join("")}</div>
   </section>
 
@@ -436,8 +438,8 @@ function renderInst(){
   </section>
   ${notifHTML()}
 
-  <section class="sec"><div class="sec-h"><h2>Evidencias para el grupo</h2><span class="progress" id="eprog"></span></div>
-    <p class="muted" style="margin:0">Solo para acordarte; las fotos van al WhatsApp.</p>
+  <section class="sec"><div class="sec-h"><h2>Checklist y evidencias</h2><span class="progress" id="eprog"></span></div>
+    <p class="muted" style="margin:0">Solo para acordarte (fotos y stickers); las fotos van al WhatsApp.</p>
     <div class="list-chk">${EVID_I.map(([k,l,c])=>`<div data-eq="${c||""}" ${c==="eq"&&!(cur.onu||cur.router)?"hidden":""}>${chk(k,l,"","evid")}</div>`).join("")}</div>
   </section>
 
@@ -465,7 +467,7 @@ function refresh(){
   const total=(cur.tipo==="instalacion"?EVID_I:EVID).filter(([,,c])=>c!=="eq"||cur.onu||cur.router).length;
   $("eprog").textContent=`${total-m.length}/${total}`;
   if($("rprog"))$("rprog").textContent=`${ROUTER.length-r}/${ROUTER.length}`;
-  $("miss").textContent=r?`Router: faltan ${r} ajustes`:m.length?`Faltan ${m.length} evidencias`:"Todo listo";
+  $("miss").textContent=r?`Router: faltan ${r} ajustes`:m.length?`Faltan ${m.length} pendientes`:"Todo listo";
   const hb=(id,v)=>{const e=$(id);if(e)e.hidden=v};hb("boxFibra",!cur.fibra);hb("boxOnu",!cur.onu);hb("boxRouter",!cur.router);
   document.querySelectorAll('[data-eq="eq"]').forEach(e=>e.hidden=!(cur.onu||cur.router));
 }
