@@ -1,0 +1,572 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Actividades de Campo</title>
+<meta name="description" content="Registro personal de actividades técnicas: foco rojo, instalación alámbrica y app de TV.">
+<meta name="theme-color" content="#c8322a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Actividades">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<style>
+@font-face{font-family:"Barlow";font-weight:400;font-display:swap;src:url(fonts/barlow-latin-400-normal.woff2) format("woff2")}
+@font-face{font-family:"Barlow";font-weight:500;font-display:swap;src:url(fonts/barlow-latin-500-normal.woff2) format("woff2")}
+@font-face{font-family:"Barlow";font-weight:600;font-display:swap;src:url(fonts/barlow-latin-600-normal.woff2) format("woff2")}
+@font-face{font-family:"Barlow";font-weight:700;font-display:swap;src:url(fonts/barlow-latin-700-normal.woff2) format("woff2")}
+@font-face{font-family:"Barlow Condensed";font-weight:600;font-display:swap;src:url(fonts/barlow-condensed-latin-600-normal.woff2) format("woff2")}
+@font-face{font-family:"Barlow Condensed";font-weight:700;font-display:swap;src:url(fonts/barlow-condensed-latin-700-normal.woff2) format("woff2")}
+@font-face{font-family:"JetBrains Mono";font-weight:400;font-display:swap;src:url(fonts/jetbrains-mono-latin-400-normal.woff2) format("woff2")}
+@font-face{font-family:"JetBrains Mono";font-weight:600;font-display:swap;src:url(fonts/jetbrains-mono-latin-600-normal.woff2) format("woff2")}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{margin:0}
+/* Layout: columna de trabajo para el teléfono — lista de actividades o formulario por pasos, barra de copiar fija abajo */
+:root{
+  --bg:#f1f3f6; --card:#ffffff; --fg:#141a22; --muted:#5a6575; --line:#d8dde5; --field:#f7f8fa;
+  --red:#c8322a; --red-soft:#fbe4e2; --ok:#1d7a4f; --ok-soft:#dff1e7; --warn:#a86a00; --warn-soft:#fbefd6; --accent:#1f5fbf; --accent-soft:#e1ebfa;
+  --sans:"Barlow",system-ui,sans-serif; --cond:"Barlow Condensed","Arial Narrow",sans-serif; --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f141b; --card:#18202a; --fg:#e6ebf2; --muted:#93a0b2; --line:#2a3542; --field:#121922;
+  --red:#ff6b5f; --red-soft:#3a1d1b; --ok:#5ccf93; --ok-soft:#173226; --warn:#f0b24a; --warn-soft:#3a2c12; --accent:#7fb0ff; --accent-soft:#1a2a44; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f141b; --card:#18202a; --fg:#e6ebf2; --muted:#93a0b2; --line:#2a3542; --field:#121922;
+  --red:#ff6b5f; --red-soft:#3a1d1b; --ok:#5ccf93; --ok-soft:#173226; --warn:#f0b24a; --warn-soft:#3a2c12; --accent:#7fb0ff; --accent-soft:#1a2a44; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:16px/1.45 var(--sans)}
+.wrap{max-width:680px;margin:0 auto;padding-top:calc(16px + env(safe-area-inset-top,0px));padding-bottom:120px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:16px}
+h1{font:700 26px var(--cond);letter-spacing:.02em;margin:0;text-transform:uppercase}
+h2{font:700 15px var(--cond);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0}
+button{font:inherit;cursor:pointer;color:var(--fg);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 14px}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.primary{background:var(--red);border-color:var(--red);color:#fff;font-weight:700}
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.new{display:flex;gap:8px;flex-wrap:wrap}
+.search{width:100%;font:inherit;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--fg)}
+.day{display:grid;gap:8px}
+.day>h2{text-transform:none}
+.item{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;text-align:left;width:100%;padding:12px 14px}
+.item b{display:block;font-weight:600;overflow-wrap:anywhere}
+.item small{color:var(--muted);font:400 13px var(--mono)}
+.badge{font:700 12px var(--cond);letter-spacing:.06em;text-transform:uppercase;padding:4px 8px;border-radius:6px;white-space:nowrap}
+.b-red{background:var(--red-soft);color:var(--red)}
+.b-inst{background:var(--accent-soft);color:var(--accent)}
+.b-tv{background:var(--warn-soft);color:var(--warn)}
+.b-ok{background:var(--ok-soft);color:var(--ok)}.b-warn{background:var(--warn-soft);color:var(--warn)}
+.empty{background:var(--card);border:1px dashed var(--line);border-radius:12px;padding:24px 16px;color:var(--muted);text-align:center}
+.muted{color:var(--muted);font-size:14px}
+/* editor */
+.sec{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;display:grid;gap:12px}
+.sec-h{display:flex;align-items:baseline;gap:10px;justify-content:space-between}
+.step{font:700 13px var(--mono);color:var(--red)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid .full{grid-column:1/-1}
+label.f{display:grid;gap:4px;font-size:13px;color:var(--muted);min-width:0}
+label.f input,textarea{font:16px var(--sans);color:var(--fg);background:var(--field);border:1px solid var(--line);border-radius:9px;padding:9px 11px;width:100%;min-width:0}
+.mono{font-family:var(--mono)!important;font-size:15px!important}
+textarea{resize:vertical;min-height:90px;line-height:1.45}
+.unit{position:relative}.unit input{padding-right:48px}.unit span{position:absolute;right:10px;bottom:10px;font:13px var(--mono);color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border-radius:99px;padding:8px 14px;font-weight:600}
+.chip[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.chip.num{display:inline-flex;gap:8px;align-items:center;padding:6px 12px}.chip.num b{color:var(--red)}
+.chip.no[aria-pressed="true"]{background:var(--warn-soft);border-color:var(--warn);color:var(--warn)}
+.chk{display:flex;gap:10px;align-items:flex-start;padding:8px 2px;cursor:pointer}
+.chk input{width:22px;height:22px;flex:none;accent-color:var(--ok);margin:0}
+.chk span{min-width:0}
+.chk small{display:block;color:var(--muted);font-size:13px}
+.list-chk{display:grid;gap:2px}
+.progress{font:600 13px var(--mono)}
+.box{border:1px solid var(--line);border-radius:10px;padding:12px;display:grid;gap:10px;background:var(--field)}
+.box h3{margin:0;font:700 14px var(--cond);letter-spacing:.06em;text-transform:uppercase}
+pre.report{margin:0;white-space:pre-wrap;overflow-wrap:anywhere;font:14px/1.5 var(--mono);background:var(--field);border:1px solid var(--line);border-radius:10px;padding:12px}
+.bar{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);padding:10px max(16px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));z-index:5}
+.bar-in{max-width:680px;margin:0 auto;display:flex;gap:10px;align-items:center}
+.bar-in .primary{flex:1;padding:14px}
+.bar .note{font-size:13px;color:var(--muted);max-width:40%}
+.danger{color:var(--red);border-color:var(--red)}
+.saved{font:12px var(--mono);color:var(--muted)}
+@media (max-width:420px){.grid{grid-template-columns:1fr}}
+.backup{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.update{position:fixed;left:50%;transform:translateX(-50%);top:calc(10px + env(safe-area-inset-top,0px));z-index:9;background:var(--fg);color:var(--bg);border-radius:12px;padding:10px 14px;display:flex;gap:12px;align-items:center;box-shadow:0 6px 20px rgba(0,0,0,.25);max-width:calc(100% - 32px)}
+.update button{background:var(--red);border-color:var(--red);color:#fff;font-weight:700;padding:6px 12px}
+.pastebtn{justify-self:start}
+</style>
+</head>
+<body>
+<div class="update" id="upd" hidden><span>Hay una versión nueva</span><button id="updBtn">Actualizar</button></div>
+<div class="wrap" id="app"></div>
+<div class="bar" id="bar" hidden><div class="bar-in"><span class="note" id="miss"></span><button class="primary" id="copy">Copiar reporte</button></div></div>
+<textarea id="clip" aria-hidden="true" style="position:fixed;left:-9999px;top:0;opacity:0"></textarea>
+
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const pad=n=>String(n).padStart(2,"0");
+const dayKey=t=>{const d=new Date(t);return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())};
+const hhmm=t=>{const d=new Date(t);return pad(d.getHours())+":"+pad(d.getMinutes())};
+const fDay=k=>{const t=new Date(k+"T12:00").toLocaleDateString("es-EC",{weekday:"long",day:"numeric",month:"long",year:"numeric"});return t[0].toUpperCase()+t.slice(1)};
+
+const ROUTER=[
+ ["remoto","Acceso remoto activado"],
+ ["b24","Banda 2.4 GHz a 40 MHz"],
+ ["b5","Banda 5 GHz a 80 MHz"],
+ ["upd","Actualización automática a las 3:00 a. m."],
+ ["unif","Unificar bandas"],
+ ["adv","Wi-Fi › Opciones avanzadas: últimos parámetros activados"]];
+const EVID=[
+ ["napC","NAP cerrada, con su etiqueta"],
+ ["napA","NAP abierta / intervención"],
+ ["potA","Potencia antes"],
+ ["potD","Potencia final (power meter)"],
+ ["equipo","Equipo nuevo: caja con S/N y MAC","eq"],
+ ["inst","Instalación final (ONU y router)"],
+ ["trace","Traceroute"],["ping","Ping"],["speed","Speed test"]];
+const EVID_I=[
+ ["nap","NAP con su etiqueta"],
+ ["napA","NAP abierta / hilo usado"],
+ ["equipo","Cajas de equipos: MAC y GPON SN","eq"],
+ ["pot","Potencia (power meter)"],
+ ["inst","Instalación final (ONU y router)"],
+ ["speed","Speed test"]];
+const TIPOS={foco_rojo:["Foco rojo","b-red"],instalacion:["Inst. alámbrica","b-inst"],tv:["App de TV","b-tv"]};
+const TVSO=[["android","Android TV / Google TV"],["webos","webOS"],["tizen","Tizen"],["vidaa","VIDAA"],["roku","Roku TV"],["otro","No sé"]];
+const NOAPK={webos:1,tizen:1,vidaa:1,roku:1};
+const MARCAS=[["Samsung","tizen"],["LG","webos"],["Sony","android"],["Xiaomi","android"],["TCL",""],["Hisense",""],["Philips",""],["Panasonic",""],["Motorola","android"],["Hyundai",""],["Riviera",""],["Challenger",""],["JVC",""],["Otra",""]];
+const MARCA_TIP={TCL:"Puede ser Google TV o Roku",Hisense:"Puede ser VIDAA o Google TV",Philips:"Puede ser Android TV o Saphi",Panasonic:"Puede ser Android TV o propio",Riviera:"Muchos son Android TV",Challenger:"Muchos son Android TV",JVC:"Puede ser Android TV o Roku",Hyundai:"Puede ser Android TV o VIDAA",Otra:"Revisa el sistema abajo"};
+const TVSTEPS=[
+ ["fuentes","Activar «Fuentes desconocidas»","Ajustes › Seguridad/Privacidad; en Google TV, permitir que el instalador instale apps"],
+ ["cred","Pedir usuario y contraseña a Michelle",""],
+ ["login","Ingresar usuario y contraseña y probar canales",""],
+ ["explicar","Explicar al cliente cómo usarla",""]];
+const tvApps=()=>[...new Set(["IPTV Smarters Pro",...acts.filter(a=>a.tipo==="tv"&&a.tvApp).map(a=>a.tvApp)])];
+function reportTV(a){
+  const tec=[a.tecnico,a.tecnico2].filter(Boolean).join(" y ");
+  const appTxt=a.tvApp?(a.tvApp+(a.tvMarca&&a.tvMarca!=="Otra"?" en TV "+a.tvMarca:"")):"";
+  const bloq=NOAPK[a.tvSO]&&!a.tvBox;
+  const work=(a.trabajo||"").split(/\r?\n/).map(t=>t.replace(/^[\s*•\-✅⚪️]+/u,"").trim()).filter(Boolean);
+  if(a.tvFmt==="rapido"){
+    const L=[];if(tec)L.push("Técnico: "+tec);
+    if(a.soporte)L.push("soporte, "+a.soporte);if(a.cliente)L.push("cliente, "+a.cliente);if(a.tel)L.push("tel. "+a.tel);if(a.direccion)L.push("dirección, "+a.direccion);
+    if(a.extra)L.push(...a.extra.split("\n"));
+    const S=work.map(x=>"✅"+x);
+    if(bloq)S.push("✅El televisor no permite instalar la aplicación; se recomienda adquirir un TV Box Android o un Fire TV Stick");
+    else if(appTxt)S.push("✅Se realizó la instalación de la app "+appTxt);
+    const n=notifLines(a);if(n.length){S.push("✅Notificación al cliente: "+n[0]);for(const x of n.slice(1))S.push("✅"+x)}
+    return L.join("\n")+(S.length?"\nSe realizó con lo siguiente\n"+S.join("\n\n"):"");
+  }
+  const L=["ACTIVIDAD: Instalación de app de canales de TV"];const add=(k,v)=>{if(String(v||"").trim())L.push(k+": "+String(v).trim())};
+  add("Fecha",fechaLarga(dayKey(a.creado)));
+  if(tec)L.push("Técnico: "+tec);
+  add("Cliente",a.cliente);add("Dirección",a.direccion);add("Telef",a.tel);
+  if(a.plan)L.push("Plan: "+(/^\d+$/.test(a.plan.trim())?a.plan.trim()+" Mbps":a.plan.trim()));
+  const N=[];
+  if(bloq)N.push("* El televisor no permite instalar la aplicación; se recomienda al cliente adquirir un TV Box Android o un Fire TV Stick.");
+  else if(appTxt)N.push("* Se instala la app de canales de TV "+appTxt+".");
+  for(const x of work)N.push("* "+x);
+  for(const t of (a.notas||"").split(/\r?\n/)){const x=t.replace(/^[\s*•\-]+/,"").trim();if(x)N.push("* "+x)}
+  if(N.length)L.push("Notas:",...N);
+  {const n=notifLines(a);if(n.length)L.push("Notificación al cliente:",...n.map(x=>"* "+x))}
+  return L.join("\n");
+}
+
+let acts=[],col=null,cur=null,q="",confirmDel=false,saveT=null,LS="actividades.v1";
+
+function blank(tipo="foco_rojo"){const inst=tipo==="instalacion";return{tipo,creado:Date.now(),estado:"pendiente",pegado:"",tecnico:"",tecnico2:"",soporte:"",cliente:"",direccion:"",tel:"",ip:"",extra:"",
+ fibra:false,metros:"",onu:false,onuAnt:"",onuNueva:"",router:false,routerAnt:"",routerNueva:"",rchk:{},
+ nap:"",napInterv:"",potAntes:"",potDespues:"",trabajo:"",tests:true,clienteOk:true,cumplida:true,evid:{},
+ tvFmt:"formal",cedula:"",correo:"",hilo:"",hilosLibres:"",mac:"",gpon:"",pot:"",plan:"",notas:"",pruebas:true,fecha:"",...(inst?{router:true,onu:true,fibra:true}:{})}}
+
+/* --- leer el mensaje que llega --- */
+function parse(txt){
+  const out={tecnico:"",soporte:"",cliente:"",direccion:"",tel:"",ip:"",cedula:"",correo:"",plan:"",nap:"",extra:[]};
+  const MAPRE=/(https?:\/\/)?(maps\.app\.goo\.gl|goo\.gl\/maps|(www\.)?google\.[a-z.]+\/maps|maps\.google\.[a-z.]+|g\.co\/kgs)\S*/gi;
+  out.mapa="";
+  for(const raw of txt.split(/\r?\n/)){let l=raw.trim();if(!l)continue;
+    const mm=l.match(MAPRE);if(mm){if(!out.mapa)out.mapa=mm[0].startsWith("http")?mm[0]:"https://"+mm[0];l=l.replace(MAPRE,"").trim();
+      if(!l||/^(ubicaci[oó]n|ubicaci[oó]n del cliente|maps?|google maps|link|enlace|direcci[oó]n en maps)\s*[,.:]*$/i.test(l))continue;l=l.replace(/[\s,.:\-]+$/,"");if(!l)continue}
+    const m=l.match(/^(t[eé]cnicos?|soporte|cliente|direcci[oó]n|tel[eé]fono|tel[eé]f|tel|celular|cel|ip|c[eé]dula|correo(?: electr[oó]nico)?|plan|nap)\s*[,.:]+\s*(.*)$/i);
+    if(!m){if(!/^instalaci[oó]n\.?$/i.test(l))out.extra.push(l);continue}
+    const k=m[1].toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
+    const key=k.startsWith("tecnico")?"tecnico":k.startsWith("direc")?"direccion":/^(tel|cel)/.test(k)?"tel":k.startsWith("correo")?"correo":k;
+    out[key]=m[2].trim();}
+  out.extra=out.extra.join("\n");return out;
+}
+
+/* --- reporte para WhatsApp --- */
+const neg=v=>{v=String(v).trim().replace(",",".");if(!v)return"";return v.startsWith("-")?v:"-"+v};
+const MES=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+function fechaLarga(k){const d=new Date(k+"T12:00");const w=d.toLocaleDateString("es-EC",{weekday:"long"});return w[0].toUpperCase()+w.slice(1)+", "+d.getDate()+" de "+MES[d.getMonth()]+" del "+d.getFullYear()}
+function reportInst(a){
+  const L=["ACTIVIDAD: Instalación nueva."];const add=(k,v)=>{if(String(v||"").trim())L.push(k+": "+String(v).trim())};
+  add("Fecha",fechaLarga(a.fecha||dayKey(a.creado)));
+  const tec=[a.tecnico,a.tecnico2].filter(Boolean).join(" y ");if(tec)L.push("Técnico: "+tec+".");
+  add("Cliente",a.cliente);add("Dirección",a.direccion);add("Cédula",a.cedula);add("Telef",a.tel);if(a.correoEstado==="no")L.push("Correo electrónico: El cliente no cuenta con correo electrónico.");else add("Correo electrónico",a.correo);
+  add("IP",a.ip);add("NAP",a.nap);add("HILO",a.hilo);add("HILOS LIBRES",a.hilosLibres);add("Mac ONT ACTUAL",a.mac);add("GPON SN",a.gpon);
+  if(a.pot)L.push("Potencia: "+neg(a.pot)+" dBm");
+  if(a.plan)L.push("Plan: "+(/^\d+$/.test(a.plan.trim())?a.plan.trim()+" Mbps":a.plan.trim()));
+  const N=[];
+  if(a.metros)N.push(`* Se utilizan ${a.metros} metros de cable de fibra óptica desde la NAP hasta el domicilio del cliente.`);
+  if(a.router&&a.onu)N.push("* Router y bridge nuevos.");else if(a.router)N.push("* Router nuevo.");else if(a.onu)N.push("* Bridge nuevo.");
+  if(a.pruebas)N.push("* Se realizan pruebas de potencia y test de velocidad, el cliente cuenta con servicio de internet.");
+  for(const t of (a.notas||"").split(/\r?\n/)){const x=t.replace(/^[\s*•\-]+/,"").trim();if(x)N.push("* "+x)}
+  if(N.length)L.push("Notas:",...N);
+  {const n=notifLines(a);if(n.length)L.push("Notificación al cliente:",...n.map(x=>"* "+x))}
+  return L.join("\n");
+}
+function report(a){
+  if(a.tipo==="instalacion")return reportInst(a);
+  if(a.tipo==="tv")return reportTV(a);
+  const L=[];const tec=[a.tecnico,a.tecnico2].filter(Boolean).join(" y ");
+  if(tec)L.push("Tecnico, "+tec);
+  if(a.soporte)L.push("soporte, "+a.soporte);
+  if(a.cliente)L.push("cliente, "+a.cliente);
+  if(a.direccion)L.push("dirección, "+a.direccion);
+  if(a.tel)L.push("tel. "+a.tel);
+  if(a.ip)L.push("ip, "+a.ip);
+  if(a.extra)L.push(...a.extra.split("\n"));
+  const S=[];
+  for(const t of (a.trabajo||"").split(/\r?\n/)){const x=t.replace(/^[\s⚪️•\-*]+/u,"").trim();if(x)S.push("⚪️"+x)}
+  if(a.fibra&&a.metros)S.push(`⚪️se pasaron ${a.metros} m de drop`);
+  if(a.napInterv==="si")S.push("⚪️se intervino en la NAP"+(a.nap?" "+a.nap:""));
+  if(a.napInterv==="no")S.push("⚪️no se intervino en la NAP"+(a.nap?" "+a.nap:""));
+  if(a.potAntes)S.push(`⚪️potencia antes ${neg(a.potAntes)} dBm`);
+  if(a.potDespues)S.push(`⚪️potencia después ${neg(a.potDespues)} dBm`);
+  if(a.tests)S.push("⚪️Realización de los distintos test");
+  if(a.clienteOk)S.push("⚪️Cliente comprueba y todo Ok");
+  if(a.onu){S.push("⚪️Cambio de nueva bridge");if(a.onuAnt)S.push("⚪️MAC bridge anterior: "+a.onuAnt);if(a.onuNueva)S.push("⚪️MAC bridge nueva: "+a.onuNueva)}
+  if(a.router){S.push("⚪️Cambio de router");if(a.routerAnt)S.push("⚪️MAC router anterior: "+a.routerAnt);if(a.routerNueva)S.push("⚪️MAC router nuevo: "+a.routerNueva)}
+  {const n=notifLines(a);if(n.length){S.push("⚪️Notificación al cliente: "+n[0]);for(const x of n.slice(1))S.push("⚪️"+x)}}
+  if(a.cumplida)S.push("✅se cumplió con la actividad");
+  return L.join("\n")+(S.length?"\n\n"+S.join("\n"):"");
+}
+function missing(a){const m=[];
+  for(const [k,l,c] of (a.tipo==="instalacion"?EVID_I:EVID)){if(c==="eq"&&!(a.onu||a.router))continue;if(!a.evid?.[k])m.push(l.split(/[:(]/)[0].trim().toLowerCase())}
+  const r=a.router?ROUTER.filter(([k])=>!a.rchk?.[k]).length:0;
+  return {m,r};
+}
+
+/* --- lista --- */
+function renderList(){
+  $("bar").hidden=true;
+  const f=q.trim().toLowerCase();
+  const list=acts.filter(a=>!f||[a.cliente,a.ip,a.nap,a.tel,a.direccion,a.onuNueva,a.onuAnt,a.routerNueva,a.cedula,a.mac,a.gpon].join(" ").toLowerCase().includes(f)).sort((a,b)=>b.creado-a.creado);
+  const g={};for(const a of list)(g[dayKey(a.creado)]??=[]).push(a);
+  let h=`<div class="top"><h1>Actividades</h1><div class="new"><button class="primary" data-new="foco_rojo">+ Foco rojo</button><button class="primary" style="background:var(--accent);border-color:var(--accent)" data-new="instalacion">+ Instalación alámbrica</button><button data-new="tv">+ App de TV</button></div></div>
+  <input class="search" id="q" type="search" placeholder="Buscar por cliente, cédula, IP, NAP o MAC" value="${esc(q)}">`;
+  if(!acts.length)h+=`<div class="empty">Aún no tienes actividades.<br>Toca <b>+ Foco rojo</b> o <b>+ Instalación alámbrica</b> y pega el mensaje que te llega.</div>`;
+  else if(!list.length)h+=`<div class="empty">Nada coincide con “${esc(q)}”.</div>`;
+  for(const k of Object.keys(g)){
+    h+=`<section class="day"><h2>${fDay(k)}</h2>`+g[k].map(a=>`<button class="item" data-open="${a.id}">
+      <span class="badge ${(TIPOS[a.tipo]||TIPOS.foco_rojo)[1]}">${(TIPOS[a.tipo]||TIPOS.foco_rojo)[0]}</span>
+      <span style="min-width:0"><b>${esc(a.cliente||"Sin cliente")}</b><small>${hhmm(a.creado)}${a.ip?" · "+esc(a.ip):""}${a.nap?" · NAP "+esc(a.nap):""}</small></span>
+      <span class="badge ${a.estado==="terminada"?"b-ok":"b-warn"}">${a.estado==="terminada"?"Terminada":"Pendiente"}</span></button>`).join("")+`</section>`}
+  h+=`<section class="sec"><div class="sec-h"><h2>Copia de seguridad</h2><span class="muted">${acts.length} ${acts.length===1?"actividad":"actividades"}</span></div>
+    <p class="muted" style="margin:0">Todo se guarda en este teléfono y funciona sin internet. Exporta una copia de vez en cuando (por ejemplo a Archivos o iCloud) para no perder tu historial si cambias de celular.</p>
+    <div class="backup"><button id="expBtn">Exportar copia</button><label style="cursor:pointer;padding:10px 14px;border-radius:10px;border:1px solid var(--line);background:var(--card);font-weight:400">Importar copia<input type="file" id="impFile" accept="application/json,.json" hidden></label></div>
+    <p class="muted" id="bkMsg" style="margin:0" role="status"></p></section>`;
+  $("app").innerHTML=h;
+  const s=$("q");s.oninput=()=>{q=s.value;const pos=s.selectionStart;renderList();const n=$("q");n.focus();n.setSelectionRange(pos,pos)};
+}
+
+/* --- editor --- */
+const inp=(k,label,o={})=>`<label class="f ${o.cls||""}">${label}${o.unit?`<span class="unit"><input id="f-${k}" data-k="${k}" ${o.attrs||""} value="${esc(cur[k])}"><span>${o.unit}</span></span>`:`<input id="f-${k}" data-k="${k}" ${o.attrs||""} value="${esc(cur[k])}">`}</label>`;
+const chk=(k,label,sub,group)=>`<label class="chk"><input type="checkbox" id="c-${group||""}${k}" data-c="${k}" ${group?`data-g="${group}"`:""} ${(group?cur[group]?.[k]:cur[k])?"checked":""}><span>${label}${sub?`<small>${sub}</small>`:""}</span></label>`;
+const chip=(k,v,label,cls="")=>`<button class="chip ${cls}" data-chip="${k}" data-v="${v}" aria-pressed="${cur[k]===v}">${label}</button>`;
+const caso=()=>cur.fibra&&cur.onu?"ambos":cur.fibra?"fibra":cur.onu?"onu":"";
+
+function renderEditor(){
+  confirmDel=false;
+  if(cur.tipo==="tv")return renderTV();
+  if(cur.tipo==="instalacion")return renderInst();
+  $("app").innerHTML=`
+  <div class="top"><button data-back>‹ Actividades</button><span class="saved" id="saved"></span></div>
+  <div class="top"><h1>Foco rojo</h1><div class="chips">${chip("estado","pendiente","Pendiente","no")}${chip("estado","terminada","Terminada")}</div></div>
+
+  <section class="sec"><div class="sec-h"><h2>Datos de la actividad</h2><span class="step">01</span></div>
+    <label class="f">Pega aquí el mensaje que te llega<textarea id="f-pegado" data-k="pegado" placeholder="Tecnico, Byron&#10;soporte, sin internet, foco rojo&#10;cliente, …&#10;dirección, …&#10;tel. …&#10;ip, …">${esc(cur.pegado)}</textarea></label>
+    <button class="pastebtn" id="pasteBtn">Pegar del portapapeles</button>
+    <div class="grid">
+      ${inp("tecnico","Técnico")}${inp("tecnico2","Segundo técnico (cuadrilla)",{attrs:'placeholder="Opcional"'})}
+      ${inp("soporte","Soporte",{cls:"full"})}
+      ${inp("cliente","Cliente",{cls:"full",attrs:'autocapitalize="characters"'})}
+      ${inp("direccion","Dirección",{cls:"full"})}
+      ${inp("tel","Teléfono",{attrs:'inputmode="tel" class="mono"'})}${inp("ip","IP",{attrs:'inputmode="decimal" class="mono"'})}
+      <div class="chips full" id="telChips"></div>
+    </div></section>
+
+  <section class="sec"><div class="sec-h"><h2>Caso</h2><span class="step">02</span></div>
+    <p class="muted" style="margin:0">Marca todo lo que cambiaste; puedes combinar.</p>
+    <div class="chips">
+      <button class="chip" data-tog="fibra" aria-pressed="${!!cur.fibra}">Fibra / drop</button>
+      <button class="chip" data-tog="onu" aria-pressed="${!!cur.onu}">ONU (bridge)</button>
+      <button class="chip" data-tog="router" aria-pressed="${!!cur.router}">Router</button></div>
+    <div class="box" id="boxFibra" ${cur.fibra?"":"hidden"}><h3>Fibra nueva</h3>${inp("metros","Metros de drop",{unit:"m",attrs:'inputmode="numeric" class="mono" placeholder="0"'})}</div>
+    <div class="box" id="boxOnu" ${cur.onu?"":"hidden"}><h3>Cambio de bridge (ONU)</h3><div class="grid">
+      ${inp("onuAnt","MAC anterior",{attrs:'class="mono" autocapitalize="characters" placeholder="Opcional"'})}${inp("onuNueva","MAC nueva",{attrs:'class="mono" autocapitalize="characters" placeholder="EC-B9-31-…"'})}</div></div>
+    <div class="box" id="boxRouter" ${cur.router?"":"hidden"}><div class="sec-h"><h3>Cambio de router</h3><span class="progress" id="rprog"></span></div><div class="grid">
+      ${inp("routerAnt","MAC anterior",{attrs:'class="mono" autocapitalize="characters" placeholder="Opcional"'})}${inp("routerNueva","MAC nueva",{attrs:'class="mono" autocapitalize="characters"'})}</div>
+      <div class="list-chk">${ROUTER.map(([k,l])=>chk(k,l,"","rchk")).join("")}</div></div>
+  </section>
+
+  <section class="sec"><div class="sec-h"><h2>NAP y potencia</h2><span class="step">03</span></div>
+    <div class="chips">${chip("napInterv","si","Se intervino la NAP")}${chip("napInterv","no","No se intervino","no")}</div>
+    <div class="grid">${inp("nap","Código NAP",{cls:"full",attrs:'class="mono" autocapitalize="characters" placeholder="A07-4"'})}
+      ${inp("potAntes","Potencia antes",{unit:"dBm",attrs:'inputmode="decimal" class="mono" placeholder="-27.50"'})}
+      ${inp("potDespues","Potencia después",{unit:"dBm",attrs:'inputmode="decimal" class="mono" placeholder="-17.48"'})}</div>
+    <p class="muted" style="margin:0">Si escribes sin el signo, se agrega el “-” solo.</p>
+  </section>
+
+  <section class="sec"><div class="sec-h"><h2>Trabajo realizado</h2><span class="step">04</span></div>
+    <label class="f">Una línea por cada punto; cada una sale con ⚪️<textarea id="f-trabajo" data-k="trabajo" placeholder="fibra rota, se procede a pasar nueva drop">${esc(cur.trabajo)}</textarea></label>
+    <div class="list-chk">${chk("tests","Realización de los distintos test")}${chk("clienteOk","Cliente comprueba y todo Ok")}${chk("cumplida","✅ Se cumplió con la actividad")}</div>
+  </section>
+  ${notifHTML()}
+
+  <section class="sec"><div class="sec-h"><h2>Evidencias para el grupo</h2><span class="progress" id="eprog"></span></div>
+    <p class="muted" style="margin:0">Solo para acordarte; las fotos van al WhatsApp.</p>
+    <div class="list-chk">${EVID.map(([k,l,c])=>`<div data-eq="${c||""}" ${c==="eq"&&!(cur.onu||cur.router)?"hidden":""}>${chk(k,l,"","evid")}</div>`).join("")}</div>
+  </section>
+
+  <section class="sec"><div class="sec-h"><h2>Reporte</h2><span class="step">05</span></div><pre class="report" id="rep"></pre></section>
+
+  <div class="top"><span class="muted">Creada ${fDay(dayKey(cur.creado))}, ${hhmm(cur.creado)}</span><button class="danger" id="del">Borrar actividad</button></div>`;
+  $("bar").hidden=false;refresh();
+}
+const notifHTML=()=>`<section class="sec"><div class="sec-h"><h2>Notificación al cliente</h2></div>
+    <div class="chips">${chip("notif","si","Hay notificación")}${chip("notif","no","No hay","no")}</div>
+    <label class="f" id="notifBox" ${cur.notif==="si"?"":"hidden"}>¿Qué se le indicó al cliente?<textarea id="f-notifTxt" data-k="notifTxt" placeholder="El cliente debe…">${esc(cur.notifTxt)}</textarea></label></section>`;
+const notifLines=a=>a.notif==="si"?(a.notifTxt||"").split(/\r?\n/).map(x=>x.trim()).filter(Boolean):[];
+function renderTV(){
+  const so=cur.tvSO, bloq=NOAPK[so]&&!cur.tvBox, sigue=so&&(!NOAPK[so]||cur.tvBox)&&so!=="otro";
+  const done=TVSTEPS.filter(([k])=>cur.tvchk?.[k]).length;
+  const appChip=v=>`<button class="chip" data-tvapp="${esc(v)}" aria-pressed="${cur.tvApp===v}">${esc(v)}</button>`;
+  $("app").innerHTML=`
+  <div class="top"><button data-back>‹ Actividades</button><span class="saved" id="saved"></span></div>
+  <div class="top"><h1>App de TV</h1><div class="chips">${chip("estado","pendiente","Pendiente","no")}${chip("estado","terminada","Terminada")}</div></div>
+  <section class="sec"><div class="sec-h"><h2>Datos de la actividad</h2></div>
+    <label class="f">Pega aquí el mensaje que te llega<textarea id="f-pegado" data-k="pegado" placeholder="soporte, colocar app de TV&#10;cliente, …&#10;tel. …&#10;dirección, …">${esc(cur.pegado)}</textarea></label>
+    <button class="pastebtn" id="pasteBtn">Pegar del portapapeles</button>
+    <div class="grid">${inp("tecnico","Técnico")}${inp("tecnico2","Segundo técnico",{attrs:'placeholder="Opcional"'})}
+    ${inp("cliente","Cliente",{cls:"full"})}${inp("direccion","Dirección",{cls:"full"})}
+    ${inp("tel","Teléfono",{attrs:'inputmode="tel" class="mono"'})}${inp("plan","Plan",{unit:"Mbps",attrs:'inputmode="numeric" class="mono" placeholder="200"'})}
+    <div class="chips full" id="telChips"></div></div></section>
+
+  <section class="sec"><div class="sec-h"><h2>1 · Marca del televisor</h2></div>
+    <div class="chips">${MARCAS.map(([m])=>`<button class="chip" data-marca="${m}" aria-pressed="${cur.tvMarca===m}">${m}</button>`).join("")}</div>
+    ${cur.tvMarca&&MARCA_TIP[cur.tvMarca]?`<p class="muted" style="margin:0">${MARCA_TIP[cur.tvMarca]}. Confirma el sistema:</p>`:""}
+    <h2 style="margin-top:4px">Sistema</h2>
+    <div class="chips">${TVSO.map(([v,l])=>chip("tvSO",v,l)).join("")}</div>
+    ${so==="otro"?`<div class="box"><p style="margin:0">Revisa Ajustes › Información del TV. Si en el menú aparece <b>Google Play</b>, es Android TV / Google TV.</p></div>`:""}
+    ${NOAPK[so]?`<div class="box" style="border-color:var(--warn)"><h3 style="color:var(--warn)">Este TV no instala la app</h3>
+      <p style="margin:0">Recomienda al cliente comprar un <b>TV Box Android</b> o un <b>Fire TV Stick</b>. Si ya tiene uno, elige cuál y sigue:</p>
+      <div class="chips">${chip("tvBox","box","Tiene TV Box Android")}${chip("tvBox","fire","Tiene Fire TV Stick")}</div></div>`:""}
+  </section>
+
+  ${sigue?`<section class="sec"><div class="sec-h"><h2>2 · Instalador</h2></div>
+    <div class="chips">${chip("tvInst","Downloader","Downloader")}${chip("tvInst","Uptodown","Uptodown")}</div></section>
+
+  <section class="sec"><div class="sec-h"><h2>3 · App de IPTV</h2></div>
+    <div class="chips">${tvApps().map(appChip).join("")}${cur.tvApp&&!tvApps().includes(cur.tvApp)?appChip(cur.tvApp):""}</div>
+    <div style="display:flex;gap:8px"><input id="newApp" class="search" placeholder="Otra app que pida la empresa" style="flex:1;min-width:0"><button id="addApp">Agregar</button></div></section>
+
+  <section class="sec"><div class="sec-h"><h2>4 · Pasos</h2><span class="progress" id="tvprog">${done}/${TVSTEPS.length}</span></div>
+    <div class="list-chk">${TVSTEPS.map(([k,l,sub])=>chk(k,l,sub,"tvchk")).join("")}</div></section>`:""}
+
+  <section class="sec"><div class="sec-h"><h2>Trabajo realizado</h2></div>
+    <label class="f">Una línea por punto (ej. se restableció el TV de fábrica)<textarea id="f-trabajo" data-k="trabajo">${esc(cur.trabajo)}</textarea></label></section>
+  ${notifHTML()}
+  <section class="sec"><div class="sec-h"><h2>Reporte</h2></div>
+    <div class="chips">${chip("tvFmt","formal","Formato ACTIVIDAD")}${chip("tvFmt","rapido","Formato rápido ✅")}</div>
+    <pre class="report" id="rep"></pre></section>
+  <div class="top"><span class="muted">Creada ${fDay(dayKey(cur.creado))}, ${hhmm(cur.creado)}</span><button class="danger" id="del">Borrar actividad</button></div>`;
+  $("bar").hidden=false;refresh();
+}
+function renderInst(){
+  if(!cur.fecha)cur.fecha=dayKey(cur.creado);
+  $("app").innerHTML=`
+  <div class="top"><button data-back>‹ Actividades</button><span class="saved" id="saved"></span></div>
+  <div class="top"><h1>Instalación alámbrica</h1><div class="chips">${chip("estado","pendiente","Pendiente","no")}${chip("estado","terminada","Terminada")}</div></div>
+
+  <section class="sec"><div class="sec-h"><h2>Datos de la oficina</h2><span class="step">01</span></div>
+    <label class="f">Pega aquí el mensaje de la secretaria<textarea id="f-pegado" data-k="pegado" placeholder="Tecnico: …&#10;Instalación&#10;Cliente: …&#10;Dirección: …&#10;IP: …&#10;Telef.: …">${esc(cur.pegado)}</textarea></label>
+    <button class="pastebtn" id="pasteBtn">Pegar del portapapeles</button>
+    <div class="grid">
+      ${inp("tecnico","Técnico")}${inp("tecnico2","Segundo técnico (cuadrilla)",{attrs:'placeholder="Opcional"'})}
+      <label class="f full">Fecha<input type="date" id="f-fecha" data-k="fecha" value="${esc(cur.fecha)}"></label>
+    </div></section>
+
+  <section class="sec"><div class="sec-h"><h2>Cliente</h2><span class="step">02</span></div>
+    <div class="grid">
+      ${inp("cliente","Nombres completos",{cls:"full",attrs:'autocapitalize="words"'})}
+      ${inp("cedula","Cédula",{attrs:'inputmode="numeric" class="mono" maxlength="13"'})}${inp("tel","Teléfono",{attrs:'inputmode="tel" class="mono"'})}
+      <div class="chips full" id="telChips"></div>
+      <div class="chips full"><span class="muted" style="align-self:center">Correo:</span>${chip("correoEstado","tiene","Tiene correo")}${chip("correoEstado","no","No tiene","no")}</div>
+      ${inp("correo","Correo electrónico",{cls:"full",attrs:'type="email" inputmode="email" autocapitalize="off" autocorrect="off" spellcheck="false"'})}
+      ${inp("direccion","Dirección",{cls:"full"})}
+      ${inp("plan","Plan",{unit:"Mbps",attrs:'inputmode="numeric" class="mono" placeholder="200"'})}${inp("ip","IP",{attrs:'inputmode="decimal" class="mono"'})}
+    </div></section>
+
+  <section class="sec"><div class="sec-h"><h2>Red y potencia</h2><span class="step">03</span></div>
+    <div class="grid">
+      ${inp("nap","NAP",{cls:"full",attrs:'class="mono" autocapitalize="characters" placeholder="B04-1"'})}
+      ${inp("hilo","Hilo",{attrs:'inputmode="numeric" class="mono"'})}${inp("hilosLibres","Hilos libres",{attrs:'inputmode="numeric" class="mono"'})}
+      ${inp("pot","Potencia",{unit:"dBm",attrs:'inputmode="decimal" class="mono" placeholder="-14.50"'})}${inp("metros","Fibra usada",{unit:"m",attrs:'inputmode="numeric" class="mono" placeholder="103"'})}
+    </div></section>
+
+  <section class="sec"><div class="sec-h"><h2>Equipos</h2><span class="step">04</span></div>
+    <div class="chips"><button class="chip" data-tog="onu" aria-pressed="${!!cur.onu}">Bridge nuevo</button><button class="chip" data-tog="router" aria-pressed="${!!cur.router}">Router nuevo</button></div>
+    <div class="grid">
+      ${inp("mac","Mac ONT actual",{attrs:'class="mono" autocapitalize="characters" placeholder="EC-B9-31-…"'})}${inp("gpon","GPON SN",{attrs:'class="mono" autocapitalize="characters"'})}
+    </div>
+    <div class="box" id="boxRouter" ${cur.router?"":"hidden"}><div class="sec-h"><h3>Configuración del router</h3><span class="progress" id="rprog"></span></div>
+      <div class="list-chk">${ROUTER.map(([k,l])=>chk(k,l,"","rchk")).join("")}</div></div>
+  </section>
+
+  <section class="sec"><div class="sec-h"><h2>Notas</h2><span class="step">05</span></div>
+    <div class="list-chk">${chk("pruebas","Pruebas de potencia y test de velocidad","Agrega: el cliente cuenta con servicio de internet")}</div>
+    <label class="f">Otras notas, una por línea; cada una sale con *<textarea id="f-notas" data-k="notas">${esc(cur.notas)}</textarea></label>
+    <p class="muted" style="margin:0">Los metros de fibra y los equipos nuevos se agregan solos a las notas.</p>
+  </section>
+  ${notifHTML()}
+
+  <section class="sec"><div class="sec-h"><h2>Evidencias para el grupo</h2><span class="progress" id="eprog"></span></div>
+    <p class="muted" style="margin:0">Solo para acordarte; las fotos van al WhatsApp.</p>
+    <div class="list-chk">${EVID_I.map(([k,l,c])=>`<div data-eq="${c||""}" ${c==="eq"&&!(cur.onu||cur.router)?"hidden":""}>${chk(k,l,"","evid")}</div>`).join("")}</div>
+  </section>
+
+  <section class="sec"><div class="sec-h"><h2>Reporte</h2><span class="step">06</span></div><pre class="report" id="rep"></pre></section>
+
+  <div class="top"><span class="muted">Creada ${fDay(dayKey(cur.creado))}, ${hhmm(cur.creado)}</span><button class="danger" id="del">Borrar actividad</button></div>`;
+  $("bar").hidden=false;refresh();
+}
+const telNums=t=>(String(t||"").match(/\+?\d[\d\s-]{5,}\d/g)||[]).map(x=>x.trim());
+function telChips(){const box=$("telChips");if(!box)return;const n=telNums(cur.tel);
+  box.hidden=n.length<2;
+  box.innerHTML=n.length<2?"":`<span class="muted" style="align-self:center">Toca ✕ para quitar:</span>`+n.map((x,i)=>`<button class="chip num" data-deltel="${i}" aria-label="Quitar ${esc(x)}"><span class="mono">${esc(x)}</span> <b aria-hidden="true">✕</b></button>`).join("");}
+function mapLink(){const ta=$("f-pegado");if(!ta)return;let el=$("mapLink");
+  if(!el){el=document.createElement("p");el.id="mapLink";el.className="muted";el.style.margin="0";ta.closest("label").after(el)}
+  el.hidden=!cur.mapa;el.innerHTML=cur.mapa?`📍 Ubicación detectada (no va en el reporte): <a href="${esc(cur.mapa)}" target="_blank" rel="noopener">Abrir en Maps</a>`:""}
+function refresh(){
+  if(!cur)return;
+  if(cur.tipo==="tv"){telChips();mapLink();const p=$("tvprog");if(p)p.textContent=`${TVSTEPS.filter(([k])=>cur.tvchk?.[k]).length}/${TVSTEPS.length}`;
+    $("rep").textContent=report(cur);const nb=$("notifBox");if(nb)nb.hidden=cur.notif!=="si";
+    $("miss").textContent=NOAPK[cur.tvSO]&&!cur.tvBox?"Recomendar TV Box o Fire TV Stick":cur.tvApp?"Listo para copiar":"Elige la app";return}telChips();mapLink();
+  {const nb=$("notifBox");if(nb)nb.hidden=cur.notif!=="si"}
+  {const c=$("f-correo");if(c)c.closest("label").hidden=cur.correoEstado==="no"}
+  $("rep").textContent=report(cur);
+  const {m,r}=missing(cur);
+  const total=(cur.tipo==="instalacion"?EVID_I:EVID).filter(([,,c])=>c!=="eq"||cur.onu||cur.router).length;
+  $("eprog").textContent=`${total-m.length}/${total}`;
+  if($("rprog"))$("rprog").textContent=`${ROUTER.length-r}/${ROUTER.length}`;
+  $("miss").textContent=r?`Router: faltan ${r} ajustes`:m.length?`Faltan ${m.length} evidencias`:"Todo listo";
+  const hb=(id,v)=>{const e=$(id);if(e)e.hidden=v};hb("boxFibra",!cur.fibra);hb("boxOnu",!cur.onu);hb("boxRouter",!cur.router);
+  document.querySelectorAll('[data-eq="eq"]').forEach(e=>e.hidden=!(cur.onu||cur.router));
+}
+
+/* --- guardar --- */
+function saveLocal(){try{localStorage.setItem(LS,JSON.stringify(acts))}catch(e){throw new Error("storage")}}
+function queueSave(){clearTimeout(saveT);const s=$("saved");if(s)s.textContent="Guardando…";saveT=setTimeout(saveNow,600)}
+async function saveNow(){clearTimeout(saveT);if(!cur)return;const {id,...data}=cur;data.actualizado=Date.now();
+  const i=acts.findIndex(a=>a.id===id);if(i>=0)acts[i]={...cur};
+  try{saveLocal();const s=$("saved");if(s)s.textContent="Guardado "+hhmm(Date.now())}
+  catch{const s=$("saved");if(s)s.textContent="No se pudo guardar: el teléfono no tiene espacio."}}
+async function remove(id){acts=acts.filter(a=>a.id!==id);saveLocal()}
+
+async function newAct(tipo){
+  const a=blank(tipo);let id="l"+a.creado;
+  cur={id,...a};acts.push({...cur});renderEditor();window.scrollTo(0,0);
+  $("f-pegado").focus();await saveNow();
+}
+async function back(){
+  if(cur){const empty=!cur.pegado&&!cur.cliente&&!cur.trabajo&&!cur.ip&&!cur.notas&&!cur.tvSO;
+    if(empty)await remove(cur.id).catch(()=>{});else await saveNow();}
+  cur=null;renderList();window.scrollTo(0,0);
+}
+
+/* --- eventos --- */
+document.addEventListener("input",e=>{
+  if(!cur)return;const t=e.target;
+  if(t.dataset.k){let v=t.value;
+    if(/^(onuAnt|onuNueva|routerAnt|routerNueva|nap|mac|gpon)$/.test(t.dataset.k)){const p=t.selectionStart;v=v.toUpperCase();t.value=v;t.setSelectionRange(p,p)}
+    cur[t.dataset.k]=v;
+    if(t.dataset.k==="pegado"){const p=parse(v);cur.mapa=p.mapa;for(const k of ["tecnico","soporte","cliente","direccion","tel","ip","extra","cedula","correo","plan","nap"]){if(cur.tipo==="instalacion"&&k==="extra")continue;if(!p[k]&&["cedula","correo","plan","nap"].includes(k))continue;cur[k]=p[k];const el=$("f-"+k);if(el)el.value=p[k]}}
+    refresh();queueSave();}
+});
+document.addEventListener("change",e=>{
+  if(!cur)return;const t=e.target;if(!t.dataset.c)return;
+  if(t.dataset.g){(cur[t.dataset.g]??={})[t.dataset.c]=t.checked}else cur[t.dataset.c]=t.checked;
+  refresh();queueSave();
+});
+document.addEventListener("click",async e=>{
+  const b=e.target.closest("button");if(!b)return;
+  if(b.dataset.new)return newAct(b.dataset.new);
+  if(b.dataset.open){const a=acts.find(x=>x.id===b.dataset.open);if(a){cur=JSON.parse(JSON.stringify(a));renderEditor();window.scrollTo(0,0)}return}
+  if("back" in b.dataset)return back();
+  if(b.dataset.deltel){const n=telNums(cur.tel);n.splice(+b.dataset.deltel,1);cur.tel=n.join(" / ");const el=$("f-tel");if(el)el.value=cur.tel;refresh();queueSave();return}
+  if(b.dataset.marca){const m=b.dataset.marca;cur.tvMarca=cur.tvMarca===m?"":m;const so=(MARCAS.find(x=>x[0]===m)||[])[1];if(cur.tvMarca&&so)cur.tvSO=so;renderTV();queueSave();return}
+  if(b.dataset.tvapp!==undefined){cur.tvApp=cur.tvApp===b.dataset.tvapp?"":b.dataset.tvapp;document.querySelectorAll("[data-tvapp]").forEach(x=>x.setAttribute("aria-pressed",String(x.dataset.tvapp===cur.tvApp)));refresh();queueSave();return}
+  if(b.id==="addApp"){const v=$("newApp").value.trim();if(!v)return;cur.tvApp=v;renderTV();queueSave();return}
+  if(b.dataset.tog){const k=b.dataset.tog;cur[k]=!cur[k];b.setAttribute("aria-pressed",String(cur[k]));refresh();queueSave();return}
+  if(b.dataset.chip){const k=b.dataset.chip,v=b.dataset.v;cur[k]=(cur[k]===v&&k!=="estado")?"":v;
+    if(/^(tvSO|tvBox)$/.test(k)){renderTV();queueSave();return}
+    if(k==="tvFmt"&&!cur.tvFmt)cur.tvFmt=v;
+    document.querySelectorAll(`[data-chip="${k}"]`).forEach(x=>x.setAttribute("aria-pressed",String(cur[k]===x.dataset.v)));refresh();queueSave();return}
+  if(b.id==="del"){if(!confirmDel){confirmDel=true;b.textContent="Toca otra vez para borrar";return}
+    const id=cur.id;cur=null;try{await remove(id)}catch{}renderList();return}
+});
+$("copy").onclick=async()=>{
+  if(!cur)return;const txt=report(cur);const btn=$("copy");
+  try{await navigator.clipboard.writeText(txt);btn.textContent="Copiado ✓"}
+  catch{const c=$("clip");c.value=txt;c.select();c.setSelectionRange(0,txt.length);
+    try{document.execCommand("copy");btn.textContent="Copiado ✓"}catch{btn.textContent="Mantén presionado el reporte para copiar"}}
+  setTimeout(()=>btn.textContent="Copiar reporte",2200);
+  if(cur.estado!=="terminada"&&cur.cumplida){cur.estado="terminada";document.querySelectorAll('[data-chip="estado"]').forEach(x=>x.setAttribute("aria-pressed",String(x.dataset.v==="terminada")));queueSave()}
+};
+
+/* --- respaldo --- */
+async function exportar(){
+  const data=JSON.stringify({app:"actividades",version:1,exportado:new Date().toISOString(),actividades:acts},null,1);
+  const name="actividades-"+dayKey(Date.now())+".json";
+  const file=new File([data],name,{type:"application/json"});
+  try{
+    if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:name});$("bkMsg").textContent="Copia lista. Guárdala en Archivos o iCloud.";return}
+  }catch(e){if(e&&e.name==="AbortError")return}
+  const u=URL.createObjectURL(file);const a=document.createElement("a");a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);
+  $("bkMsg").textContent="Copia descargada: "+name;
+}
+async function importar(f){
+  try{const j=JSON.parse(await f.text());const list=Array.isArray(j)?j:j.actividades;if(!Array.isArray(list))throw 0;
+    const byId=new Map(acts.map(a=>[a.id,a]));let n=0;
+    for(const a of list){if(!a||!a.id)continue;const o=byId.get(a.id);if(!o||(a.actualizado||0)>(o.actualizado||0)){byId.set(a.id,a);n++}}
+    acts=[...byId.values()];saveLocal();renderList();$("bkMsg").textContent=`Copia importada: ${n} actividades nuevas o actualizadas.`;
+  }catch{$("bkMsg").textContent="Ese archivo no es una copia válida de Actividades."}
+}
+document.addEventListener("click",async e=>{
+  const b=e.target.closest("button");if(!b)return;
+  if(b.id==="expBtn")return exportar();
+  if(b.id==="pasteBtn"){try{const t=await navigator.clipboard.readText();const ta=$("f-pegado");if(!t||!ta)return;ta.value=t;ta.dispatchEvent(new Event("input",{bubbles:true}))}catch{b.textContent="Mantén presionado el cuadro y elige Pegar";setTimeout(()=>b.textContent="Pegar del portapapeles",2500)}}
+});
+document.addEventListener("change",e=>{if(e.target.id==="impFile"&&e.target.files[0]){importar(e.target.files[0]);e.target.value=""}});
+
+/* --- arranque --- */
+try{acts=JSON.parse(localStorage.getItem(LS)||"[]")}catch{acts=[]}
+renderList();
+if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{});
+if("serviceWorker" in navigator){
+  navigator.serviceWorker.register("sw.js").then(reg=>{
+    const show=w=>{$("upd").hidden=false;$("updBtn").onclick=()=>w.postMessage("skip")};
+    if(reg.waiting&&navigator.serviceWorker.controller)show(reg.waiting);
+    reg.addEventListener("updatefound",()=>{const w=reg.installing;w&&w.addEventListener("statechange",()=>{if(w.state==="installed"&&navigator.serviceWorker.controller)show(w)})});
+    setInterval(()=>reg.update().catch(()=>{}),60*60*1000);
+  }).catch(()=>{});
+  let reloaded=false;const hadCtl=!!navigator.serviceWorker.controller;navigator.serviceWorker.addEventListener("controllerchange",()=>{if(reloaded||!hadCtl)return;reloaded=true;if(cur)saveNow();location.reload()});
+}
+</script>
+</body>
+</html>
