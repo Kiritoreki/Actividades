@@ -237,7 +237,7 @@ function reportTV(a){
   const work=(a.trabajo||"").split(/\r?\n/).map(t=>t.replace(/^[\s*•\-✅⚪️]+/u,"").trim()).filter(Boolean);
   if(a.tvFmt==="rapido"){
     const L=[];if(tec)L.push("Técnico: "+tec);
-    if(a.soporte)L.push("soporte, "+a.soporte);if(a.cliente)L.push("cliente, "+a.cliente);if(a.tel)L.push("tel. "+a.tel);if(a.direccion)L.push("dirección, "+a.direccion);
+    if(a.soporte)L.push("soporte, "+a.soporte);if(a.cliente)L.push("cliente, "+a.cliente);if(a.tel)L.push("tel. "+a.tel);if(a.direccion)L.push("dirección, "+a.direccion);if(a.coords&&a.coords.trim())L.push("coordenadas, "+a.coords.trim());
     if(a.extra)L.push(...a.extra.split("\n"));
     const S=work.map(x=>"✅"+x);
     if(bloq)S.push("✅El televisor no permite instalar la aplicación; se recomienda adquirir un TV Box Android o un Fire TV Stick");
@@ -248,7 +248,7 @@ function reportTV(a){
   const L=["ACTIVIDAD: Instalación de app de canales de TV"];const add=(k,v)=>{if(String(v||"").trim())L.push(k+": "+String(v).trim())};
   add("Fecha",fechaLarga(dayKey(a.creado)));
   if(tec)L.push("Técnico: "+tec);
-  add("Cliente",a.cliente);add("Dirección",a.direccion);add("Telef",a.tel);
+  add("Cliente",a.cliente);add("Dirección",a.direccion);add("Coordenadas",a.coords);add("Telef",a.tel);
   if(a.plan)L.push("Plan: "+(/^\d+$/.test(a.plan.trim())?a.plan.trim()+" Mbps":a.plan.trim()));
   const N=[];
   if(bloq)N.push("* El televisor no permite instalar la aplicación; se recomienda al cliente adquirir un TV Box Android o un Fire TV Stick.");
@@ -297,7 +297,7 @@ function reportInst(a){
   const L=["ACTIVIDAD: Instalación nueva."];const add=(k,v)=>{if(String(v||"").trim())L.push(k+": "+String(v).trim())};
   add("Fecha",fechaLarga(a.fecha||dayKey(a.creado)));
   const tec=[a.tecnico,a.tecnico2].filter(Boolean).join(" y ");if(tec)L.push("Técnico: "+tec+".");
-  add("Cliente",a.cliente);add("Dirección",a.direccion);add("Cédula",a.cedula);add("Telef",a.tel);if(a.correoEstado==="no")L.push("Correo electrónico: El cliente no cuenta con correo electrónico.");else add("Correo electrónico",a.correo);
+  add("Cliente",a.cliente);add("Dirección",a.direccion);add("Coordenadas",a.coords);add("Cédula",a.cedula);add("Telef",a.tel);if(a.correoEstado==="no")L.push("Correo electrónico: El cliente no cuenta con correo electrónico.");else add("Correo electrónico",a.correo);
   add("IP",a.ip);add("NAP",a.nap);add("HILO",a.hilo);add("HILOS LIBRES",a.hilosLibres);add("Mac ONT ACTUAL",a.mac);add("GPON SN",a.gpon);
   if(a.pot)L.push("Potencia: "+neg(a.pot)+" dBm");
   if(a.plan)L.push("Plan: "+(/^\d+$/.test(a.plan.trim())?a.plan.trim()+" Mbps":a.plan.trim()));
@@ -358,6 +358,7 @@ function reportBase(a){
   if(a.soporte)L.push("soporte, "+a.soporte);
   if(a.cliente)L.push("cliente, "+a.cliente);
   if(a.direccion)L.push("dirección, "+a.direccion);
+  if(a.coords&&a.coords.trim())L.push("coordenadas, "+a.coords.trim());
   if(a.tel)L.push("tel. "+a.tel);
   if(a.ip)L.push("ip, "+a.ip);
   if(a.extra)L.push(...a.extra.split("\n"));
@@ -490,6 +491,7 @@ function renderEditor(){
       ${inp("soporte","Soporte",{cls:"full"})}
       ${inp("cliente","Cliente",{cls:"full",attrs:'autocapitalize="characters"'})}
       ${inp("direccion","Dirección",{cls:"full"})}
+      ${coordInp()}
       ${inp("tel","Teléfono",{attrs:'inputmode="tel" class="mono"'})}${inp("ip","IP",{attrs:'inputmode="decimal" class="mono"'})}
       <div class="chips full" id="telChips"></div>
     </div></section>
@@ -549,6 +551,7 @@ function renderTV(){
     <button class="pastebtn" id="pasteBtn">Pegar del portapapeles</button>
     <div class="grid">${inp("tecnico","Técnico")}${inp("tecnico2","Segundo técnico",{attrs:'placeholder="Opcional"'})}
     ${inp("cliente","Cliente",{cls:"full"})}${inp("direccion","Dirección",{cls:"full"})}
+    ${coordInp()}
     ${inp("tel","Teléfono",{attrs:'inputmode="tel" class="mono"'})}${inp("plan","Plan",{unit:"Mbps",attrs:'inputmode="numeric" class="mono" placeholder="200"'})}
     <div class="chips full" id="telChips"></div></div></section>
 
@@ -605,6 +608,7 @@ function renderInst(){
       <div class="chips full"><span class="muted" style="align-self:center">Correo:</span>${chip("correoEstado","tiene","Tiene correo")}${chip("correoEstado","no","No tiene","no")}</div>
       ${inp("correo","Correo electrónico",{cls:"full",attrs:'type="email" inputmode="email" autocapitalize="off" autocorrect="off" spellcheck="false"'})}
       ${inp("direccion","Dirección",{cls:"full"})}
+      ${coordInp()}
       ${inp("plan","Plan",{unit:"Mbps",attrs:'inputmode="numeric" class="mono" placeholder="200"'})}${inp("ip","IP",{attrs:'inputmode="decimal" class="mono"'})}
     </div></section>
 
@@ -648,6 +652,8 @@ function telChips(){const box=$("telChips");if(!box)return;const n=telNums(cur.t
 function mapLink(){const ta=$("f-pegado");if(!ta)return;let el=$("mapLink");
   if(!el){el=document.createElement("p");el.id="mapLink";el.className="muted";el.style.margin="0";ta.closest("label").after(el)}
   el.hidden=!cur.mapa;el.innerHTML=cur.mapa?`📍 Ubicación detectada (no va en el reporte): <a href="${esc(cur.mapa)}" target="_blank" rel="noopener">Abrir en Maps</a>`:""}
+function coordInp(){return `${inp("coords","Coordenadas",{cls:"full",attrs:'class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="4°38&#39;01.04&quot;S 79°07&#39;52.85&quot;W"'})}<p class="muted full" id="coordLink" style="margin:0"></p>`}
+function coordLinkUpd(){const cl=$("coordLink");if(!cl)return;const c=coordsDec(cur.coords);cl.innerHTML=c?`📍 <a href="https://maps.google.com/?q=${c[0].toFixed(6)},${c[1].toFixed(6)}" target="_blank" rel="noopener">Abrir en Maps</a> · ${c[0].toFixed(6)}, ${c[1].toFixed(6)}`:(cur.coords?'<span style="color:var(--amber)">No reconozco el formato de las coordenadas.</span>':"")}
 function potBox(){
   const rows=[["ONU",cur.potAntes,cur.potDespues],["OLT",cur.potAntesOlt,cur.potDespuesOlt]].filter(([,x,y])=>potNum(x)!==null||potNum(y)!==null);
   if(!rows.length)return `<span class="muted" style="grid-column:1/-1">Escribe la potencia antes y después.</span>`;
@@ -713,6 +719,7 @@ function realizHTML(){return `<section class="sec nr ${cur.noRealizada?"on":""}"
     <label class="f" id="motivoBox" ${cur.noRealizada?"":"hidden"}>Motivo (sale en el reporte)<textarea id="f-motivo" data-k="motivo" placeholder="Ej. cliente no estaba en casa, reagendado para mañana">${esc(cur.motivo)}</textarea></label></section>`}
 function refresh(){
   if(!cur)return;
+  coordLinkUpd();
   {const mb=$("motivoBox");if(mb)mb.hidden=!cur.noRealizada;const ns=$("nrSec");if(ns)ns.classList.toggle("on",!!cur.noRealizada)}
   if(cur.tipo==="tv"){telChips();mapLink();const p=$("tvprog");if(p)p.textContent=`${TVSTEPS.filter(([k])=>cur.tvchk?.[k]).length}/${TVSTEPS.length}`;
     $("rep").textContent=report(cur);const nb=$("notifBox");if(nb)nb.hidden=cur.notif!=="si";
@@ -729,7 +736,6 @@ function refresh(){
   const hb=(id,v)=>{const e=$(id);if(e)e.hidden=v};hb("boxFibra",!cur.fibra);hb("boxOnu",!cur.onu);hb("boxRouter",!cur.router);
   document.querySelectorAll('[data-eq="eq"]').forEach(e=>e.hidden=!(cur.onu||cur.router));
   if(cur.tipo==="potencia"){hb("boxHilo",!cur.accHilo);const g=$("gain");if(g)g.innerHTML=potBox();
-    {const cl=$("coordLink");if(cl){const c=coordsDec(cur.coords);cl.innerHTML=c?`📍 <a href="https://maps.google.com/?q=${c[0].toFixed(6)},${c[1].toFixed(6)}" target="_blank" rel="noopener">Abrir en Maps</a> · ${c[0].toFixed(6)}, ${c[1].toFixed(6)}`:(cur.coords?'<span style="color:var(--amber)">No reconozco el formato de las coordenadas.</span>':"")}}
     for(const k of ["potAntes","potDespues","potAntesOlt","potDespuesOlt"]){const el=$("f-"+k);if(el){el.classList.remove("pin-r","pin-a","pin-g");const c=potCls(cur[k]);if(c)el.classList.add("pin-"+c)}}}
 }
 
