@@ -527,14 +527,19 @@ document.addEventListener("click",async e=>{
     const id=cur.id;cur=null;try{await remove(id)}catch{}renderList();return}
 });
 const TIPO_TXT={foco_rojo:"Foco rojo",instalacion:"Instalación alámbrica",tv:"App de TV"};
+function actividadTxt(a){
+  if(a.soporte&&a.soporte.trim())return a.soporte.trim();
+  return a.tipo==="instalacion"?"instalación nueva":a.tipo==="tv"?"colocar app de TV":"foco rojo";
+}
 function resumenDia(k){
   const list=acts.filter(a=>dayKey(a.creado)===k).sort((a,b)=>a.creado-b.creado);
-  const out=[`Actividades del ${fechaLarga(k)}`];
-  list.forEach((a,i)=>{const L=[`${i+1}. ${TIPO_TXT[a.tipo]||"Actividad"}`];
-    if(a.cliente)L.push("Cliente: "+a.cliente);
-    if(a.tel)L.push("Telef: "+a.tel);
-    if(a.ip)L.push("IP: "+a.ip);else if(a.direccion)L.push("Dirección: "+a.direccion);
-    out.push(L.join("\n"));});
+  const hoy=k===dayKey(Date.now());
+  const out=[hoy?"Se cumplieron con las siguientes actividades de hoy:":`Se cumplieron con las siguientes actividades del ${fechaLarga(k)}:`];
+  for(const a of list){const L=["✅soporte, "+actividadTxt(a)];
+    if(a.cliente)L.push("cliente, "+a.cliente);
+    if(a.tel)L.push("tel. "+a.tel);
+    if(a.ip)L.push("ip, "+a.ip);
+    out.push(L.join("\n"));}
   return out.join("\n\n");
 }
 async function copyText(txt){
