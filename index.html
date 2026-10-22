@@ -85,6 +85,13 @@ details.year>.mdays>details.month{background:rgba(0,0,0,.2)}
 .mdays{padding:0 10px 10px;display:grid;gap:10px}
 .dbody{padding:0 10px 12px;display:grid;gap:10px}
 .dtools{display:flex;justify-content:flex-end}
+/* no realizada y pendientes viejas */
+.chip.bad[aria-pressed="true"]{background:rgba(255,46,122,.22);border-color:var(--pink);color:#fff;box-shadow:0 0 12px rgba(255,46,122,.5)}
+.sec.nr.on{border-color:rgba(255,46,122,.6);box-shadow:0 0 14px rgba(255,46,122,.25)}
+.pend{border-radius:20px;padding:14px;display:grid;gap:10px;background:rgba(251,191,36,.08);border:1.5px solid rgba(251,191,36,.6);box-shadow:0 0 16px rgba(251,191,36,.2)}
+.pend-h{font:700 15px var(--display);color:#fde68a}
+.pend-row{display:grid;gap:8px}
+.pasar{justify-self:end;display:inline-flex;align-items:center;gap:6px;border-radius:99px;padding:8px 14px;font-weight:700;font-size:14px;color:#1a1205;border:0;background:var(--amber);box-shadow:0 0 14px rgba(251,191,36,.55)}
 /* tarjetas */
 .item{--c:var(--purple);display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;text-align:left;width:100%;padding:12px;border-radius:18px;
   background:var(--card);border:1px solid color-mix(in srgb,var(--c) 42%,transparent);box-shadow:0 0 12px color-mix(in srgb,var(--c) 16%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
@@ -94,7 +101,7 @@ details.year>.mdays>details.month{background:rgba(0,0,0,.2)}
 .item small{color:#ddd5f2;font:400 12.5px var(--mono)}
 .st{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:5px 10px;border-radius:99px;background:rgba(255,255,255,.06);white-space:nowrap}
 .st::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--d);box-shadow:0 0 8px var(--d)}
-.st.ok{--d:var(--green);color:#bff7d8}.st.wait{--d:var(--amber);color:#fde7a8}
+.st.ok{--d:var(--green);color:#bff7d8}.st.no{--d:var(--pink);color:#ffc2d6}.st.wait{--d:var(--amber);color:#fde7a8}
 .empty{background:var(--card);border:1px dashed rgba(168,85,247,.45);border-radius:18px;padding:24px 16px;color:var(--muted);text-align:center}
 .muted{color:var(--muted);font-size:14px}
 /* barra flotante (pestañas o copiar) */
@@ -277,7 +284,13 @@ function reportInst(a){
   {const n=notifLines(a);if(n.length)L.push("Notificación al cliente:",...n.map(x=>"* "+x))}
   return L.join("\n");
 }
+function pendTxt(a){return "⏳Pendiente, reagendar"+(a.motivo&&a.motivo.trim()?"\nMotivo: "+a.motivo.trim():"")}
 function report(a){
+  let t=reportBase(a);
+  if(a.noRealizada){t=t.split("\n").filter(l=>!/^✅\s*se cumplió con la actividad|Cliente comprueba y todo Ok|Realización de los distintos test|Se realizan pruebas de potencia|^\* Cliente comprueba/i.test(l)).join("\n").replace(/\s+$/,"");t+="\n\n"+pendTxt(a)}
+  return t;
+}
+function reportBase(a){
   if(a.tipo==="instalacion")return reportInst(a);
   if(a.tipo==="tv")return reportTV(a);
   const L=[];const tec=[a.tecnico,a.tecnico2].filter(Boolean).join(" y ");
@@ -328,7 +341,7 @@ const isOpen=(key,byDefault,force)=>force||openSet.has(key)||(!openSet.has("x"+k
 function cardHTML(a){const t=TIPOS[a.tipo]?a.tipo:"foco_rojo";
   return `<button class="item t-${t}" data-open="${a.id}"><span class="ic">${ICON[t]}</span>
     <span style="min-width:0"><b>${esc(a.cliente||"Sin cliente")}</b><small>${hhmm(a.creado)}${a.ip?" · "+esc(a.ip):""}${a.nap?" · NAP "+esc(a.nap):""}${!a.ip&&!a.nap&&a.tvMarca?" · TV "+esc(a.tvMarca):""}</small></span>
-    <span class="st ${a.estado==="terminada"?"ok":"wait"}">${a.estado==="terminada"?"Lista":"Pendiente"}</span></button>`}
+    <span class="st ${a.noRealizada?"no":a.estado==="terminada"?"ok":"wait"}">${a.noRealizada?"No realizada":a.estado==="terminada"?"Lista":"Pendiente"}</span></button>`}
 function dayBlock(k,items,title){return `<section class="day"><div class="day-top"><h2>${title||fDay(k)}</h2><button class="copyday" data-copyday="${k}">${ICON.copy}Copiar resumen</button></div>${items.map(cardHTML).join("")}</section>`}
 function dayDetails(k,it,forceOpen,pfx=""){const hoyK=dayKey(Date.now());const pend=it.filter(a=>a.estado!=="terminada").length;
   const key=pfx+"d"+k,dOpen=isOpen(key,k===hoyK,forceOpen);
@@ -367,6 +380,9 @@ function renderList(){
     h=`<div class="top"><div class="hello"><small>${esc(fecha)}</small><h1>Actividades</h1></div></div>
     <div class="stats"><div class="stat"><b>${hoy.length}</b><span>Hoy</span></div><div class="stat g"><b>${ok}</b><span>${ok===1?"Terminada":"Terminadas"}</span></div><div class="stat a"><b>${hoy.length-ok}</b><span>${hoy.length-ok===1?"Pendiente":"Pendientes"}</span></div></div>
     <div class="tiles"><button class="tile red" data-new="foco_rojo"><i>${ICON.foco_rojo}</i>Foco rojo</button><button class="tile" data-new="instalacion"><i>${ICON.instalacion}</i>Instalación alámbrica</button><button class="tile tv" data-new="tv"><i>${ICON.tv}</i>App de TV</button></div>`;
+    const viejas=acts.filter(a=>dayKey(a.creado)<hoyK&&a.estado!=="terminada").sort((a,b)=>a.creado-b.creado);
+    if(viejas.length)h+=`<section class="pend"><div class="pend-h">⏳ Tienes ${viejas.length} ${viejas.length===1?"pendiente":"pendientes"} de días anteriores</div>
+      ${viejas.map(a=>`<div class="pend-row">${cardHTML(a).replace('<small>',`<small>${esc(new Date(dayKey(a.creado)+"T12:00").toLocaleDateString("es-EC",{day:"numeric",month:"short"}).replace(".",""))} · `)}<button class="pasar" data-pasar="${a.id}">Pasar a hoy</button></div>`).join("")}</section>`;
     if(!hoy.length)h+=`<div class="empty">Aún no tienes actividades hoy.<br>Toca una opción de arriba y pega el mensaje que te llega.</div>`;
     h+=treeHTML(acts,false,"i");
   }else if(tab==="historial"){
@@ -402,6 +418,7 @@ function renderEditor(){
   $("app").innerHTML=`
   <div class="top"><button class="back" data-back>${ICON.back}Actividades</button><span class="saved" id="saved"></span></div>
   <div class="top"><h1>Foco rojo</h1><div class="chips">${chip("estado","pendiente","Pendiente","no")}${chip("estado","terminada","Terminada")}</div></div>
+  ${realizHTML()}
 
   <section class="sec"><div class="sec-h"><h2>Datos de la actividad</h2><span class="step">01</span></div>
     <label class="f">Pega aquí el mensaje que te llega<textarea id="f-pegado" data-k="pegado" placeholder="Tecnico, Byron&#10;soporte, sin internet, foco rojo&#10;cliente, …&#10;dirección, …&#10;tel. …&#10;ip, …">${esc(cur.pegado)}</textarea></label>
@@ -464,6 +481,7 @@ function renderTV(){
   $("app").innerHTML=`
   <div class="top"><button class="back" data-back>${ICON.back}Actividades</button><span class="saved" id="saved"></span></div>
   <div class="top"><h1>App de TV</h1><div class="chips">${chip("estado","pendiente","Pendiente","no")}${chip("estado","terminada","Terminada")}</div></div>
+  ${realizHTML()}
   <section class="sec"><div class="sec-h"><h2>Datos de la actividad</h2></div>
     <label class="f">Pega aquí el mensaje que te llega<textarea id="f-pegado" data-k="pegado" placeholder="soporte, colocar app de TV&#10;cliente, …&#10;tel. …&#10;dirección, …">${esc(cur.pegado)}</textarea></label>
     <button class="pastebtn" id="pasteBtn">Pegar del portapapeles</button>
@@ -507,6 +525,7 @@ function renderInst(){
   $("app").innerHTML=`
   <div class="top"><button class="back" data-back>${ICON.back}Actividades</button><span class="saved" id="saved"></span></div>
   <div class="top"><h1>Instalación alámbrica</h1><div class="chips">${chip("estado","pendiente","Pendiente","no")}${chip("estado","terminada","Terminada")}</div></div>
+  ${realizHTML()}
 
   <section class="sec"><div class="sec-h"><h2>Datos de la oficina</h2><span class="step">01</span></div>
     <label class="f">Pega aquí el mensaje de la secretaria<textarea id="f-pegado" data-k="pegado" placeholder="Tecnico: …&#10;Instalación&#10;Cliente: …&#10;Dirección: …&#10;IP: …&#10;Telef.: …">${esc(cur.pegado)}</textarea></label>
@@ -567,8 +586,12 @@ function telChips(){const box=$("telChips");if(!box)return;const n=telNums(cur.t
 function mapLink(){const ta=$("f-pegado");if(!ta)return;let el=$("mapLink");
   if(!el){el=document.createElement("p");el.id="mapLink";el.className="muted";el.style.margin="0";ta.closest("label").after(el)}
   el.hidden=!cur.mapa;el.innerHTML=cur.mapa?`📍 Ubicación detectada (no va en el reporte): <a href="${esc(cur.mapa)}" target="_blank" rel="noopener">Abrir en Maps</a>`:""}
+function realizHTML(){return `<section class="sec nr ${cur.noRealizada?"on":""}" id="nrSec"><div class="sec-h"><h2>¿Se realizó?</h2></div>
+    <div class="chips"><button class="chip" data-real="si" aria-pressed="${!cur.noRealizada}">Se realizó</button><button class="chip bad" data-real="no" aria-pressed="${!!cur.noRealizada}">No se realizó</button></div>
+    <label class="f" id="motivoBox" ${cur.noRealizada?"":"hidden"}>Motivo (sale en el reporte)<textarea id="f-motivo" data-k="motivo" placeholder="Ej. cliente no estaba en casa, reagendado para mañana">${esc(cur.motivo)}</textarea></label></section>`}
 function refresh(){
   if(!cur)return;
+  {const mb=$("motivoBox");if(mb)mb.hidden=!cur.noRealizada;const ns=$("nrSec");if(ns)ns.classList.toggle("on",!!cur.noRealizada)}
   if(cur.tipo==="tv"){telChips();mapLink();const p=$("tvprog");if(p)p.textContent=`${TVSTEPS.filter(([k])=>cur.tvchk?.[k]).length}/${TVSTEPS.length}`;
     $("rep").textContent=report(cur);const nb=$("notifBox");if(nb)nb.hidden=cur.notif!=="si";
     $("miss").textContent=NOAPK[cur.tvSO]&&!cur.tvBox?"Recomendar TV Box o Fire TV Stick":cur.tvApp?"✓ Listo para copiar":"Elige la app";{const ok=!!cur.tvApp||(NOAPK[cur.tvSO]&&!cur.tvBox);$("miss").classList.toggle("ok",ok);$("copy").classList.toggle("ready",ok)}return}telChips();mapLink();
@@ -629,6 +652,13 @@ document.addEventListener("click",async e=>{
   if(b.dataset.marca){const m=b.dataset.marca;cur.tvMarca=cur.tvMarca===m?"":m;const so=(MARCAS.find(x=>x[0]===m)||[])[1];if(cur.tvMarca&&so)cur.tvSO=so;renderTV();queueSave();return}
   if(b.dataset.tvapp!==undefined){cur.tvApp=cur.tvApp===b.dataset.tvapp?"":b.dataset.tvapp;document.querySelectorAll("[data-tvapp]").forEach(x=>x.setAttribute("aria-pressed",String(x.dataset.tvapp===cur.tvApp)));refresh();queueSave();return}
   if(b.id==="addApp"){const v=$("newApp").value.trim();if(!v)return;cur.tvApp=v;renderTV();queueSave();return}
+  if(b.dataset.real){cur.noRealizada=b.dataset.real==="no";if(cur.noRealizada)cur.estado="pendiente";
+    document.querySelectorAll("[data-real]").forEach(x=>x.setAttribute("aria-pressed",String((x.dataset.real==="no")===cur.noRealizada)));
+    document.querySelectorAll('[data-chip="estado"]').forEach(x=>x.setAttribute("aria-pressed",String(x.dataset.v===cur.estado)));
+    refresh();queueSave();if(cur.noRealizada){const m=$("f-motivo");m&&m.focus()}return}
+  if(b.dataset.pasar){const a=acts.find(x=>x.id===b.dataset.pasar);if(!a)return;
+    a.reagendadoDe=a.reagendadoDe||dayKey(a.creado);a.creado=Date.now();a.noRealizada=false;a.estado="pendiente";if(a.tipo==="instalacion")a.fecha=dayKey(a.creado);a.actualizado=Date.now();
+    try{saveLocal()}catch{}renderList();return}
   if(b.dataset.tog){const k=b.dataset.tog;cur[k]=!cur[k];b.setAttribute("aria-pressed",String(cur[k]));refresh();queueSave();return}
   if(b.dataset.chip){const k=b.dataset.chip,v=b.dataset.v;cur[k]=(cur[k]===v&&k!=="estado")?"":v;
     if(/^(tvSO|tvBox)$/.test(k)){renderTV();queueSave();return}
@@ -646,11 +676,13 @@ function resumenDia(k){
   const list=acts.filter(a=>dayKey(a.creado)===k).sort((a,b)=>a.creado-b.creado);
   const hoy=k===dayKey(Date.now());
   const out=[hoy?"Se cumplieron con las siguientes actividades de hoy:":`Se cumplieron con las siguientes actividades del ${fechaLarga(k)}:`];
-  for(const a of list){const L=["✅soporte, "+actividadTxt(a)];
+  const blk=(a,first)=>{const L=[first+"soporte, "+actividadTxt(a)];
     if(a.cliente)L.push("cliente, "+a.cliente);
     if(a.tel)L.push("tel. "+a.tel);
-    if(a.ip)L.push("ip, "+a.ip);
-    out.push(L.join("\n"));}
+    if(a.ip)L.push("ip, "+a.ip);return L};
+  for(const a of list.filter(a=>!a.noRealizada))out.push(blk(a,"✅").join("\n"));
+  for(const a of list.filter(a=>a.noRealizada)){const L=blk(a,"");L.unshift("⏳Pendiente, reagendar");if(a.motivo&&a.motivo.trim())L.push("Motivo: "+a.motivo.trim());out.push(L.join("\n"))}
+  if(out.length===1)return out[0];
   return out.join("\n\n");
 }
 async function copyText(txt){
@@ -665,7 +697,7 @@ $("copy").onclick=async()=>{
   catch{const c=$("clip");c.value=txt;c.select();c.setSelectionRange(0,txt.length);
     try{document.execCommand("copy");btn.textContent="Copiado ✓"}catch{btn.textContent="Mantén presionado el reporte para copiar"}}
   setTimeout(()=>btn.textContent="Copiar reporte",2200);
-  if(cur.estado!=="terminada"&&cur.cumplida){cur.estado="terminada";document.querySelectorAll('[data-chip="estado"]').forEach(x=>x.setAttribute("aria-pressed",String(x.dataset.v==="terminada")));queueSave()}
+  if(cur.estado!=="terminada"&&cur.cumplida&&!cur.noRealizada){cur.estado="terminada";document.querySelectorAll('[data-chip="estado"]').forEach(x=>x.setAttribute("aria-pressed",String(x.dataset.v==="terminada")));queueSave()}
 };
 
 /* --- respaldo --- */
