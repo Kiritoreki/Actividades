@@ -78,6 +78,9 @@ details.month>summary .l{font:700 18px var(--display);letter-spacing:-.01em}
 .cnt{font-size:12.5px;font-weight:600;color:var(--muted);white-space:nowrap}
 .cnt em{font-style:normal;color:var(--amber)}
 details.dayd .l .cnt{display:block;margin-top:2px}
+details.year{border-color:rgba(232,121,249,.45);box-shadow:0 0 14px rgba(232,121,249,.12)}
+details.year>summary .l{font:700 22px var(--display)}
+details.year>.mdays>details.month{background:rgba(0,0,0,.2)}
 .today{font:700 11px var(--sans);letter-spacing:.06em;text-transform:uppercase;color:#04140a;background:var(--green);border-radius:99px;padding:2px 8px;margin-left:6px;vertical-align:2px;box-shadow:0 0 8px rgba(46,232,138,.5)}
 .mdays{padding:0 10px 10px;display:grid;gap:10px}
 .dbody{padding:0 10px 12px;display:grid;gap:10px}
@@ -319,17 +322,38 @@ const ICON={
  back:'<svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg>'};
 let tab="inicio";const openSet=new Set();
 const fMes=m=>{const t=new Date(m+"-15T12:00").toLocaleDateString("es-EC",{month:"long",year:"numeric"});return t[0].toUpperCase()+t.slice(1)};
-document.addEventListener("toggle",e=>{const k=e.target.dataset?.k;if(!k)return;const id=k.slice(1);
-  if(e.target.open){openSet.add(k);openSet.delete("x"+id)}else{openSet.delete(k);openSet.add("x"+id)}},true);
+document.addEventListener("toggle",e=>{const k=e.target.dataset?.k;if(!k)return;
+  if(e.target.open){openSet.add(k);openSet.delete("x"+k)}else{openSet.delete(k);openSet.add("x"+k)}},true);
+const isOpen=(key,byDefault,force)=>force||openSet.has(key)||(!openSet.has("x"+key)&&byDefault);
 function cardHTML(a){const t=TIPOS[a.tipo]?a.tipo:"foco_rojo";
   return `<button class="item t-${t}" data-open="${a.id}"><span class="ic">${ICON[t]}</span>
     <span style="min-width:0"><b>${esc(a.cliente||"Sin cliente")}</b><small>${hhmm(a.creado)}${a.ip?" · "+esc(a.ip):""}${a.nap?" · NAP "+esc(a.nap):""}${!a.ip&&!a.nap&&a.tvMarca?" · TV "+esc(a.tvMarca):""}</small></span>
     <span class="st ${a.estado==="terminada"?"ok":"wait"}">${a.estado==="terminada"?"Lista":"Pendiente"}</span></button>`}
 function dayBlock(k,items,title){return `<section class="day"><div class="day-top"><h2>${title||fDay(k)}</h2><button class="copyday" data-copyday="${k}">${ICON.copy}Copiar resumen</button></div>${items.map(cardHTML).join("")}</section>`}
-function dayDetails(k,it,forceOpen){const hoyK=dayKey(Date.now());const pend=it.filter(a=>a.estado!=="terminada").length;
-  const dOpen=forceOpen||openSet.has("d"+k)||(!openSet.has("x"+k)&&k===hoyK);
-  return `<details class="dayd" data-k="d${k}" ${dOpen?"open":""}><summary><span class="l">${esc(fDay(k).replace(/ de \d{4}$/,""))}${k===hoyK?' <span class="today">Hoy</span>':""}<span class="cnt">${it.length} ${it.length===1?"actividad":"actividades"}${pend?` · <em>${pend} ${pend===1?"pendiente":"pendientes"}</em>`:""}</span></span></summary>
+function dayDetails(k,it,forceOpen,pfx=""){const hoyK=dayKey(Date.now());const pend=it.filter(a=>a.estado!=="terminada").length;
+  const key=pfx+"d"+k,dOpen=isOpen(key,k===hoyK,forceOpen);
+  return `<details class="dayd" data-k="${key}" ${dOpen?"open":""}><summary><span class="l">${esc(fDay(k).replace(/ de \d{4}$/,""))}${k===hoyK?' <span class="today">Hoy</span>':""}<span class="cnt">${it.length} ${it.length===1?"actividad":"actividades"}${pend?` · <em>${pend} ${pend===1?"pendiente":"pendientes"}</em>`:""}</span></span></summary>
     <div class="dbody"><div class="dtools"><button class="copyday" data-copyday="${k}">${ICON.copy}Copiar resumen</button></div>${it.map(cardHTML).join("")}</div></details>`}
+function treeHTML(list,force,pfx){
+  const hoyK=dayKey(Date.now());const g={};
+  for(const a of [...list].sort((a,b)=>b.creado-a.creado))(g[dayKey(a.creado)]??=[]).push(a);
+  const years={};for(const k of Object.keys(g))((years[k.slice(0,4)]??={})[k.slice(0,7)]??=[]).push(k);
+  const cnt=n=>`<span class="cnt">${n} ${n===1?"actividad":"actividades"}</span>`;
+  let h="";
+  for(const y of Object.keys(years).sort().reverse()){
+    const ms=years[y];const ny=Object.values(ms).flat().reduce((t,k)=>t+g[k].length,0);
+    const yk=pfx+"y"+y;
+    h+=`<details class="month year" data-k="${yk}" ${isOpen(yk,y===hoyK.slice(0,4),force)?"open":""}><summary><span class="l">${y}</span>${cnt(ny)}</summary><div class="mdays">`;
+    for(const m of Object.keys(ms).sort().reverse()){
+      const days=ms[m];const nm=days.reduce((t,k)=>t+g[k].length,0);const mk=pfx+"m"+m;
+      h+=`<details class="month" data-k="${mk}" ${isOpen(mk,m===hoyK.slice(0,7),force)?"open":""}><summary><span class="l">${esc(fMes(m).replace(/ de \d{4}$/,""))}</span>${cnt(nm)}</summary><div class="mdays">`;
+      for(const k of days)h+=dayDetails(k,g[k],force,pfx);
+      h+=`</div></details>`;
+    }
+    h+=`</div></details>`;
+  }
+  return h;
+}
 function renderDock(){const d=$("dock");d.hidden=!!cur;if(cur)return;
   d.innerHTML=[["inicio","Inicio","home"],["historial","Historial","cal"],["respaldo","Respaldo","save"]].map(([k,l,i])=>`<button data-tab="${k}" ${tab===k?'aria-current="page"':""}>${ICON[i]}${l}</button>`).join("")}
 function renderList(){
@@ -343,24 +367,16 @@ function renderList(){
     h=`<div class="top"><div class="hello"><small>${esc(fecha)}</small><h1>Actividades</h1></div></div>
     <div class="stats"><div class="stat"><b>${hoy.length}</b><span>Hoy</span></div><div class="stat g"><b>${ok}</b><span>${ok===1?"Terminada":"Terminadas"}</span></div><div class="stat a"><b>${hoy.length-ok}</b><span>${hoy.length-ok===1?"Pendiente":"Pendientes"}</span></div></div>
     <div class="tiles"><button class="tile red" data-new="foco_rojo"><i>${ICON.foco_rojo}</i>Foco rojo</button><button class="tile" data-new="instalacion"><i>${ICON.instalacion}</i>Instalación alámbrica</button><button class="tile tv" data-new="tv"><i>${ICON.tv}</i>App de TV</button></div>`;
-    h+=hoy.length?dayDetails(hoyK,hoy,false):`<div class="empty">Aún no tienes actividades hoy.<br>Toca una opción de arriba y pega el mensaje que te llega.</div>`;
+    if(!hoy.length)h+=`<div class="empty">Aún no tienes actividades hoy.<br>Toca una opción de arriba y pega el mensaje que te llega.</div>`;
+    h+=treeHTML(acts,false,"i");
   }else if(tab==="historial"){
     const f=q.trim().toLowerCase();
     const list=acts.filter(a=>!f||[a.cliente,a.ip,a.nap,a.tel,a.direccion,a.onuNueva,a.onuAnt,a.routerNueva,a.cedula,a.mac,a.gpon].join(" ").toLowerCase().includes(f)).sort((a,b)=>b.creado-a.creado);
-    const g={};for(const a of list)(g[dayKey(a.creado)]??=[]).push(a);
     h=`<div class="top"><div class="hello"><small>${acts.length} ${acts.length===1?"actividad":"actividades"} en total</small><h1>Historial</h1></div></div>
     <label class="searchbox">${ICON.search}<input class="search" id="q" type="search" placeholder="Cliente, cédula, IP, NAP o MAC" value="${esc(q)}"></label>`;
     if(!acts.length)h+=`<div class="empty">Aún no tienes actividades guardadas.</div>`;
     else if(!list.length)h+=`<div class="empty">Nada coincide con “${esc(q)}”.</div>`;
-    const months={};for(const k of Object.keys(g))(months[k.slice(0,7)]??=[]).push(k);
-    const hoyM=hoyK.slice(0,7);
-    for(const m of Object.keys(months)){
-      const days=months[m];const n=days.reduce((t,k)=>t+g[k].length,0);
-      const mOpen=f||openSet.has("m"+m)||(!openSet.has("x"+m)&&m===hoyM);
-      h+=`<details class="month" data-k="m${m}" ${mOpen?"open":""}><summary><span class="l">${esc(fMes(m))}</span><span class="cnt">${n} ${n===1?"actividad":"actividades"}</span></summary><div class="mdays">`;
-      for(const k of days)h+=dayDetails(k,g[k],!!f);
-      h+=`</div></details>`;
-    }
+    h+=treeHTML(list,!!f,"h");
   }else{
     h=`<div class="top"><div class="hello"><small>${acts.length} ${acts.length===1?"actividad":"actividades"} guardadas</small><h1>Respaldo</h1></div></div>
     <section class="sec"><div class="sec-h"><h2>Copia de seguridad</h2></div>
