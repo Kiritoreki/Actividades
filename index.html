@@ -336,10 +336,10 @@ function reportPot(a){
   if(!a.accFusion&&!a.accHilo&&(a.nap||a.hilo))S.push("⚪️NAP"+nh);
   const f2=v=>potNum(v)===null?null:potNum(v).toFixed(2);
   const par=(o,l)=>{const x=f2(o),y=f2(l);return x&&y?`ONU ${x} / OLT ${y} dBm`:x?`ONU ${x} dBm`:y?`OLT ${y} dBm`:""};
-  {const t=par(a.potAntes,a.potAntesOlt);if(t)S.push("⚪️potencia antes: "+t)}
+  if(a.antesOffline)S.push("⚪️potencia antes: sin señal (ONU offline)");else{const t=par(a.potAntes,a.potAntesOlt);if(t)S.push("⚪️potencia antes: "+t)}
   {const t=par(a.potDespues,a.potDespuesOlt);if(t)S.push("⚪️potencia después: "+t)}
   {const g=(x,y)=>{const p=potNum(x),q=potNum(y);return p!==null&&q!==null?`${q-p>=0?"+":""}${(q-p).toFixed(2)} dB`:null};
-   const go=g(a.potAntes,a.potDespues),gl=g(a.potAntesOlt,a.potDespuesOlt);
+   const go=a.antesOffline?null:g(a.potAntes,a.potDespues),gl=a.antesOffline?null:g(a.potAntesOlt,a.potDespuesOlt);
    if(go||gl)S.push("⚪️mejoró: "+[go&&"ONU "+go,gl&&"OLT "+gl].filter(Boolean).join(" / "))}
   if(a.tests)S.push("⚪️Realización de los distintos test");
   if(a.clienteOk)S.push("⚪️Cliente comprueba y todo Ok");
@@ -655,12 +655,13 @@ function mapLink(){const ta=$("f-pegado");if(!ta)return;let el=$("mapLink");
 function coordInp(){return `${inp("coords","Coordenadas",{cls:"full",attrs:'class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="4°38&#39;01.04&quot;S 79°07&#39;52.85&quot;W"'})}<p class="muted full" id="coordLink" style="margin:0"></p>`}
 function coordLinkUpd(){const cl=$("coordLink");if(!cl)return;const c=coordsDec(cur.coords);cl.innerHTML=c?`📍 <a href="https://maps.google.com/?q=${c[0].toFixed(6)},${c[1].toFixed(6)}" target="_blank" rel="noopener">Abrir en Maps</a> · ${c[0].toFixed(6)}, ${c[1].toFixed(6)}`:(cur.coords?'<span style="color:var(--amber)">No reconozco el formato de las coordenadas.</span>':"")}
 function potBox(){
-  const rows=[["ONU",cur.potAntes,cur.potDespues],["OLT",cur.potAntesOlt,cur.potDespuesOlt]].filter(([,x,y])=>potNum(x)!==null||potNum(y)!==null);
+  const off=!!cur.antesOffline;
+  const rows=[["ONU",off?"":cur.potAntes,cur.potDespues],["OLT",off?"":cur.potAntesOlt,cur.potDespuesOlt]].filter(([,x,y])=>off||potNum(x)!==null||potNum(y)!==null);
   if(!rows.length)return `<span class="muted" style="grid-column:1/-1">Escribe la potencia antes y después.</span>`;
-  const pill=v=>potNum(v)===null?'<span class="muted">—</span>':`<span class="pv ${potCls(v)}">${potNum(v).toFixed(2)}</span>`;
+  const pill=(v,isA)=>isA&&off?'<span class="pv r">Offline</span>':potNum(v)===null?'<span class="muted">—</span>':`<span class="pv ${potCls(v)}">${potNum(v).toFixed(2)}</span>`;
   let h='<span></span><b>Antes</b><b>Después</b><b>Mejoró</b>';
   for(const [l,x,y] of rows){const a=potNum(x),d=potNum(y);const g=a!==null&&d!==null?d-a:null;
-    h+=`<span>${l}</span>${pill(x)}${pill(y)}${g===null?'<span class="muted">—</span>':`<b class="delta ${g>=0?"up":"down"}">${g>=0?"+":""}${g.toFixed(2)} dB</b>`}`}
+    h+=`<span>${l}</span>${pill(x,true)}${pill(y)}${g===null?'<span class="muted">—</span>':`<b class="delta ${g>=0?"up":"down"}">${g>=0?"+":""}${g.toFixed(2)} dB</b>`}`}
   return h}
 const DMS=/(\d{1,3})\s*°\s*(\d{1,2})\s*['’′]\s*(\d{1,2}(?:[.,]\d+)?)\s*(?:"|”|″|'')?\s*([NS])[\s,;]+(\d{1,3})\s*°\s*(\d{1,2})\s*['’′]\s*(\d{1,2}(?:[.,]\d+)?)\s*(?:"|”|″|'')?\s*([EWO])/i;
 function coordsDec(t){t=String(t||"");const m=t.match(DMS);
@@ -698,7 +699,7 @@ function renderPot(){
   </section>
   <section class="sec"><div class="sec-h"><h2>Potencia</h2><span class="step">03</span></div>
     <p class="muted" style="margin:0">Pega la línea “Señal Rx ONU/OLT” tal cual (ej. -19.74 dBm / -26.2 dBm) o escribe los dos valores.</p>
-    <div class="box"><h3>Antes</h3><div class="grid">${inp("potAntes","ONU Rx",{unit:"dBm",attrs:'inputmode="decimal" class="mono" placeholder="-33.02"'})}${inp("potAntesOlt","OLT Rx",{unit:"dBm",attrs:'inputmode="decimal" class="mono" placeholder="-32.22"'})}</div></div>
+    <div class="box"><div class="sec-h"><h3>Antes</h3><button class="chip bad" data-tog="antesOffline" aria-pressed="${!!cur.antesOffline}">Sin señal / Offline</button></div><div class="grid" id="antesGrid" ${cur.antesOffline?"hidden":""}>${inp("potAntes","ONU Rx",{unit:"dBm",attrs:'inputmode="decimal" class="mono" placeholder="-33.02"'})}${inp("potAntesOlt","OLT Rx",{unit:"dBm",attrs:'inputmode="decimal" class="mono" placeholder="-32.22"'})}</div></div>
     <div class="box"><h3>Después</h3><div class="grid">${inp("potDespues","ONU Rx",{unit:"dBm",attrs:'inputmode="decimal" class="mono" placeholder="-17.69"'})}${inp("potDespuesOlt","OLT Rx",{unit:"dBm",attrs:'inputmode="decimal" class="mono" placeholder="-23.77"'})}</div></div>
     <div class="gtab" id="gain"></div>
     <div class="legend"><span><i class="g"></i>mejor que -25</span><span><i class="a"></i>-25 a -27</span><span><i class="r"></i>peor que -27</span></div>
@@ -735,7 +736,7 @@ function refresh(){
   {const ok=!r&&!m.length;$("miss").classList.toggle("ok",ok);$("copy").classList.toggle("ready",ok)}
   const hb=(id,v)=>{const e=$(id);if(e)e.hidden=v};hb("boxFibra",!cur.fibra);hb("boxOnu",!cur.onu);hb("boxRouter",!cur.router);
   document.querySelectorAll('[data-eq="eq"]').forEach(e=>e.hidden=!(cur.onu||cur.router));
-  if(cur.tipo==="potencia"){hb("boxHilo",!cur.accHilo);const g=$("gain");if(g)g.innerHTML=potBox();
+  if(cur.tipo==="potencia"){hb("boxHilo",!cur.accHilo);hb("antesGrid",!!cur.antesOffline);const g=$("gain");if(g)g.innerHTML=potBox();
     for(const k of ["potAntes","potDespues","potAntesOlt","potDespuesOlt"]){const el=$("f-"+k);if(el){el.classList.remove("pin-r","pin-a","pin-g");const c=potCls(cur[k]);if(c)el.classList.add("pin-"+c)}}}
 }
 
