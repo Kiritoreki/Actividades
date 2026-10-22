@@ -107,6 +107,7 @@ input.pin-a{border-color:var(--amber)!important;box-shadow:0 0 10px rgba(251,191
 input.pin-g{border-color:var(--green)!important;box-shadow:0 0 10px rgba(46,232,138,.35)}
 .gain{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-height:28px}.gain .arrow{color:var(--muted)}
 .delta{margin-left:auto;font:700 18px var(--display)}.delta.up{color:var(--green);text-shadow:0 0 12px rgba(46,232,138,.6)}.delta.down{color:var(--pink)}
+.gtab{display:grid;grid-template-columns:auto 1fr 1fr auto;gap:8px 10px;align-items:center;font-size:13px}.gtab>b{color:var(--muted);font-weight:600}.gtab .delta{margin:0;font-size:15px}
 .legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--muted)}.legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px}
 .legend .g{background:var(--green)}.legend .a{background:var(--amber)}.legend .r{background:var(--pink)}
 .item .ic{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;color:var(--c);background:color-mix(in srgb,var(--c) 18%,transparent);border:1px solid color-mix(in srgb,var(--c) 45%,transparent)}
@@ -213,7 +214,7 @@ const EVID_I=[
  ["speed","Speed test"],
  ["stRoseta","Sticker en la roseta"],["stRouter","Sticker en el router"],["stBridge","Sticker en el bridge"]];
 const TIPOS={foco_rojo:["Foco rojo","b-red"],instalacion:["Inst. alámbrica","b-inst"],tv:["App de TV","b-tv"],potencia:["Mejorar potencia","b-pot"]};
-const EVID_P=[["potA","Potencia antes (power meter)"],["potD","Potencia después"],["napOrd","Caja NAP ordenada"],["equipo","Equipo nuevo: caja con S/N y MAC","eq"],
+const EVID_P=[["potA","Captura potencia antes (ONU/OLT)"],["potD","Captura potencia después (ONU/OLT)"],["napOrd","Caja NAP ordenada"],["equipo","Equipo nuevo: caja con S/N y MAC","eq"],
  ["stRoseta","Sticker en la roseta"],["stRouter","Sticker en el router"],["stBridge","Sticker en el bridge"]];
 const evidFor=a=>a.tipo==="instalacion"?EVID_I:a.tipo==="potencia"?EVID_P:EVID;
 const potNum=v=>{const n=parseFloat(String(v||"").replace(",","."));return isNaN(n)?null:(n>0?-n:n)};
@@ -268,7 +269,7 @@ function blank(tipo="foco_rojo"){const inst=tipo==="instalacion";return{tipo,cre
 
 /* --- leer el mensaje que llega --- */
 function parse(txt){
-  const out={tecnico:"",soporte:"",cliente:"",direccion:"",tel:"",ip:"",cedula:"",correo:"",plan:"",nap:"",hilo:"",potAntes:"",extra:[]};
+  const out={tecnico:"",soporte:"",cliente:"",direccion:"",tel:"",ip:"",cedula:"",correo:"",plan:"",nap:"",hilo:"",potAntes:"",coords:"",extra:[]};
   const MAPRE=/(https?:\/\/)?(maps\.app\.goo\.gl|goo\.gl\/maps|(www\.)?google\.[a-z.]+\/maps|maps\.google\.[a-z.]+|g\.co\/kgs)\S*/gi;
   out.mapa="";
   for(const raw of txt.split(/\r?\n/)){let l=raw.trim();if(!l)continue;
@@ -276,6 +277,7 @@ function parse(txt){
       if(!l||/^(ubicaci[oó]n|ubicaci[oó]n del cliente|maps?|google maps|link|enlace|direcci[oó]n en maps)\s*[,.:]*$/i.test(l))continue;l=l.replace(/[\s,.:\-]+$/,"");if(!l)continue}
     {const nm=l.match(/^nap\s*[,.:]?\s*([A-Za-z0-9]+(?:-[A-Za-z0-9]+)*)\s*(?:[,;/]?\s*(?:h(?:ilo)?)\s*[:.#]?\s*(\d+))?\s*$/i);
       if(nm){out.nap=nm[1].toUpperCase();if(nm[2])out.hilo=nm[2];continue}
+      const cm=l.match(/^coordenadas?\s*[,.:]?\s*(.+)$/i);if(cm){out.coords=cm[1].trim();continue}
       const hm=l.match(/^hilo\s*[,.:#]?\s*(\d+)\s*$/i);if(hm){out.hilo=hm[1];continue}
       const pm=l.match(/^potencia(?:\s+actual)?\s*[,.:]?\s*(-?\s*\d+(?:[.,]\d+)?)\s*(?:dbm)?\s*$/i);
       if(pm){out.potAntes=pm[1].replace(/\s/g,"").replace(",",".");continue}}
@@ -320,6 +322,7 @@ function reportPot(a){
   L.push("soporte, "+(a.soporte||"mejorar potencia"));
   if(a.cliente)L.push("cliente, "+a.cliente);
   if(a.direccion)L.push("dirección, "+a.direccion);
+  if(a.coords&&a.coords.trim())L.push("coordenadas, "+a.coords.trim());
   if(a.tel)L.push("tel. "+a.tel);
   if(a.ip)L.push("ip, "+a.ip);
   if(a.extra)L.push(...a.extra.split("\n"));
@@ -331,9 +334,13 @@ function reportPot(a){
   if(a.fibra)S.push("⚪️cambio de drop"+(a.metros?", "+a.metros+" m":""));
   for(const t of (a.accOtra||"").split(/\r?\n/)){const x=t.replace(/^[\s⚪️•\-*]+/u,"").trim();if(x)S.push("⚪️"+x)}
   if(!a.accFusion&&!a.accHilo&&(a.nap||a.hilo))S.push("⚪️NAP"+nh);
-  const pa=potNum(a.potAntes),pd=potNum(a.potDespues);
-  if(pa!==null)S.push(`⚪️potencia antes ${pa.toFixed(2)} dBm`);
-  if(pd!==null)S.push(`⚪️potencia después ${pd.toFixed(2)} dBm`+(pa!==null&&pd>pa?` (mejoró ${(pd-pa).toFixed(2)} dB)`:""));
+  const f2=v=>potNum(v)===null?null:potNum(v).toFixed(2);
+  const par=(o,l)=>{const x=f2(o),y=f2(l);return x&&y?`ONU ${x} / OLT ${y} dBm`:x?`ONU ${x} dBm`:y?`OLT ${y} dBm`:""};
+  {const t=par(a.potAntes,a.potAntesOlt);if(t)S.push("⚪️potencia antes: "+t)}
+  {const t=par(a.potDespues,a.potDespuesOlt);if(t)S.push("⚪️potencia después: "+t)}
+  {const g=(x,y)=>{const p=potNum(x),q=potNum(y);return p!==null&&q!==null?`${q-p>=0?"+":""}${(q-p).toFixed(2)} dB`:null};
+   const go=g(a.potAntes,a.potDespues),gl=g(a.potAntesOlt,a.potDespuesOlt);
+   if(go||gl)S.push("⚪️mejoró: "+[go&&"ONU "+go,gl&&"OLT "+gl].filter(Boolean).join(" / "))}
   if(a.tests)S.push("⚪️Realización de los distintos test");
   if(a.clienteOk)S.push("⚪️Cliente comprueba y todo Ok");
   if(a.onu){S.push("⚪️Cambio de nueva bridge");if(a.onuAnt)S.push("⚪️MAC bridge anterior: "+a.onuAnt);if(a.onuNueva)S.push("⚪️MAC bridge nueva: "+a.onuNueva)}
@@ -641,12 +648,18 @@ function telChips(){const box=$("telChips");if(!box)return;const n=telNums(cur.t
 function mapLink(){const ta=$("f-pegado");if(!ta)return;let el=$("mapLink");
   if(!el){el=document.createElement("p");el.id="mapLink";el.className="muted";el.style.margin="0";ta.closest("label").after(el)}
   el.hidden=!cur.mapa;el.innerHTML=cur.mapa?`📍 Ubicación detectada (no va en el reporte): <a href="${esc(cur.mapa)}" target="_blank" rel="noopener">Abrir en Maps</a>`:""}
-function potBox(){const pa=potNum(cur.potAntes),pd=potNum(cur.potDespues);
-  if(pa===null&&pd===null)return `<span class="muted">Escribe la potencia antes y después.</span>`;
-  const pill=(v)=>`<span class="pv ${potCls(v)}">${potNum(v).toFixed(2)} · ${potLbl[potCls(v)]}</span>`;
-  let h=(pa!==null?pill(cur.potAntes):"")+(pa!==null&&pd!==null?'<span class="arrow">→</span>':"")+(pd!==null?pill(cur.potDespues):"");
-  if(pa!==null&&pd!==null){const d=pd-pa;h+=`<b class="delta ${d>=0?"up":"down"}">${d>=0?"+":""}${d.toFixed(2)} dB</b>`}
+function potBox(){
+  const rows=[["ONU",cur.potAntes,cur.potDespues],["OLT",cur.potAntesOlt,cur.potDespuesOlt]].filter(([,x,y])=>potNum(x)!==null||potNum(y)!==null);
+  if(!rows.length)return `<span class="muted" style="grid-column:1/-1">Escribe la potencia antes y después.</span>`;
+  const pill=v=>potNum(v)===null?'<span class="muted">—</span>':`<span class="pv ${potCls(v)}">${potNum(v).toFixed(2)}</span>`;
+  let h='<span></span><b>Antes</b><b>Después</b><b>Mejoró</b>';
+  for(const [l,x,y] of rows){const a=potNum(x),d=potNum(y);const g=a!==null&&d!==null?d-a:null;
+    h+=`<span>${l}</span>${pill(x)}${pill(y)}${g===null?'<span class="muted">—</span>':`<b class="delta ${g>=0?"up":"down"}">${g>=0?"+":""}${g.toFixed(2)} dB</b>`}`}
   return h}
+const DMS=/(\d{1,3})\s*°\s*(\d{1,2})\s*['’′]\s*(\d{1,2}(?:[.,]\d+)?)\s*(?:"|”|″|'')?\s*([NS])[\s,;]+(\d{1,3})\s*°\s*(\d{1,2})\s*['’′]\s*(\d{1,2}(?:[.,]\d+)?)\s*(?:"|”|″|'')?\s*([EWO])/i;
+function coordsDec(t){t=String(t||"");const m=t.match(DMS);
+  if(m){const f=(d,mi,se)=>+d+ +mi/60+ +String(se).replace(",",".")/3600;let la=f(m[1],m[2],m[3]),lo=f(m[5],m[6],m[7]);if(/s/i.test(m[4]))la=-la;if(/[wo]/i.test(m[8]))lo=-lo;return [la,lo]}
+  const d=t.match(/(-?\d{1,2}\.\d+)\s*[,;\s]\s*(-?\d{1,3}\.\d+)/);return d?[+d[1],+d[2]]:null}
 function renderPot(){
   const tog=(k,l)=>`<button class="chip" data-tog="${k}" aria-pressed="${!!cur[k]}">${l}</button>`;
   $("app").innerHTML=`
@@ -662,6 +675,8 @@ function renderPot(){
       ${inp("tel","Teléfono",{attrs:'inputmode="tel" class="mono"'})}${inp("ip","IP",{attrs:'inputmode="decimal" class="mono"'})}
       <div class="chips full" id="telChips"></div>
       ${inp("nap","NAP",{attrs:'class="mono" autocapitalize="characters" placeholder="B00-4"'})}${inp("hilo","Hilo",{attrs:'inputmode="numeric" class="mono" placeholder="1"'})}
+      ${inp("coords","Coordenadas",{cls:"full",attrs:'class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="4°38&#39;01.04&quot;S 79°07&#39;52.85&quot;W"'})}
+      <p class="muted full" id="coordLink" style="margin:0"></p>
     </div></section>
   <section class="sec"><div class="sec-h"><h2>Qué se hizo</h2><span class="step">02</span></div>
     <div class="chips">${tog("accFusion","Nueva fusión del hilo en la NAP")}${tog("accOrdenar","Ordenar la caja NAP")}${tog("accRoseta","Revisar fusión en la roseta")}
@@ -676,8 +691,10 @@ function renderPot(){
     <label class="f">Otra acción (opcional, una por línea)<textarea id="f-accOtra" data-k="accOtra" style="min-height:60px" placeholder="Ej. se reubicó la roseta">${esc(cur.accOtra)}</textarea></label>
   </section>
   <section class="sec"><div class="sec-h"><h2>Potencia</h2><span class="step">03</span></div>
-    <div class="grid">${inp("potAntes","Antes",{unit:"dBm",attrs:'inputmode="decimal" class="mono" placeholder="-33.02"'})}${inp("potDespues","Después",{unit:"dBm",attrs:'inputmode="decimal" class="mono" placeholder="-17.80"'})}</div>
-    <div class="gain" id="gain"></div>
+    <p class="muted" style="margin:0">Pega la línea “Señal Rx ONU/OLT” tal cual (ej. -19.74 dBm / -26.2 dBm) o escribe los dos valores.</p>
+    <div class="box"><h3>Antes</h3><div class="grid">${inp("potAntes","ONU Rx",{unit:"dBm",attrs:'inputmode="decimal" class="mono" placeholder="-33.02"'})}${inp("potAntesOlt","OLT Rx",{unit:"dBm",attrs:'inputmode="decimal" class="mono" placeholder="-32.22"'})}</div></div>
+    <div class="box"><h3>Después</h3><div class="grid">${inp("potDespues","ONU Rx",{unit:"dBm",attrs:'inputmode="decimal" class="mono" placeholder="-17.69"'})}${inp("potDespuesOlt","OLT Rx",{unit:"dBm",attrs:'inputmode="decimal" class="mono" placeholder="-23.77"'})}</div></div>
+    <div class="gtab" id="gain"></div>
     <div class="legend"><span><i class="g"></i>mejor que -25</span><span><i class="a"></i>-25 a -27</span><span><i class="r"></i>peor que -27</span></div>
     <p class="muted" style="margin:0">Si escribes sin el signo, se toma como negativa.</p>
     <div class="list-chk">${chk("tests","Realización de los distintos test")}${chk("clienteOk","Cliente comprueba y todo Ok")}${chk("cumplida","✅ Se cumplió con la actividad")}</div>
@@ -712,7 +729,8 @@ function refresh(){
   const hb=(id,v)=>{const e=$(id);if(e)e.hidden=v};hb("boxFibra",!cur.fibra);hb("boxOnu",!cur.onu);hb("boxRouter",!cur.router);
   document.querySelectorAll('[data-eq="eq"]').forEach(e=>e.hidden=!(cur.onu||cur.router));
   if(cur.tipo==="potencia"){hb("boxHilo",!cur.accHilo);const g=$("gain");if(g)g.innerHTML=potBox();
-    for(const k of ["potAntes","potDespues"]){const el=$("f-"+k);if(el){el.classList.remove("pin-r","pin-a","pin-g");const c=potCls(cur[k]);if(c)el.classList.add("pin-"+c)}}}
+    {const cl=$("coordLink");if(cl){const c=coordsDec(cur.coords);cl.innerHTML=c?`📍 <a href="https://maps.google.com/?q=${c[0].toFixed(6)},${c[1].toFixed(6)}" target="_blank" rel="noopener">Abrir en Maps</a> · ${c[0].toFixed(6)}, ${c[1].toFixed(6)}`:(cur.coords?'<span style="color:var(--amber)">No reconozco el formato de las coordenadas.</span>':"")}}
+    for(const k of ["potAntes","potDespues","potAntesOlt","potDespuesOlt"]){const el=$("f-"+k);if(el){el.classList.remove("pin-r","pin-a","pin-g");const c=potCls(cur[k]);if(c)el.classList.add("pin-"+c)}}}
 }
 
 /* --- guardar --- */
@@ -740,8 +758,9 @@ document.addEventListener("input",e=>{
   if(!cur)return;const t=e.target;
   if(t.dataset.k){let v=t.value;
     if(/^(onuAnt|onuNueva|routerAnt|routerNueva|nap|mac|gpon)$/.test(t.dataset.k)){const p=t.selectionStart;v=v.toUpperCase();t.value=v;t.setSelectionRange(p,p)}
+    if(/^(potAntes|potDespues)$/.test(t.dataset.k)&&v.includes("/")){const nums=v.match(/-?\d+(?:[.,]\d+)?/g)||[];v=nums[0]||"";t.value=v;const k2=t.dataset.k+"Olt";cur[k2]=(nums[1]||"").replace(",",".");const o=$("f-"+k2);if(o)o.value=cur[k2]}
     cur[t.dataset.k]=v;
-    if(t.dataset.k==="pegado"){const p=parse(v);cur.mapa=p.mapa;for(const k of ["tecnico","soporte","cliente","direccion","tel","ip","extra","cedula","correo","plan","nap","hilo","potAntes"]){if(cur.tipo==="instalacion"&&k==="extra")continue;if(!p[k]&&["cedula","correo","plan","nap","hilo","potAntes"].includes(k))continue;cur[k]=p[k];const el=$("f-"+k);if(el)el.value=p[k]}}
+    if(t.dataset.k==="pegado"){const p=parse(v);cur.mapa=p.mapa;for(const k of ["tecnico","soporte","cliente","direccion","tel","ip","extra","cedula","correo","plan","nap","hilo","potAntes","coords"]){if(cur.tipo==="instalacion"&&k==="extra")continue;if(!p[k]&&["cedula","correo","plan","nap","hilo","potAntes","coords"].includes(k))continue;cur[k]=p[k];const el=$("f-"+k);if(el)el.value=p[k]}}
     refresh();queueSave();}
 });
 document.addEventListener("change",e=>{
