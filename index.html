@@ -334,6 +334,7 @@ function reportPot(a){
   const pa=potNum(a.potAntes),pd=potNum(a.potDespues);
   if(pa!==null)S.push(`⚪️potencia antes ${pa.toFixed(2)} dBm`);
   if(pd!==null)S.push(`⚪️potencia después ${pd.toFixed(2)} dBm`+(pa!==null&&pd>pa?` (mejoró ${(pd-pa).toFixed(2)} dB)`:""));
+  {const o1=potNum(a.oltOnu),o2=potNum(a.oltOlt);if(o1!==null||o2!==null)S.push(`⚪️potencia en OLT (ONU/OLT): ${o1!==null?o1.toFixed(2):"—"} / ${o2!==null?o2.toFixed(2):"—"} dBm`)}
   if(a.tests)S.push("⚪️Realización de los distintos test");
   if(a.clienteOk)S.push("⚪️Cliente comprueba y todo Ok");
   if(a.onu){S.push("⚪️Cambio de nueva bridge");if(a.onuAnt)S.push("⚪️MAC bridge anterior: "+a.onuAnt);if(a.onuNueva)S.push("⚪️MAC bridge nueva: "+a.onuNueva)}
@@ -680,6 +681,10 @@ function renderPot(){
     <div class="gain" id="gain"></div>
     <div class="legend"><span><i class="g"></i>mejor que -25</span><span><i class="a"></i>-25 a -27</span><span><i class="r"></i>peor que -27</span></div>
     <p class="muted" style="margin:0">Si escribes sin el signo, se toma como negativa.</p>
+    <div class="box"><h3>Confirmación en la OLT (secretaria)</h3>
+      <p class="muted" style="margin:0">Lo que te pasa la secretaria desde la OLT. Puedes pegar “-22.84 / -27.22” en el primer campo.</p>
+      <div class="grid">${inp("oltOnu","Rx ONU",{unit:"dBm",attrs:'inputmode="decimal" class="mono" placeholder="-22.84"'})}${inp("oltOlt","Rx OLT",{unit:"dBm",attrs:'inputmode="decimal" class="mono" placeholder="-27.22"'})}</div>
+      <div class="gain" id="oltBox"></div></div>
     <div class="list-chk">${chk("tests","Realización de los distintos test")}${chk("clienteOk","Cliente comprueba y todo Ok")}${chk("cumplida","✅ Se cumplió con la actividad")}</div>
   </section>
   ${notifHTML()}
@@ -712,7 +717,8 @@ function refresh(){
   const hb=(id,v)=>{const e=$(id);if(e)e.hidden=v};hb("boxFibra",!cur.fibra);hb("boxOnu",!cur.onu);hb("boxRouter",!cur.router);
   document.querySelectorAll('[data-eq="eq"]').forEach(e=>e.hidden=!(cur.onu||cur.router));
   if(cur.tipo==="potencia"){hb("boxHilo",!cur.accHilo);const g=$("gain");if(g)g.innerHTML=potBox();
-    for(const k of ["potAntes","potDespues"]){const el=$("f-"+k);if(el){el.classList.remove("pin-r","pin-a","pin-g");const c=potCls(cur[k]);if(c)el.classList.add("pin-"+c)}}}
+    {const ob=$("oltBox");if(ob){const o1=potNum(cur.oltOnu),o2=potNum(cur.oltOlt);ob.innerHTML=o1!==null?`<span class="muted">Según OLT:</span><span class="pv ${potCls(cur.oltOnu)}">ONU ${o1.toFixed(2)}</span>${o2!==null?`<span class="pv ${potCls(cur.oltOlt)}">OLT ${o2.toFixed(2)}</span>`:""}`:""}}
+    for(const k of ["potAntes","potDespues","oltOnu","oltOlt"]){const el=$("f-"+k);if(el){el.classList.remove("pin-r","pin-a","pin-g");const c=potCls(cur[k]);if(c)el.classList.add("pin-"+c)}}}
 }
 
 /* --- guardar --- */
@@ -740,6 +746,7 @@ document.addEventListener("input",e=>{
   if(!cur)return;const t=e.target;
   if(t.dataset.k){let v=t.value;
     if(/^(onuAnt|onuNueva|routerAnt|routerNueva|nap|mac|gpon)$/.test(t.dataset.k)){const p=t.selectionStart;v=v.toUpperCase();t.value=v;t.setSelectionRange(p,p)}
+    if(t.dataset.k==="oltOnu"&&v.includes("/")){const [x,y]=v.split("/").map(z=>z.trim());v=x;t.value=x;cur.oltOlt=y;const o=$("f-oltOlt");if(o)o.value=y}
     cur[t.dataset.k]=v;
     if(t.dataset.k==="pegado"){const p=parse(v);cur.mapa=p.mapa;for(const k of ["tecnico","soporte","cliente","direccion","tel","ip","extra","cedula","correo","plan","nap","hilo","potAntes"]){if(cur.tipo==="instalacion"&&k==="extra")continue;if(!p[k]&&["cedula","correo","plan","nap","hilo","potAntes"].includes(k))continue;cur[k]=p[k];const el=$("f-"+k);if(el)el.value=p[k]}}
     refresh();queueSave();}
