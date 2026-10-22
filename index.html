@@ -65,6 +65,23 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
 .pill,.copyday{--c:var(--fuchsia);display:inline-flex;gap:6px;align-items:center;border-radius:99px;padding:7px 12px;font-size:13px;font-weight:700;
   border:1.5px solid color-mix(in srgb,var(--c) 75%,transparent);background:color-mix(in srgb,var(--c) 12%,transparent);box-shadow:0 0 10px color-mix(in srgb,var(--c) 35%,transparent)}
 .pill svg,.copyday svg{width:15px;height:15px}
+/* historial por mes y día */
+details.month,details.dayd{border-radius:20px;background:var(--card);border:1px solid rgba(168,85,247,.28);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+details.dayd{border-radius:18px;background:rgba(0,0,0,.22);border-color:rgba(255,255,255,.09)}
+details.dayd[open]{border-color:rgba(232,121,249,.45);box-shadow:0 0 14px rgba(232,121,249,.18)}
+details>summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:10px;padding:14px;font-weight:700;-webkit-tap-highlight-color:transparent}
+details>summary::-webkit-details-marker{display:none}
+details>summary::before{content:"›";font:700 20px/1 var(--display);color:var(--fuchsia);width:14px;transition:transform .15s;text-shadow:0 0 8px rgba(232,121,249,.6)}
+details[open]>summary::before{transform:rotate(90deg)}
+details>summary .l{flex:1;min-width:0}
+details.month>summary .l{font:700 18px var(--display);letter-spacing:-.01em}
+.cnt{font-size:12.5px;font-weight:600;color:var(--muted);white-space:nowrap}
+.cnt em{font-style:normal;color:var(--amber)}
+details.dayd .l .cnt{display:block;margin-top:2px}
+.today{font:700 11px var(--sans);letter-spacing:.06em;text-transform:uppercase;color:#04140a;background:var(--green);border-radius:99px;padding:2px 8px;margin-left:6px;vertical-align:2px;box-shadow:0 0 8px rgba(46,232,138,.5)}
+.mdays{padding:0 10px 10px;display:grid;gap:10px}
+.dbody{padding:0 10px 12px;display:grid;gap:10px}
+.dtools{display:flex;justify-content:flex-end}
 /* tarjetas */
 .item{--c:var(--purple);display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;text-align:left;width:100%;padding:12px;border-radius:18px;
   background:var(--card);border:1px solid color-mix(in srgb,var(--c) 42%,transparent);box-shadow:0 0 12px color-mix(in srgb,var(--c) 16%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
@@ -300,7 +317,10 @@ const ICON={
  cal:'<svg viewBox="0 0 24 24"><path d="M8 2v4M16 2v4"/><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18"/></svg>',
  save:'<svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>',
  back:'<svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg>'};
-let tab="inicio";
+let tab="inicio";const openSet=new Set();
+const fMes=m=>{const t=new Date(m+"-15T12:00").toLocaleDateString("es-EC",{month:"long",year:"numeric"});return t[0].toUpperCase()+t.slice(1)};
+document.addEventListener("toggle",e=>{const k=e.target.dataset?.k;if(!k)return;const id=k.slice(1);
+  if(e.target.open){openSet.add(k);openSet.delete("x"+id)}else{openSet.delete(k);openSet.add("x"+id)}},true);
 function cardHTML(a){const t=TIPOS[a.tipo]?a.tipo:"foco_rojo";
   return `<button class="item t-${t}" data-open="${a.id}"><span class="ic">${ICON[t]}</span>
     <span style="min-width:0"><b>${esc(a.cliente||"Sin cliente")}</b><small>${hhmm(a.creado)}${a.ip?" · "+esc(a.ip):""}${a.nap?" · NAP "+esc(a.nap):""}${!a.ip&&!a.nap&&a.tvMarca?" · TV "+esc(a.tvMarca):""}</small></span>
@@ -328,7 +348,18 @@ function renderList(){
     <label class="searchbox">${ICON.search}<input class="search" id="q" type="search" placeholder="Cliente, cédula, IP, NAP o MAC" value="${esc(q)}"></label>`;
     if(!acts.length)h+=`<div class="empty">Aún no tienes actividades guardadas.</div>`;
     else if(!list.length)h+=`<div class="empty">Nada coincide con “${esc(q)}”.</div>`;
-    for(const k of Object.keys(g))h+=dayBlock(k,g[k]);
+    const months={};for(const k of Object.keys(g))(months[k.slice(0,7)]??=[]).push(k);
+    const hoyM=hoyK.slice(0,7);
+    for(const m of Object.keys(months)){
+      const days=months[m];const n=days.reduce((t,k)=>t+g[k].length,0);
+      const mOpen=f||openSet.has("m"+m)||(!openSet.has("x"+m)&&m===hoyM);
+      h+=`<details class="month" data-k="m${m}" ${mOpen?"open":""}><summary><span class="l">${esc(fMes(m))}</span><span class="cnt">${n} ${n===1?"actividad":"actividades"}</span></summary><div class="mdays">`;
+      for(const k of days){const it=g[k];const pend=it.filter(a=>a.estado!=="terminada").length;
+        const dOpen=f||openSet.has("d"+k)||(!openSet.has("x"+k)&&k===hoyK);
+        h+=`<details class="dayd" data-k="d${k}" ${dOpen?"open":""}><summary><span class="l">${esc(fDay(k).replace(/ de \d{4}$/,""))}${k===hoyK?' <span class="today">Hoy</span>':""}<span class="cnt">${it.length} ${it.length===1?"actividad":"actividades"}${pend?` · <em>${pend} ${pend===1?"pendiente":"pendientes"}</em>`:""}</span></span></summary>
+          <div class="dbody"><div class="dtools"><button class="copyday" data-copyday="${k}">${ICON.copy}Copiar resumen</button></div>${it.map(cardHTML).join("")}</div></details>`;}
+      h+=`</div></details>`;
+    }
   }else{
     h=`<div class="top"><div class="hello"><small>${acts.length} ${acts.length===1?"actividad":"actividades"} guardadas</small><h1>Respaldo</h1></div></div>
     <section class="sec"><div class="sec-h"><h2>Copia de seguridad</h2></div>
