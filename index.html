@@ -95,7 +95,20 @@ details.year>.mdays>details.month{background:rgba(0,0,0,.2)}
 /* tarjetas */
 .item{--c:var(--purple);display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;text-align:left;width:100%;padding:12px;border-radius:18px;
   background:var(--card);border:1px solid color-mix(in srgb,var(--c) 42%,transparent);box-shadow:0 0 12px color-mix(in srgb,var(--c) 16%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
-.item.t-foco_rojo{--c:var(--pink)}.item.t-tv{--c:var(--cyan)}
+.item.t-foco_rojo{--c:var(--pink)}.item.t-tv{--c:var(--cyan)}.item.t-potencia{--c:var(--orange)}
+.tiles{grid-template-columns:repeat(2,1fr)}.tile{grid-template-columns:auto 1fr;justify-items:start;text-align:left;align-items:center;padding:12px}
+.tile.pot{--c:var(--orange)}.tile.pot i{color:#1a0c00}
+.pv{font:700 12.5px var(--mono);padding:2px 8px;border-radius:99px;white-space:nowrap}
+.pv.r{color:#ffc2d6;background:rgba(255,46,122,.18);border:1px solid var(--pink)}
+.pv.a{color:#fde68a;background:rgba(251,191,36,.16);border:1px solid var(--amber)}
+.pv.g{color:#bff7d8;background:rgba(46,232,138,.16);border:1px solid var(--green)}
+input.pin-r{border-color:var(--pink)!important;box-shadow:0 0 10px rgba(255,46,122,.35)}
+input.pin-a{border-color:var(--amber)!important;box-shadow:0 0 10px rgba(251,191,36,.35)}
+input.pin-g{border-color:var(--green)!important;box-shadow:0 0 10px rgba(46,232,138,.35)}
+.gain{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-height:28px}.gain .arrow{color:var(--muted)}
+.delta{margin-left:auto;font:700 18px var(--display)}.delta.up{color:var(--green);text-shadow:0 0 12px rgba(46,232,138,.6)}.delta.down{color:var(--pink)}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--muted)}.legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px}
+.legend .g{background:var(--green)}.legend .a{background:var(--amber)}.legend .r{background:var(--pink)}
 .item .ic{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;color:var(--c);background:color-mix(in srgb,var(--c) 18%,transparent);border:1px solid color-mix(in srgb,var(--c) 45%,transparent)}
 .item b{display:block;font-weight:700;font-size:15px;overflow-wrap:anywhere}
 .item small{color:#ddd5f2;font:400 12.5px var(--mono)}
@@ -199,7 +212,13 @@ const EVID_I=[
  ["inst","Instalación final (ONU y router)"],
  ["speed","Speed test"],
  ["stRoseta","Sticker en la roseta"],["stRouter","Sticker en el router"],["stBridge","Sticker en el bridge"]];
-const TIPOS={foco_rojo:["Foco rojo","b-red"],instalacion:["Inst. alámbrica","b-inst"],tv:["App de TV","b-tv"]};
+const TIPOS={foco_rojo:["Foco rojo","b-red"],instalacion:["Inst. alámbrica","b-inst"],tv:["App de TV","b-tv"],potencia:["Mejorar potencia","b-pot"]};
+const EVID_P=[["potA","Potencia antes (power meter)"],["potD","Potencia después"],["napOrd","Caja NAP ordenada"],["equipo","Equipo nuevo: caja con S/N y MAC","eq"],
+ ["stRoseta","Sticker en la roseta"],["stRouter","Sticker en el router"],["stBridge","Sticker en el bridge"]];
+const evidFor=a=>a.tipo==="instalacion"?EVID_I:a.tipo==="potencia"?EVID_P:EVID;
+const potNum=v=>{const n=parseFloat(String(v||"").replace(",","."));return isNaN(n)?null:(n>0?-n:n)};
+const potCls=v=>{const n=potNum(v);return n===null?"":n>-25?"g":n>=-27?"a":"r"};
+const potLbl={g:"buena",a:"aceptable",r:"crítica"};
 const TVSO=[["android","Android TV / Google TV"],["webos","webOS"],["tizen","Tizen"],["vidaa","VIDAA"],["roku","Roku TV"],["otro","No sé"]];
 const NOAPK={webos:1,tizen:1,vidaa:1,roku:1};
 const MARCAS=[["Samsung","tizen"],["LG","webos"],["Sony","android"],["Xiaomi","android"],["TCL",""],["Hisense",""],["Philips",""],["Panasonic",""],["Motorola","android"],["Hyundai",""],["Riviera",""],["Challenger",""],["JVC",""],["Otra",""]];
@@ -245,16 +264,21 @@ let offReady=false,acts=[],col=null,cur=null,q="",confirmDel=false,saveT=null,LS
 function blank(tipo="foco_rojo"){const inst=tipo==="instalacion";return{tipo,creado:Date.now(),estado:"pendiente",pegado:"",tecnico:"",tecnico2:"",soporte:"",cliente:"",direccion:"",tel:"",ip:"",extra:"",
  fibra:false,metros:"",onu:false,onuAnt:"",onuNueva:"",router:false,routerAnt:"",routerNueva:"",rchk:{},
  nap:"",napInterv:"",potAntes:"",potDespues:"",trabajo:"",tests:true,clienteOk:true,cumplida:true,evid:{},
- tvFmt:"formal",cedula:"",correo:"",hilo:"",hilosLibres:"",mac:"",gpon:"",pot:"",plan:"",notas:"",pruebas:true,fecha:"",...(inst?{router:true,onu:true,fibra:true}:{})}}
+ tvFmt:"formal",cedula:"",correo:"",hilo:"",hilosLibres:"",mac:"",gpon:"",pot:"",plan:"",notas:"",pruebas:true,fecha:"",accFusion:false,accOrdenar:false,accRoseta:false,accHilo:false,hiloNuevo:"",accOtra:"",...(inst?{router:true,onu:true,fibra:true}:{}),...(tipo==="potencia"?{tests:false}:{})}}
 
 /* --- leer el mensaje que llega --- */
 function parse(txt){
-  const out={tecnico:"",soporte:"",cliente:"",direccion:"",tel:"",ip:"",cedula:"",correo:"",plan:"",nap:"",extra:[]};
+  const out={tecnico:"",soporte:"",cliente:"",direccion:"",tel:"",ip:"",cedula:"",correo:"",plan:"",nap:"",hilo:"",potAntes:"",extra:[]};
   const MAPRE=/(https?:\/\/)?(maps\.app\.goo\.gl|goo\.gl\/maps|(www\.)?google\.[a-z.]+\/maps|maps\.google\.[a-z.]+|g\.co\/kgs)\S*/gi;
   out.mapa="";
   for(const raw of txt.split(/\r?\n/)){let l=raw.trim();if(!l)continue;
     const mm=l.match(MAPRE);if(mm){if(!out.mapa)out.mapa=mm[0].startsWith("http")?mm[0]:"https://"+mm[0];l=l.replace(MAPRE,"").trim();
       if(!l||/^(ubicaci[oó]n|ubicaci[oó]n del cliente|maps?|google maps|link|enlace|direcci[oó]n en maps)\s*[,.:]*$/i.test(l))continue;l=l.replace(/[\s,.:\-]+$/,"");if(!l)continue}
+    {const nm=l.match(/^nap\s*[,.:]?\s*([A-Za-z0-9]+(?:-[A-Za-z0-9]+)*)\s*(?:[,;/]?\s*(?:h(?:ilo)?)\s*[:.#]?\s*(\d+))?\s*$/i);
+      if(nm){out.nap=nm[1].toUpperCase();if(nm[2])out.hilo=nm[2];continue}
+      const hm=l.match(/^hilo\s*[,.:#]?\s*(\d+)\s*$/i);if(hm){out.hilo=hm[1];continue}
+      const pm=l.match(/^potencia(?:\s+actual)?\s*[,.:]?\s*(-?\s*\d+(?:[.,]\d+)?)\s*(?:dbm)?\s*$/i);
+      if(pm){out.potAntes=pm[1].replace(/\s/g,"").replace(",",".");continue}}
     const m=l.match(/^(t[eé]cnicos?|soporte|cliente|direcci[oó]n|tel[eé]fono|tel[eé]f|tel|celular|cel|ip|c[eé]dula|correo(?: electr[oó]nico)?|plan|nap)\s*[,.:]+\s*(.*)$/i);
     if(!m){if(!/^instalaci[oó]n\.?$/i.test(l))out.extra.push(l);continue}
     const k=m[1].toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
@@ -290,7 +314,36 @@ function report(a){
   if(a.noRealizada){t=t.split("\n").filter(l=>!/^✅\s*se cumplió con la actividad|Cliente comprueba y todo Ok|Realización de los distintos test|Se realizan pruebas de potencia|^\* Cliente comprueba/i.test(l)).join("\n").replace(/\s+$/,"");t+="\n\n"+pendTxt(a)}
   return t;
 }
+function reportPot(a){
+  const L=[];const tec=[a.tecnico,a.tecnico2].filter(Boolean).join(" y ");
+  if(tec)L.push("Tecnico, "+tec);
+  L.push("soporte, "+(a.soporte||"mejorar potencia"));
+  if(a.cliente)L.push("cliente, "+a.cliente);
+  if(a.direccion)L.push("dirección, "+a.direccion);
+  if(a.tel)L.push("tel. "+a.tel);
+  if(a.ip)L.push("ip, "+a.ip);
+  if(a.extra)L.push(...a.extra.split("\n"));
+  const S=[];const nh=(a.nap?" "+a.nap:"")+(a.hilo?", hilo "+a.hilo:"");
+  if(a.accFusion)S.push("⚪️nueva fusión del hilo en la NAP"+nh);
+  if(a.accOrdenar)S.push("⚪️se ordenó la caja NAP");
+  if(a.accRoseta)S.push("⚪️se revisó la fusión en la roseta");
+  if(a.accHilo)S.push("⚪️cambio de hilo en la NAP"+(a.nap?" "+a.nap:"")+(a.hilo?": hilo "+a.hilo:"")+(a.hiloNuevo?" → hilo "+a.hiloNuevo:""));
+  if(a.fibra)S.push("⚪️cambio de drop"+(a.metros?", "+a.metros+" m":""));
+  for(const t of (a.accOtra||"").split(/\r?\n/)){const x=t.replace(/^[\s⚪️•\-*]+/u,"").trim();if(x)S.push("⚪️"+x)}
+  if(!a.accFusion&&!a.accHilo&&(a.nap||a.hilo))S.push("⚪️NAP"+nh);
+  const pa=potNum(a.potAntes),pd=potNum(a.potDespues);
+  if(pa!==null)S.push(`⚪️potencia antes ${pa.toFixed(2)} dBm`);
+  if(pd!==null)S.push(`⚪️potencia después ${pd.toFixed(2)} dBm`+(pa!==null&&pd>pa?` (mejoró ${(pd-pa).toFixed(2)} dB)`:""));
+  if(a.tests)S.push("⚪️Realización de los distintos test");
+  if(a.clienteOk)S.push("⚪️Cliente comprueba y todo Ok");
+  if(a.onu){S.push("⚪️Cambio de nueva bridge");if(a.onuAnt)S.push("⚪️MAC bridge anterior: "+a.onuAnt);if(a.onuNueva)S.push("⚪️MAC bridge nueva: "+a.onuNueva)}
+  if(a.router){S.push("⚪️Cambio de router");if(a.routerAnt)S.push("⚪️MAC router anterior: "+a.routerAnt);if(a.routerNueva)S.push("⚪️MAC router nuevo: "+a.routerNueva)}
+  {const n=notifLines(a);if(n.length){S.push("⚪️Notificación al cliente: "+n[0]);for(const x of n.slice(1))S.push("⚪️"+x)}}
+  if(a.cumplida)S.push("✅se cumplió con la actividad");
+  return L.join("\n")+(S.length?"\n\n"+S.join("\n"):"");
+}
 function reportBase(a){
+  if(a.tipo==="potencia")return reportPot(a);
   if(a.tipo==="instalacion")return reportInst(a);
   if(a.tipo==="tv")return reportTV(a);
   const L=[];const tec=[a.tecnico,a.tecnico2].filter(Boolean).join(" y ");
@@ -317,7 +370,7 @@ function reportBase(a){
   return L.join("\n")+(S.length?"\n\n"+S.join("\n"):"");
 }
 function missing(a){const m=[];
-  for(const [k,l,c] of (a.tipo==="instalacion"?EVID_I:EVID)){if(c==="eq"&&!(a.onu||a.router))continue;if(!a.evid?.[k])m.push(l.split(/[:(]/)[0].trim().toLowerCase())}
+  for(const [k,l,c] of evidFor(a)){if(c==="eq"&&!(a.onu||a.router))continue;if(!a.evid?.[k])m.push(l.split(/[:(]/)[0].trim().toLowerCase())}
   const r=a.router?ROUTER.filter(([k])=>!a.rchk?.[k]).length:0;
   return {m,r};
 }
@@ -327,6 +380,7 @@ const ICON={
  foco_rojo:'<svg viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>',
  instalacion:'<svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>',
  tv:'<svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="m17 2-5 5-5-5"/></svg>',
+ potencia:'<svg viewBox="0 0 24 24"><path d="M2 20h.01M7 20v-4M12 20v-8M17 20V8M22 4v16"/></svg>',
  copy:'<svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>',
  search:'<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>',
  home:'<svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/></svg>',
@@ -340,7 +394,7 @@ document.addEventListener("toggle",e=>{const k=e.target.dataset?.k;if(!k)return;
 const isOpen=(key,byDefault,force)=>force||openSet.has(key)||(!openSet.has("x"+key)&&byDefault);
 function cardHTML(a){const t=TIPOS[a.tipo]?a.tipo:"foco_rojo";
   return `<button class="item t-${t}" data-open="${a.id}"><span class="ic">${ICON[t]}</span>
-    <span style="min-width:0"><b>${esc(a.cliente||"Sin cliente")}</b><small>${hhmm(a.creado)}${a.ip?" · "+esc(a.ip):""}${a.nap?" · NAP "+esc(a.nap):""}${!a.ip&&!a.nap&&a.tvMarca?" · TV "+esc(a.tvMarca):""}</small></span>
+    <span style="min-width:0"><b>${esc(a.cliente||"Sin cliente")}</b><small>${hhmm(a.creado)}${a.ip?" · "+esc(a.ip):""}${a.nap?" · NAP "+esc(a.nap):""}${a.tipo==="potencia"&&a.hilo?" · H"+esc(a.hilo):""}${!a.ip&&!a.nap&&a.tvMarca?" · TV "+esc(a.tvMarca):""}${a.tipo==="potencia"&&(a.potDespues||a.potAntes)?` · <span class="pv ${potCls(a.potDespues||a.potAntes)}">${potNum(a.potDespues||a.potAntes).toFixed(2)}</span>`:""}</small></span>
     <span class="st ${a.noRealizada?"no":a.estado==="terminada"?"ok":"wait"}">${a.noRealizada?"No realizada":a.estado==="terminada"?"Lista":"Pendiente"}</span></button>`}
 function dayBlock(k,items,title){return `<section class="day"><div class="day-top"><h2>${title||fDay(k)}</h2><button class="copyday" data-copyday="${k}">${ICON.copy}Copiar resumen</button></div>${items.map(cardHTML).join("")}</section>`}
 function dayDetails(k,it,forceOpen,pfx=""){const hoyK=dayKey(Date.now());const pend=it.filter(a=>a.estado!=="terminada").length;
@@ -379,7 +433,7 @@ function renderList(){
     const ok=hoy.filter(a=>a.estado==="terminada").length;
     h=`<div class="top"><div class="hello"><small>${esc(fecha)}</small><h1>Actividades</h1></div></div>
     <div class="stats"><div class="stat"><b>${hoy.length}</b><span>Hoy</span></div><div class="stat g"><b>${ok}</b><span>${ok===1?"Terminada":"Terminadas"}</span></div><div class="stat a"><b>${hoy.length-ok}</b><span>${hoy.length-ok===1?"Pendiente":"Pendientes"}</span></div></div>
-    <div class="tiles"><button class="tile red" data-new="foco_rojo"><i>${ICON.foco_rojo}</i>Foco rojo</button><button class="tile" data-new="instalacion"><i>${ICON.instalacion}</i>Instalación alámbrica</button><button class="tile tv" data-new="tv"><i>${ICON.tv}</i>App de TV</button></div>`;
+    <div class="tiles"><button class="tile red" data-new="foco_rojo"><i>${ICON.foco_rojo}</i>Foco rojo</button><button class="tile" data-new="instalacion"><i>${ICON.instalacion}</i>Instalación alámbrica</button><button class="tile tv" data-new="tv"><i>${ICON.tv}</i>App de TV</button><button class="tile pot" data-new="potencia"><i>${ICON.potencia}</i>Mejorar potencia</button></div>`;
     const viejas=acts.filter(a=>dayKey(a.creado)<hoyK&&a.estado!=="terminada").sort((a,b)=>a.creado-b.creado);
     if(viejas.length)h+=`<section class="pend"><div class="pend-h">⏳ Tienes ${viejas.length} ${viejas.length===1?"pendiente":"pendientes"} de días anteriores</div>
       ${viejas.map(a=>`<div class="pend-row">${cardHTML(a).replace('<small>',`<small>${esc(new Date(dayKey(a.creado)+"T12:00").toLocaleDateString("es-EC",{day:"numeric",month:"short"}).replace(".",""))} · `)}<button class="pasar" data-pasar="${a.id}">Pasar a hoy</button></div>`).join("")}</section>`;
@@ -415,6 +469,7 @@ function renderEditor(){
   confirmDel=false;$("dock").hidden=true;
   if(cur.tipo==="tv")return renderTV();
   if(cur.tipo==="instalacion")return renderInst();
+  if(cur.tipo==="potencia")return renderPot();
   $("app").innerHTML=`
   <div class="top"><button class="back" data-back>${ICON.back}Actividades</button><span class="saved" id="saved"></span></div>
   <div class="top"><h1>Foco rojo</h1><div class="chips">${chip("estado","pendiente","Pendiente","no")}${chip("estado","terminada","Terminada")}</div></div>
@@ -586,6 +641,56 @@ function telChips(){const box=$("telChips");if(!box)return;const n=telNums(cur.t
 function mapLink(){const ta=$("f-pegado");if(!ta)return;let el=$("mapLink");
   if(!el){el=document.createElement("p");el.id="mapLink";el.className="muted";el.style.margin="0";ta.closest("label").after(el)}
   el.hidden=!cur.mapa;el.innerHTML=cur.mapa?`📍 Ubicación detectada (no va en el reporte): <a href="${esc(cur.mapa)}" target="_blank" rel="noopener">Abrir en Maps</a>`:""}
+function potBox(){const pa=potNum(cur.potAntes),pd=potNum(cur.potDespues);
+  if(pa===null&&pd===null)return `<span class="muted">Escribe la potencia antes y después.</span>`;
+  const pill=(v)=>`<span class="pv ${potCls(v)}">${potNum(v).toFixed(2)} · ${potLbl[potCls(v)]}</span>`;
+  let h=(pa!==null?pill(cur.potAntes):"")+(pa!==null&&pd!==null?'<span class="arrow">→</span>':"")+(pd!==null?pill(cur.potDespues):"");
+  if(pa!==null&&pd!==null){const d=pd-pa;h+=`<b class="delta ${d>=0?"up":"down"}">${d>=0?"+":""}${d.toFixed(2)} dB</b>`}
+  return h}
+function renderPot(){
+  const tog=(k,l)=>`<button class="chip" data-tog="${k}" aria-pressed="${!!cur[k]}">${l}</button>`;
+  $("app").innerHTML=`
+  <div class="top"><button class="back" data-back>${ICON.back}Actividades</button><span class="saved" id="saved"></span></div>
+  <div class="top"><h1>Mejorar potencia</h1><div class="chips">${chip("estado","pendiente","Pendiente","no")}${chip("estado","terminada","Terminada")}</div></div>
+  ${realizHTML()}
+  <section class="sec"><div class="sec-h"><h2>Datos de la actividad</h2><span class="step">01</span></div>
+    <label class="f">Pega aquí el mensaje que te llega<textarea id="f-pegado" data-k="pegado" placeholder="Técnico, …&#10;Soporte, mejorar potencia&#10;Cliente, …&#10;Nap B00-4 H:1&#10;Potencia actual -33.02dBm&#10;Dirección, …&#10;Tel. …">${esc(cur.pegado)}</textarea></label>
+    <button class="pastebtn" id="pasteBtn">Pegar del portapapeles</button>
+    <div class="grid">
+      ${inp("tecnico","Técnico")}${inp("tecnico2","Segundo técnico (cuadrilla)",{attrs:'placeholder="Opcional"'})}
+      ${inp("cliente","Cliente",{cls:"full"})}${inp("direccion","Dirección",{cls:"full"})}
+      ${inp("tel","Teléfono",{attrs:'inputmode="tel" class="mono"'})}${inp("ip","IP",{attrs:'inputmode="decimal" class="mono"'})}
+      <div class="chips full" id="telChips"></div>
+      ${inp("nap","NAP",{attrs:'class="mono" autocapitalize="characters" placeholder="B00-4"'})}${inp("hilo","Hilo",{attrs:'inputmode="numeric" class="mono" placeholder="1"'})}
+    </div></section>
+  <section class="sec"><div class="sec-h"><h2>Qué se hizo</h2><span class="step">02</span></div>
+    <div class="chips">${tog("accFusion","Nueva fusión del hilo en la NAP")}${tog("accOrdenar","Ordenar la caja NAP")}${tog("accRoseta","Revisar fusión en la roseta")}
+      ${tog("fibra","Cambio de drop")}${tog("onu","Cambio de ONU")}${tog("router","Cambio de router")}${tog("accHilo","Cambio de hilo (si lo piden)")}</div>
+    <div class="box" id="boxHilo" ${cur.accHilo?"":"hidden"}><h3>Cambio de hilo</h3>${inp("hiloNuevo","Hilo nuevo",{attrs:'inputmode="numeric" class="mono"'})}</div>
+    <div class="box" id="boxFibra" ${cur.fibra?"":"hidden"}><h3>Drop nuevo</h3>${inp("metros","Metros de drop",{unit:"m",attrs:'inputmode="numeric" class="mono" placeholder="0"'})}</div>
+    <div class="box" id="boxOnu" ${cur.onu?"":"hidden"}><h3>Cambio de ONU</h3><div class="grid">
+      ${inp("onuAnt","MAC anterior",{attrs:'class="mono" autocapitalize="characters" placeholder="Opcional"'})}${inp("onuNueva","MAC nueva",{attrs:'class="mono" autocapitalize="characters"'})}</div></div>
+    <div class="box" id="boxRouter" ${cur.router?"":"hidden"}><div class="sec-h"><h3>Cambio de router</h3><span class="progress" id="rprog"></span></div><div class="grid">
+      ${inp("routerAnt","MAC anterior",{attrs:'class="mono" autocapitalize="characters" placeholder="Opcional"'})}${inp("routerNueva","MAC nueva",{attrs:'class="mono" autocapitalize="characters"'})}</div>
+      <div class="list-chk">${ROUTER.map(([k,l])=>chk(k,l,"","rchk")).join("")}</div></div>
+    <label class="f">Otra acción (opcional, una por línea)<textarea id="f-accOtra" data-k="accOtra" style="min-height:60px" placeholder="Ej. se reubicó la roseta">${esc(cur.accOtra)}</textarea></label>
+  </section>
+  <section class="sec"><div class="sec-h"><h2>Potencia</h2><span class="step">03</span></div>
+    <div class="grid">${inp("potAntes","Antes",{unit:"dBm",attrs:'inputmode="decimal" class="mono" placeholder="-33.02"'})}${inp("potDespues","Después",{unit:"dBm",attrs:'inputmode="decimal" class="mono" placeholder="-17.80"'})}</div>
+    <div class="gain" id="gain"></div>
+    <div class="legend"><span><i class="g"></i>mejor que -25</span><span><i class="a"></i>-25 a -27</span><span><i class="r"></i>peor que -27</span></div>
+    <p class="muted" style="margin:0">Si escribes sin el signo, se toma como negativa.</p>
+    <div class="list-chk">${chk("tests","Realización de los distintos test")}${chk("clienteOk","Cliente comprueba y todo Ok")}${chk("cumplida","✅ Se cumplió con la actividad")}</div>
+  </section>
+  ${notifHTML()}
+  <section class="sec"><div class="sec-h"><h2>Checklist y evidencias</h2><span class="progress" id="eprog"></span></div>
+    <p class="muted" style="margin:0">Solo para acordarte (fotos y stickers); las fotos van al WhatsApp.</p>
+    <div class="list-chk">${EVID_P.map(([k,l,c])=>`<div data-eq="${c||""}" ${c==="eq"&&!(cur.onu||cur.router)?"hidden":""}>${chk(k,l,"","evid")}</div>`).join("")}</div>
+  </section>
+  <section class="sec"><div class="sec-h"><h2>Reporte</h2><span class="step">04</span></div><pre class="report" id="rep"></pre></section>
+  <div class="top"><span class="muted">Creada ${fDay(dayKey(cur.creado))}, ${hhmm(cur.creado)}</span><button class="danger" id="del">Borrar actividad</button></div>`;
+  $("bar").hidden=false;refresh();
+}
 function realizHTML(){return `<section class="sec nr ${cur.noRealizada?"on":""}" id="nrSec"><div class="sec-h"><h2>¿Se realizó?</h2></div>
     <div class="chips"><button class="chip" data-real="si" aria-pressed="${!cur.noRealizada}">Se realizó</button><button class="chip bad" data-real="no" aria-pressed="${!!cur.noRealizada}">No se realizó</button></div>
     <label class="f" id="motivoBox" ${cur.noRealizada?"":"hidden"}>Motivo (sale en el reporte)<textarea id="f-motivo" data-k="motivo" placeholder="Ej. cliente no estaba en casa, reagendado para mañana">${esc(cur.motivo)}</textarea></label></section>`}
@@ -599,13 +704,15 @@ function refresh(){
   {const c=$("f-correo");if(c)c.closest("label").hidden=cur.correoEstado==="no"}
   $("rep").textContent=report(cur);
   const {m,r}=missing(cur);
-  const total=(cur.tipo==="instalacion"?EVID_I:EVID).filter(([,,c])=>c!=="eq"||cur.onu||cur.router).length;
+  const total=evidFor(cur).filter(([,,c])=>c!=="eq"||cur.onu||cur.router).length;
   $("eprog").textContent=`${total-m.length}/${total}`;
   if($("rprog"))$("rprog").textContent=`${ROUTER.length-r}/${ROUTER.length}`;
   $("miss").textContent=r?`Router: faltan ${r} ajustes`:m.length?`Faltan ${m.length} pendientes`:"✓ Todo listo";
   {const ok=!r&&!m.length;$("miss").classList.toggle("ok",ok);$("copy").classList.toggle("ready",ok)}
   const hb=(id,v)=>{const e=$(id);if(e)e.hidden=v};hb("boxFibra",!cur.fibra);hb("boxOnu",!cur.onu);hb("boxRouter",!cur.router);
   document.querySelectorAll('[data-eq="eq"]').forEach(e=>e.hidden=!(cur.onu||cur.router));
+  if(cur.tipo==="potencia"){hb("boxHilo",!cur.accHilo);const g=$("gain");if(g)g.innerHTML=potBox();
+    for(const k of ["potAntes","potDespues"]){const el=$("f-"+k);if(el){el.classList.remove("pin-r","pin-a","pin-g");const c=potCls(cur[k]);if(c)el.classList.add("pin-"+c)}}}
 }
 
 /* --- guardar --- */
@@ -634,7 +741,7 @@ document.addEventListener("input",e=>{
   if(t.dataset.k){let v=t.value;
     if(/^(onuAnt|onuNueva|routerAnt|routerNueva|nap|mac|gpon)$/.test(t.dataset.k)){const p=t.selectionStart;v=v.toUpperCase();t.value=v;t.setSelectionRange(p,p)}
     cur[t.dataset.k]=v;
-    if(t.dataset.k==="pegado"){const p=parse(v);cur.mapa=p.mapa;for(const k of ["tecnico","soporte","cliente","direccion","tel","ip","extra","cedula","correo","plan","nap"]){if(cur.tipo==="instalacion"&&k==="extra")continue;if(!p[k]&&["cedula","correo","plan","nap"].includes(k))continue;cur[k]=p[k];const el=$("f-"+k);if(el)el.value=p[k]}}
+    if(t.dataset.k==="pegado"){const p=parse(v);cur.mapa=p.mapa;for(const k of ["tecnico","soporte","cliente","direccion","tel","ip","extra","cedula","correo","plan","nap","hilo","potAntes"]){if(cur.tipo==="instalacion"&&k==="extra")continue;if(!p[k]&&["cedula","correo","plan","nap","hilo","potAntes"].includes(k))continue;cur[k]=p[k];const el=$("f-"+k);if(el)el.value=p[k]}}
     refresh();queueSave();}
 });
 document.addEventListener("change",e=>{
@@ -667,7 +774,7 @@ document.addEventListener("click",async e=>{
   if(b.id==="del"){if(!confirmDel){confirmDel=true;b.textContent="Toca otra vez para borrar";return}
     const id=cur.id;cur=null;try{await remove(id)}catch{}renderList();return}
 });
-const TIPO_TXT={foco_rojo:"Foco rojo",instalacion:"Instalación alámbrica",tv:"App de TV"};
+const TIPO_TXT={foco_rojo:"Foco rojo",instalacion:"Instalación alámbrica",tv:"App de TV",potencia:"Mejorar potencia"};
 function actividadTxt(a){
   if(a.soporte&&a.soporte.trim())return a.soporte.trim();
   return a.tipo==="instalacion"?"instalación nueva":a.tipo==="tv"?"colocar app de TV":"foco rojo";
