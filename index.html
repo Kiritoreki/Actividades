@@ -65,6 +65,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
 .pill,.copyday{--c:var(--fuchsia);display:inline-flex;gap:6px;align-items:center;border-radius:99px;padding:7px 12px;font-size:13px;font-weight:700;
   border:1.5px solid color-mix(in srgb,var(--c) 75%,transparent);background:color-mix(in srgb,var(--c) 12%,transparent);box-shadow:0 0 10px color-mix(in srgb,var(--c) 35%,transparent)}
 .pill svg,.copyday svg{width:15px;height:15px}
+.daybtns{display:flex;gap:6px;flex-wrap:wrap}
 /* tarjetas */
 .item{--c:var(--purple);display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;text-align:left;width:100%;padding:12px;border-radius:18px;
   background:var(--card);border:1px solid color-mix(in srgb,var(--c) 42%,transparent);box-shadow:0 0 12px color-mix(in srgb,var(--c) 16%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
@@ -305,7 +306,7 @@ function cardHTML(a){const t=TIPOS[a.tipo]?a.tipo:"foco_rojo";
   return `<button class="item t-${t}" data-open="${a.id}"><span class="ic">${ICON[t]}</span>
     <span style="min-width:0"><b>${esc(a.cliente||"Sin cliente")}</b><small>${hhmm(a.creado)}${a.ip?" · "+esc(a.ip):""}${a.nap?" · NAP "+esc(a.nap):""}${!a.ip&&!a.nap&&a.tvMarca?" · TV "+esc(a.tvMarca):""}</small></span>
     <span class="st ${a.estado==="terminada"?"ok":"wait"}">${a.estado==="terminada"?"Lista":"Pendiente"}</span></button>`}
-function dayBlock(k,items,title){return `<section class="day"><div class="day-top"><h2>${title||fDay(k)}</h2><button class="copyday" data-copyday="${k}">${ICON.copy}Copiar resumen</button></div>${items.map(cardHTML).join("")}</section>`}
+function dayBlock(k,items,title){return `<section class="day"><div class="day-top"><h2>${title||fDay(k)}</h2><span class="daybtns"><button class="copyday" data-copyday="${k}">${ICON.copy}Detallado</button><button class="copyday" data-copyday="${k}" data-fmt="corto">${ICON.copy}Corto</button></span></div>${items.map(cardHTML).join("")}</section>`}
 function renderDock(){const d=$("dock");d.hidden=!!cur;if(cur)return;
   d.innerHTML=[["inicio","Inicio","home"],["historial","Historial","cal"],["respaldo","Respaldo","save"]].map(([k,l,i])=>`<button data-tab="${k}" ${tab===k?'aria-current="page"':""}>${ICON[i]}${l}</button>`).join("")}
 function renderList(){
@@ -605,12 +606,26 @@ function resumenDia(k){
     out.push(L.join("\n"));}
   return out.join("\n\n");
 }
+const TIPO_CORTO={foco_rojo:"Soporte",instalacion:"Instalación nueva",tv:"App de TV"};
+function resumenCorto(k){
+  const list=acts.filter(a=>dayKey(a.creado)===k).sort((a,b)=>a.creado-b.creado);
+  const out=[];let last=null;
+  for(const a of list){
+    const tec=[a.tecnico,a.tecnico2].map(x=>(x||"").trim()).filter(Boolean).join(" y ");
+    if(tec!==last){out.push(tec?`Técnicos: ${tec}.`:"Técnicos:");last=tec}
+    const nom=(a.cliente||"Sin cliente").replace(/\s*\(.*?\)\s*/g," ").trim();
+    out.push(`• _(${TIPO_CORTO[a.tipo]||"Actividad"} - *${nom}*)_✅`);
+  }
+  const hoy=k===dayKey(Date.now());
+  out.push(`*Se cumplieron con todas las actividades asignadas para el día${hoy?" de hoy":""} ${fechaLarga(k).replace(",","")}.*`);
+  return out.join("\n");
+}
 async function copyText(txt){
   try{await navigator.clipboard.writeText(txt);return true}
   catch{const c=$("clip");c.value=txt;c.select();c.setSelectionRange(0,txt.length);try{return document.execCommand("copy")}catch{return false}}
 }
 document.addEventListener("click",async e=>{const b=e.target.closest("[data-copyday]");if(!b)return;e.stopPropagation();
-  const ok=await copyText(resumenDia(b.dataset.copyday));b.innerHTML=ok?"Copiado ✓":"No se pudo copiar";setTimeout(()=>b.innerHTML=ICON.copy+"Copiar resumen",2200)},true);
+  const corto=b.dataset.fmt==="corto";const ok=await copyText(corto?resumenCorto(b.dataset.copyday):resumenDia(b.dataset.copyday));b.innerHTML=ok?"Copiado ✓":"No se pudo copiar";setTimeout(()=>b.innerHTML=ICON.copy+(corto?"Corto":"Detallado"),2200)},true);
 $("copy").onclick=async()=>{
   if(!cur)return;const txt=report(cur);const btn=$("copy").querySelector("span");
   try{await navigator.clipboard.writeText(txt);btn.textContent="Copiado ✓"}
