@@ -50,6 +50,9 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
 .search{width:100%;font:inherit;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--fg)}
 .day{display:grid;gap:8px}
 .day>h2{text-transform:none}
+.day-top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.day-top h2{margin:0}
+.copyday{padding:6px 12px;font-size:14px;font-weight:600}
 .item{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;text-align:left;width:100%;padding:12px 14px}
 .item b{display:block;font-weight:600;overflow-wrap:anywhere}
 .item small{color:var(--muted);font:400 13px var(--mono)}
@@ -264,7 +267,7 @@ function renderList(){
   if(!acts.length)h+=`<div class="empty">Aún no tienes actividades.<br>Toca <b>+ Foco rojo</b> o <b>+ Instalación alámbrica</b> y pega el mensaje que te llega.</div>`;
   else if(!list.length)h+=`<div class="empty">Nada coincide con “${esc(q)}”.</div>`;
   for(const k of Object.keys(g)){
-    h+=`<section class="day"><h2>${fDay(k)}</h2>`+g[k].map(a=>`<button class="item" data-open="${a.id}">
+    h+=`<section class="day"><div class="day-top"><h2>${fDay(k)}</h2><button class="copyday" data-copyday="${k}">Copiar resumen del día</button></div>`+g[k].map(a=>`<button class="item" data-open="${a.id}">
       <span class="badge ${(TIPOS[a.tipo]||TIPOS.foco_rojo)[1]}">${(TIPOS[a.tipo]||TIPOS.foco_rojo)[0]}</span>
       <span style="min-width:0"><b>${esc(a.cliente||"Sin cliente")}</b><small>${hhmm(a.creado)}${a.ip?" · "+esc(a.ip):""}${a.nap?" · NAP "+esc(a.nap):""}</small></span>
       <span class="badge ${a.estado==="terminada"?"b-ok":"b-warn"}">${a.estado==="terminada"?"Terminada":"Pendiente"}</span></button>`).join("")+`</section>`}
@@ -523,6 +526,23 @@ document.addEventListener("click",async e=>{
   if(b.id==="del"){if(!confirmDel){confirmDel=true;b.textContent="Toca otra vez para borrar";return}
     const id=cur.id;cur=null;try{await remove(id)}catch{}renderList();return}
 });
+const TIPO_TXT={foco_rojo:"Foco rojo",instalacion:"Instalación alámbrica",tv:"App de TV"};
+function resumenDia(k){
+  const list=acts.filter(a=>dayKey(a.creado)===k).sort((a,b)=>a.creado-b.creado);
+  const out=[`Actividades del ${fechaLarga(k)}`];
+  list.forEach((a,i)=>{const L=[`${i+1}. ${TIPO_TXT[a.tipo]||"Actividad"}`];
+    if(a.cliente)L.push("Cliente: "+a.cliente);
+    if(a.tel)L.push("Telef: "+a.tel);
+    if(a.ip)L.push("IP: "+a.ip);else if(a.direccion)L.push("Dirección: "+a.direccion);
+    out.push(L.join("\n"));});
+  return out.join("\n\n");
+}
+async function copyText(txt){
+  try{await navigator.clipboard.writeText(txt);return true}
+  catch{const c=$("clip");c.value=txt;c.select();c.setSelectionRange(0,txt.length);try{return document.execCommand("copy")}catch{return false}}
+}
+document.addEventListener("click",async e=>{const b=e.target.closest("[data-copyday]");if(!b)return;e.stopPropagation();
+  const ok=await copyText(resumenDia(b.dataset.copyday));b.textContent=ok?"Copiado ✓":"No se pudo copiar";setTimeout(()=>b.textContent="Copiar resumen del día",2200)},true);
 $("copy").onclick=async()=>{
   if(!cur)return;const txt=report(cur);const btn=$("copy");
   try{await navigator.clipboard.writeText(txt);btn.textContent="Copiado ✓"}
