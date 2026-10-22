@@ -326,6 +326,10 @@ function cardHTML(a){const t=TIPOS[a.tipo]?a.tipo:"foco_rojo";
     <span style="min-width:0"><b>${esc(a.cliente||"Sin cliente")}</b><small>${hhmm(a.creado)}${a.ip?" · "+esc(a.ip):""}${a.nap?" · NAP "+esc(a.nap):""}${!a.ip&&!a.nap&&a.tvMarca?" · TV "+esc(a.tvMarca):""}</small></span>
     <span class="st ${a.estado==="terminada"?"ok":"wait"}">${a.estado==="terminada"?"Lista":"Pendiente"}</span></button>`}
 function dayBlock(k,items,title){return `<section class="day"><div class="day-top"><h2>${title||fDay(k)}</h2><button class="copyday" data-copyday="${k}">${ICON.copy}Copiar resumen</button></div>${items.map(cardHTML).join("")}</section>`}
+function dayDetails(k,it,forceOpen){const hoyK=dayKey(Date.now());const pend=it.filter(a=>a.estado!=="terminada").length;
+  const dOpen=forceOpen||openSet.has("d"+k)||(!openSet.has("x"+k)&&k===hoyK);
+  return `<details class="dayd" data-k="d${k}" ${dOpen?"open":""}><summary><span class="l">${esc(fDay(k).replace(/ de \d{4}$/,""))}${k===hoyK?' <span class="today">Hoy</span>':""}<span class="cnt">${it.length} ${it.length===1?"actividad":"actividades"}${pend?` · <em>${pend} ${pend===1?"pendiente":"pendientes"}</em>`:""}</span></span></summary>
+    <div class="dbody"><div class="dtools"><button class="copyday" data-copyday="${k}">${ICON.copy}Copiar resumen</button></div>${it.map(cardHTML).join("")}</div></details>`}
 function renderDock(){const d=$("dock");d.hidden=!!cur;if(cur)return;
   d.innerHTML=[["inicio","Inicio","home"],["historial","Historial","cal"],["respaldo","Respaldo","save"]].map(([k,l,i])=>`<button data-tab="${k}" ${tab===k?'aria-current="page"':""}>${ICON[i]}${l}</button>`).join("")}
 function renderList(){
@@ -339,7 +343,7 @@ function renderList(){
     h=`<div class="top"><div class="hello"><small>${esc(fecha)}</small><h1>Actividades</h1></div></div>
     <div class="stats"><div class="stat"><b>${hoy.length}</b><span>Hoy</span></div><div class="stat g"><b>${ok}</b><span>${ok===1?"Terminada":"Terminadas"}</span></div><div class="stat a"><b>${hoy.length-ok}</b><span>${hoy.length-ok===1?"Pendiente":"Pendientes"}</span></div></div>
     <div class="tiles"><button class="tile red" data-new="foco_rojo"><i>${ICON.foco_rojo}</i>Foco rojo</button><button class="tile" data-new="instalacion"><i>${ICON.instalacion}</i>Instalación alámbrica</button><button class="tile tv" data-new="tv"><i>${ICON.tv}</i>App de TV</button></div>`;
-    h+=hoy.length?dayBlock(hoyK,hoy,"Hoy"):`<div class="empty">Aún no tienes actividades hoy.<br>Toca una opción de arriba y pega el mensaje que te llega.</div>`;
+    h+=hoy.length?dayDetails(hoyK,hoy,false):`<div class="empty">Aún no tienes actividades hoy.<br>Toca una opción de arriba y pega el mensaje que te llega.</div>`;
   }else if(tab==="historial"){
     const f=q.trim().toLowerCase();
     const list=acts.filter(a=>!f||[a.cliente,a.ip,a.nap,a.tel,a.direccion,a.onuNueva,a.onuAnt,a.routerNueva,a.cedula,a.mac,a.gpon].join(" ").toLowerCase().includes(f)).sort((a,b)=>b.creado-a.creado);
@@ -354,10 +358,7 @@ function renderList(){
       const days=months[m];const n=days.reduce((t,k)=>t+g[k].length,0);
       const mOpen=f||openSet.has("m"+m)||(!openSet.has("x"+m)&&m===hoyM);
       h+=`<details class="month" data-k="m${m}" ${mOpen?"open":""}><summary><span class="l">${esc(fMes(m))}</span><span class="cnt">${n} ${n===1?"actividad":"actividades"}</span></summary><div class="mdays">`;
-      for(const k of days){const it=g[k];const pend=it.filter(a=>a.estado!=="terminada").length;
-        const dOpen=f||openSet.has("d"+k)||(!openSet.has("x"+k)&&k===hoyK);
-        h+=`<details class="dayd" data-k="d${k}" ${dOpen?"open":""}><summary><span class="l">${esc(fDay(k).replace(/ de \d{4}$/,""))}${k===hoyK?' <span class="today">Hoy</span>':""}<span class="cnt">${it.length} ${it.length===1?"actividad":"actividades"}${pend?` · <em>${pend} ${pend===1?"pendiente":"pendientes"}</em>`:""}</span></span></summary>
-          <div class="dbody"><div class="dtools"><button class="copyday" data-copyday="${k}">${ICON.copy}Copiar resumen</button></div>${it.map(cardHTML).join("")}</div></details>`;}
+      for(const k of days)h+=dayDetails(k,g[k],!!f);
       h+=`</div></details>`;
     }
   }else{
