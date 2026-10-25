@@ -485,7 +485,7 @@ function finHTML(){
       h+=`<details class="month" data-k="${mk}" ${isOpen(mk,m===hoyK.slice(0,7),false)?"open":""}><summary><span class="l">${esc(fMes(m).replace(/ de \d{4}$/,""))}</span>${cnt(ms[m].length)}</summary><div class="mdays">`;
       for(const k of ms[m]){const sal=marksDay(k).filter(x=>x.tipo==="salida").pop();const ua=ultimaAct(k);const t=ua&&TIPOS[ua.tipo]?ua.tipo:"foco_rojo";const dk="fd"+k;
         h+=`<details class="dayd" data-k="${dk}" ${isOpen(dk,k===hoyK,false)?"open":""}><summary><span class="l">${esc(fDay(k).replace(/ de \d{4}$/,""))}${k===hoyK?' <span class="today">Hoy</span>':""}<span class="cnt">Salida <em class="sal">${fmtT(sal.ts).slice(0,5)}</em></span></span></summary>
-          <div class="dbody"><div class="ult ${ua?"t-"+t:""}">${ua?`<span class="ic">${ICON[t]}</span>`:""}<span><small>Última actividad</small><b>${esc(ultTxt(ua))}</b></span></div></div></details>`}
+          <div class="dbody"><div class="ult ${ua?"t-"+t:""}">${ua?`<span class="ic">${ICON[t]}</span>`:""}<span><small>Última actividad</small><b>${esc(ultTxt(ua))}</b></span></div>${ua?`<div class="dtools"><button class="copyday" data-copyult="${k}">${ICON.copy}Copiar última actividad</button></div>`:""}</div></details>`}
       h+=`</div></details>`}
     h+=`</div></details>`}
   return h}
@@ -874,6 +874,7 @@ document.addEventListener("click",async e=>{
   if(b.dataset.tab){tab=b.dataset.tab;renderList();window.scrollTo(0,0);return}
   if(b.dataset.mark){const ts=Date.now();const nota=($("mnote")?.value||"").trim();marks.push({id:"l"+ts,tipo:b.dataset.mark,ts,nota});
     try{saveMarks()}catch{}renderList();const t=$("mtoast");if(t)t.textContent=`${b.dataset.mark==="entrada"?"Entrada":"Salida"} registrada a las ${fmtT(ts)}.`+(b.dataset.mark==="salida"?" Última actividad: "+ultTxt(ultimaAct(dayKey(ts))):"");return}
+  if(b.dataset.copyult){const ok=await copyText(ultTxt(ultimaAct(b.dataset.copyult)));b.innerHTML=ok?"Copiado ✓":"No se pudo copiar";setTimeout(()=>b.innerHTML=ICON.copy+"Copiar última actividad",2000);return}
   if(b.dataset.medit){mEdit=mEdit===b.dataset.medit?null:b.dataset.medit;mConf=null;renderList();return}
   if(b.dataset.mdel){if(mConf===b.dataset.mdel){marks=marks.filter(m=>m.id!==b.dataset.mdel);mConf=null;try{saveMarks()}catch{}}else mConf=b.dataset.mdel;renderList();return}
   if("mcancel" in b.dataset){mEdit=null;renderList();return}
