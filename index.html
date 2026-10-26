@@ -104,6 +104,7 @@ details.year>.mdays>details.month{background:rgba(0,0,0,.2)}
 .punch.out{--c:var(--orange)}.punch.next{box-shadow:0 0 30px var(--c),inset 0 0 14px color-mix(in srgb,var(--c) 30%,transparent)}
 .punch i{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;background:var(--c);color:#06110b;box-shadow:0 0 12px var(--c)}.punch b{font:700 16px var(--display)}.punch small{font-size:12px;color:#d7cfea}
 .lunchbtn{width:100%;border-radius:18px;padding:13px;font-weight:700;font-size:15px;border:1.5px solid var(--amber);background:rgba(251,191,36,.12);box-shadow:0 0 14px rgba(251,191,36,.35)}.lunchbtn small{font-weight:500;color:#fde68a}
+.lunchbtn.off{opacity:.55;box-shadow:none}
 .lunch{border-radius:20px;padding:14px;display:grid;gap:12px;border:1.5px solid var(--amber);background:rgba(251,191,36,.1);box-shadow:0 0 18px rgba(251,191,36,.3)}
 .lunch.late{border-color:var(--pink);background:rgba(255,46,122,.12);box-shadow:0 0 18px rgba(255,46,122,.4)}
 .lunch-h{display:grid;gap:4px}.lunch-h b{font:700 15px var(--display)}.lunch-h span{font:600 14px var(--mono);color:#fde68a}.lunch.late .lunch-h span{color:#ffc2d6}
@@ -514,7 +515,7 @@ function jornadaHTML(){
   <button class="lunchbtn" id="lunchBtn" data-mark="almuerzo">🍽️ Salir a almorzar <small>(regreso en 1 h 30)</small></button>
   <div class="lunch" id="lunchCard" hidden><div class="lunch-h"><b id="lunchTxt"></b><span id="lunchLeft"></span></div>
     <div class="lunch-a"><a class="alarm" href="shortcuts://run-shortcut?name=Almuerzo%20Meganet">⏰ Poner alarma</a><button class="punch-r" data-mark="regreso">Regreso de almuerzo</button></div></div>
-  <input class="mnote" id="mnote" placeholder="Nota opcional (ej. salida a almuerzo)" maxlength="120">
+  <input class="mnote" id="mnote" placeholder="Nota opcional (ej. visita a cliente)" maxlength="120">
   <div class="hint">Al tocar <b>Salida</b>, ese día queda unido a tu última actividad terminada.</div>
   <p class="muted" id="mtoast" role="status" style="margin:0;text-align:center"></p>
   <div class="sec-h"><h2>Hoy</h2><span class="total" id="jtotal"></span></div>
@@ -531,7 +532,7 @@ function updateClock(){
   $("jstate").classList.toggle("on",!!inside);
   $("jstateTxt").textContent=!last?"Sin marcaciones todavía":inside?`Dentro desde las ${fmtT(last.ts).slice(0,5)}`:lunch?`En almuerzo desde las ${fmtT(last.ts).slice(0,5)}`:`Fuera · última salida ${fmtT(last.ts).slice(0,5)}`;
   document.querySelectorAll(".punch[data-mark]").forEach(b=>b.classList.toggle("next",!lunch&&(b.dataset.mark==="salida")===!!inside));
-  $("lunchBtn").hidden=!inside;$("lunchCard").hidden=!lunch;
+  $("lunchBtn").hidden=!!lunch;$("lunchBtn").classList.toggle("off",!inside);$("lunchCard").hidden=!lunch;
   if(lunch){const back=last.ts+LUNCH,left=back-Date.now();
     $("lunchTxt").textContent=`🍽️ Almuerzo desde ${fmtT(last.ts).slice(0,5)} · regresa a las ${fmtT(back).slice(0,5)}`;
     $("lunchLeft").textContent=left>=0?`Faltan ${durTxt(left)}`:`Ya debías volver hace ${durTxt(-left)}`;
@@ -890,6 +891,7 @@ document.addEventListener("change",e=>{
 document.addEventListener("click",async e=>{
   const b=e.target.closest("button");if(!b)return;
   if(b.dataset.tab){tab=b.dataset.tab;renderList();window.scrollTo(0,0);return}
+  if(b.dataset.mark==="almuerzo"&&b.classList.contains("off")){const t=$("mtoast");if(t)t.textContent="Primero marca tu Entrada; luego puedes salir a almorzar.";return}
   if(b.dataset.mark){const ts=Date.now();const nota=($("mnote")?.value||"").trim();marks.push({id:"l"+ts,tipo:b.dataset.mark,ts,nota});
     try{saveMarks()}catch{}renderList();const t=$("mtoast");if(t)t.textContent=`${({entrada:"Entrada registrada",salida:"Salida registrada",almuerzo:"Salida a almorzar registrada",regreso:"Regreso de almuerzo registrado"})[b.dataset.mark]} a las ${fmtT(ts)}.`+(b.dataset.mark==="salida"?" Última actividad: "+ultTxt(ultimaAct(dayKey(ts))):b.dataset.mark==="almuerzo"?` Regresa a las ${fmtT(ts+LUNCH).slice(0,5)}.`:"");return}
   if(b.dataset.copyult){const ok=await copyText(ultTxt(ultimaAct(b.dataset.copyult)));b.innerHTML=ok?"Copiado ✓":"No se pudo copiar";setTimeout(()=>b.innerHTML=ICON.copy+"Copiar última actividad",2000);return}
