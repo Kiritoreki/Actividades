@@ -610,7 +610,7 @@ function renderList(){
     <p class="muted" style="margin:0"><b>¿Venías de la app Marcación?</b> En ella toca Respaldo → Exportar copia, y aquí Importar copia: tus marcaciones pasan a Jornada.</p>
     <div class="backup"><button id="expBtn">Exportar copia</button><label class="filebtn">Importar copia<input type="file" id="impFile" accept="application/json,.json" hidden></label></div>
     <p class="muted" id="bkMsg" style="margin:0" role="status"></p></section>
-    <p class="muted" style="margin:0">Versión de la app: <b>30</b></p>
+    <p class="muted" style="margin:0">Versión de la app: <b>31</b></p>
     <p class="muted" id="offState" style="margin:0">${offReady?'<span class="offok">✓ Lista para usar sin internet</span>':"Preparando uso sin internet… mantén la app abierta con internet unos segundos."}</p>`;
   }
   $("app").innerHTML=h;updateClock();
@@ -909,7 +909,7 @@ function renderRet(){
 }
 function realizHTML(){return `<section class="sec nr ${cur.noRealizada?"on":""}" id="nrSec"><div class="sec-h"><h2>¿Se realizó?</h2></div>
     <div class="chips"><button class="chip" data-real="si" aria-pressed="${!cur.noRealizada}">Se realizó</button><button class="chip bad" data-real="no" aria-pressed="${!!cur.noRealizada}">No se realizó</button></div>
-    <div class="chips" id="motivoQuick" ${cur.noRealizada?"":"hidden"}><button class="chip" data-motivo="ausente" aria-pressed="${!!cur.motivoAusente}">🏠 Cliente no se encuentra</button></div>
+    <div class="chips" id="motivoQuick" ${cur.noRealizada?"":"hidden"}><button class="chip" data-motivo="ausente" aria-pressed="${!!cur.motivoAusente}">🏠 Cliente no se encuentra</button><button class="chip" data-motivo="otro" id="motivoOtro" ${cur.motivoAusente?"":"hidden"}>🔄 Otro texto</button></div>
     <label class="f" id="motivoBox" ${cur.noRealizada?"":"hidden"}>Motivo (sale en el reporte, puedes editarlo)<textarea id="f-motivo" data-k="motivo" placeholder="Ej. cliente no estaba en casa, reagendado para mañana">${esc(cur.motivo)}</textarea></label></section>`}
 function refresh(){
   if(!cur)return;
@@ -972,6 +972,23 @@ async function multiCreate(){
     o.lote=lote;o.loteIdx=i+1;o.loteN=N;if(i>0){o.actualizado=Date.now()}});
   const i0=acts.findIndex(a=>a.id===cur.id);if(i0>=0)acts[i0]={...cur};
   try{saveLocal()}catch{}multi=null;renderEditor();window.scrollTo(0,0);await saveNow()}
+let lastMot=-1;
+function motivoAusenteTxt(a){
+  const n=(a.cliente||"").replace(/\s*\(.*?\)\s*/g," ").replace(/_/g," ").trim()||"el cliente";
+  const tel=(a.tel||"").split("/")[0].trim();
+  const act={foco_rojo:"atender el soporte",instalacion:"realizar la instalación",tv:"instalar la app de TV",potencia:"revisar y mejorar la potencia",retiro:"realizar el retiro de equipos"}[a.tipo]||"realizar la actividad";
+  const T=[
+   `Se acudió al domicilio del cliente ${n} para ${act}; los vecinos aledaños nos comentan que no se encuentra en casa en este momento.`,
+   `Al llegar al domicilio de ${n} no hubo respuesta. Los vecinos del sector indican que el cliente salió y no saben a qué hora regresa, por lo que no fue posible ${act}.`,
+   `Nos presentamos en el domicilio del cliente ${n}, pero se encontraba cerrado. Según los vecinos cercanos, el cliente no está en casa, por lo que no se pudo ${act}.`,
+   `Se visitó el domicilio de ${n} para ${act}; sin embargo, los vecinos aledaños nos informan que el cliente se encuentra fuera y no se pudo concretar la visita.`,
+   `Se llegó a la dirección del cliente ${n} y nadie atendió. Los vecinos comentan que el cliente no se encuentra en la vivienda, por lo que la actividad no pudo realizarse.`,
+   `Se acudió a la vivienda de ${n} para ${act}, pero el cliente no se encontraba. Vecinos del lugar confirman que salió y no tienen información de su regreso.`];
+  let i;do{i=Math.floor(Math.random()*T.length)}while(i===lastMot&&T.length>1);lastMot=i;
+  const tels=[` Se intentó comunicar al número ${tel} sin obtener respuesta.`,` Se llamó al ${tel}, pero no contestó.`,` Se intentó contactar al cliente al ${tel} sin éxito.`];
+  const ends=[" Queda pendiente reagendar la visita."," Se solicita reagendar la actividad."," Se reagendará la visita en coordinación con el cliente."];
+  return T[i]+(tel?tels[Math.floor(Math.random()*tels.length)]:"")+ends[Math.floor(Math.random()*ends.length)];
+}
 function loteNav(){if(!cur||!cur.lote)return "";const g=acts.filter(a=>a.lote===cur.lote).sort((a,b)=>a.loteIdx-b.loteIdx);
   const nx=g.find(a=>a.loteIdx>cur.loteIdx)||g.find(a=>a.loteIdx<cur.loteIdx&&a.estado!=="terminada");
   return `<div class="lotenav"><span class="muted">Lote · ${cur.loteIdx}/${cur.loteN}</span>${nx?`<button class="mgo" data-next="${nx.id}">Siguiente: ${esc((nx.cliente||"Sin nombre").replace(/\s*\(.*?\)\s*/g," ").trim())} →</button>`:""}</div>`}
@@ -1023,11 +1040,9 @@ document.addEventListener("click",async e=>{
       err=>{if(err.code===1){done=true;navigator.geolocation.clearWatch(wid);clearTimeout(tm);delete b.dataset.busy;b.disabled=false;b.classList.add("bad");b.textContent="Permiso de ubicación negado: actívalo en Ajustes › Apps › Safari › Ubicación"}},
       {enableHighAccuracy:true,timeout:15000,maximumAge:0});
     const tm=setTimeout(finish,15000);return}
-  if(b.dataset.motivo&&cur&&cur.motivoAusente){cur.motivoAusente=false;cur.motivo="";b.setAttribute("aria-pressed","false");const m=$("f-motivo");if(m)m.value="";refresh();queueSave();return}
-  if(b.dataset.motivo&&cur){cur.motivoAusente=true;b.setAttribute("aria-pressed","true");const n=(cur.cliente||"").replace(/\s*\(.*?\)\s*/g," ").replace(/_/g," ").trim()||"el cliente";
-    const tel=(cur.tel||"").split("/")[0].trim();
-    cur.motivo=`Se acudió al domicilio del cliente ${n}; los vecinos aledaños nos comentan que no se encuentra en casa en este momento.`+(tel?` Se intentó comunicar al número ${tel} sin obtener respuesta.`:"")+` Queda pendiente reagendar la visita.`;
-    const m=$("f-motivo");if(m){m.value=cur.motivo;m.focus()}refresh();queueSave();return}
+  if(b.dataset.motivo==="ausente"&&cur&&cur.motivoAusente){cur.motivoAusente=false;cur.motivo="";b.setAttribute("aria-pressed","false");const m=$("f-motivo");if(m)m.value="";const o=$("motivoOtro");if(o)o.hidden=true;refresh();queueSave();return}
+  if(b.dataset.motivo&&cur){cur.motivoAusente=true;document.querySelector('[data-motivo="ausente"]')?.setAttribute("aria-pressed","true");const o=$("motivoOtro");if(o)o.hidden=false;
+    cur.motivo=motivoAusenteTxt(cur);const m=$("f-motivo");if(m){m.value=cur.motivo;m.focus()}refresh();queueSave();return}
   if(b.dataset.multi){if(b.dataset.multi==="crear")return multiCreate();const m=$("multiBox");if(m)m.remove();multi=null;return}
   if(b.dataset.next){await saveNow();const a=acts.find(x=>x.id===b.dataset.next);if(a){cur=JSON.parse(JSON.stringify(a));renderEditor();window.scrollTo(0,0)}return}
   if(b.dataset.medit){mEdit=mEdit===b.dataset.medit?null:b.dataset.medit;mConf=null;renderList();return}
