@@ -104,7 +104,7 @@ details.year>.mdays>details.month{background:rgba(0,0,0,.2)}
 .punch.out{--c:var(--orange)}.punch.next{box-shadow:0 0 30px var(--c),inset 0 0 14px color-mix(in srgb,var(--c) 30%,transparent)}
 .punch i{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;background:var(--c);color:#06110b;box-shadow:0 0 12px var(--c)}.punch b{font:700 16px var(--display)}.punch small{font-size:12px;color:#d7cfea}
 .lunchbtn{width:100%;border-radius:18px;padding:13px;font-weight:700;font-size:15px;border:1.5px solid var(--amber);background:rgba(251,191,36,.12);box-shadow:0 0 14px rgba(251,191,36,.35)}.lunchbtn small{font-weight:500;color:#fde68a}
-.gpsrow{display:flex}.gpsbtn{font-weight:700;font-size:14px;border:1.5px solid var(--cyan);background:rgba(34,211,238,.1);box-shadow:0 0 12px rgba(34,211,238,.35);border-radius:14px;padding:9px 14px}
+.gpsrow{display:flex}.gpsbtn.bad{border-color:var(--pink);background:rgba(255,46,122,.12);box-shadow:0 0 12px rgba(255,46,122,.4);color:#ffc2d6}.gpsbtn{font-weight:700;font-size:14px;border:1.5px solid var(--cyan);background:rgba(34,211,238,.1);box-shadow:0 0 12px rgba(34,211,238,.35);border-radius:14px;padding:9px 14px}
 .lunchbtn.off{opacity:.55;box-shadow:none}
 .lunch{border-radius:20px;padding:14px;display:grid;gap:12px;border:1.5px solid var(--amber);background:rgba(251,191,36,.1);box-shadow:0 0 18px rgba(251,191,36,.3)}
 .lunch.late{border-color:var(--pink);background:rgba(255,46,122,.12);box-shadow:0 0 18px rgba(255,46,122,.4)}
@@ -605,7 +605,7 @@ function renderList(){
     <p class="muted" style="margin:0"><b>¿Venías de la app Marcación?</b> En ella toca Respaldo → Exportar copia, y aquí Importar copia: tus marcaciones pasan a Jornada.</p>
     <div class="backup"><button id="expBtn">Exportar copia</button><label class="filebtn">Importar copia<input type="file" id="impFile" accept="application/json,.json" hidden></label></div>
     <p class="muted" id="bkMsg" style="margin:0" role="status"></p></section>
-    <p class="muted" style="margin:0">Versión de la app: <b>26</b></p>
+    <p class="muted" style="margin:0">Versión de la app: <b>27</b></p>
     <p class="muted" id="offState" style="margin:0">${offReady?'<span class="offok">✓ Lista para usar sin internet</span>':"Preparando uso sin internet… mantén la app abierta con internet unos segundos."}</p>`;
   }
   $("app").innerHTML=h;updateClock();
@@ -967,12 +967,19 @@ document.addEventListener("click",async e=>{
   if(b.dataset.copyult){const ok=await copyText(ultTxt(ultimaAct(b.dataset.copyult)));b.innerHTML=ok?"Copiado ✓":"No se pudo copiar";setTimeout(()=>b.innerHTML=ICON.copy+"Copiar última actividad",2000);return}
   if("gps" in b.dataset){
     if(!navigator.geolocation){b.textContent="Este teléfono no permite obtener la ubicación";return}
-    b.disabled=true;b.textContent="📍 Buscando tu ubicación…";
-    navigator.geolocation.getCurrentPosition(pos=>{const {latitude:la,longitude:lo,accuracy:ac}=pos.coords;
-        cur.coords=toDMS(la,"N","S")+" "+toDMS(lo,"E","W");const el=$("f-coords");if(el)el.value=cur.coords;
-        b.disabled=false;b.textContent=`📍 Ubicación lista (±${Math.round(ac)} m) · tocar para actualizar`;refresh();queueSave()},
-      err=>{b.disabled=false;b.textContent=err.code===1?"Permiso de ubicación negado: actívalo en Ajustes › Privacidad › Localización":"No se pudo obtener la ubicación. Intenta de nuevo al aire libre";},
-      {enableHighAccuracy:true,timeout:20000,maximumAge:0});return}
+    if(b.dataset.busy)return;b.dataset.busy="1";b.disabled=true;b.classList.remove("bad");b.textContent="📍 Buscando señal GPS…";
+    let best=null,done=false;const t0=Date.now();
+    const finish=()=>{if(done)return;done=true;navigator.geolocation.clearWatch(wid);clearTimeout(tm);delete b.dataset.busy;b.disabled=false;
+      if(!best){b.textContent="No se pudo obtener la ubicación. Intenta de nuevo al aire libre";b.classList.add("bad");return}
+      const {latitude:la,longitude:lo,accuracy:ac}=best;cur.coords=toDMS(la,"N","S")+" "+toDMS(lo,"E","W");const el=$("f-coords");if(el)el.value=cur.coords;
+      const good=ac<=50;b.classList.toggle("bad",!good);
+      b.textContent=good?`📍 Ubicación lista (±${Math.round(ac)} m) · tocar para actualizar`:`⚠️ Ubicación aproximada (±${Math.round(ac)} m): sal al aire libre y toca otra vez`;
+      refresh();queueSave()};
+    const wid=navigator.geolocation.watchPosition(pos=>{if(!best||pos.coords.accuracy<best.accuracy)best={latitude:pos.coords.latitude,longitude:pos.coords.longitude,accuracy:pos.coords.accuracy};
+        b.textContent=`📍 Afinando precisión… ±${Math.round(best.accuracy)} m`;if(best.accuracy<=12||(best.accuracy<=25&&Date.now()-t0>5000))finish()},
+      err=>{if(err.code===1){done=true;navigator.geolocation.clearWatch(wid);clearTimeout(tm);delete b.dataset.busy;b.disabled=false;b.classList.add("bad");b.textContent="Permiso de ubicación negado: actívalo en Ajustes › Apps › Safari › Ubicación"}},
+      {enableHighAccuracy:true,timeout:15000,maximumAge:0});
+    const tm=setTimeout(finish,15000);return}
   if(b.dataset.medit){mEdit=mEdit===b.dataset.medit?null:b.dataset.medit;mConf=null;renderList();return}
   if(b.dataset.mdel){if(mConf===b.dataset.mdel){marks=marks.filter(m=>m.id!==b.dataset.mdel);mConf=null;try{saveMarks()}catch{}}else mConf=b.dataset.mdel;renderList();return}
   if("mcancel" in b.dataset){mEdit=null;renderList();return}
