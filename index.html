@@ -357,7 +357,7 @@ function reportInst(a){
   {const n=notifLines(a);if(n.length)L.push("Notificación al cliente:",...n.map(x=>"* "+x))}
   return L.join("\n");
 }
-function pendTxt(a){return "⏳Pendiente, reagendar"+(a.motivo&&a.motivo.trim()?"\nMotivo: "+a.motivo.trim():"")}
+function pendTxt(a){return "❌No se pudo realizar la actividad"+(a.motivo&&a.motivo.trim()?"\nMotivo: "+a.motivo.trim():"")}
 function report(a){
   let t=reportBase(a);
   if(a.noRealizada){t=t.split("\n").filter(l=>!/^✅\s*se cumplió con la actividad|Cliente comprueba y todo Ok|Realización de los distintos test|Se realizan pruebas de potencia|^\* Cliente comprueba/i.test(l)).join("\n").replace(/\s+$/,"");t+="\n\n"+pendTxt(a)}
@@ -610,7 +610,7 @@ function renderList(){
     <p class="muted" style="margin:0"><b>¿Venías de la app Marcación?</b> En ella toca Respaldo → Exportar copia, y aquí Importar copia: tus marcaciones pasan a Jornada.</p>
     <div class="backup"><button id="expBtn">Exportar copia</button><label class="filebtn">Importar copia<input type="file" id="impFile" accept="application/json,.json" hidden></label></div>
     <p class="muted" id="bkMsg" style="margin:0" role="status"></p></section>
-    <p class="muted" style="margin:0">Versión de la app: <b>31</b></p>
+    <p class="muted" style="margin:0">Versión de la app: <b>32</b></p>
     <p class="muted" id="offState" style="margin:0">${offReady?'<span class="offok">✓ Lista para usar sin internet</span>':"Preparando uso sin internet… mantén la app abierta con internet unos segundos."}</p>`;
   }
   $("app").innerHTML=h;updateClock();
@@ -1084,7 +1084,7 @@ function resumenDia(k){
     if(a.tel)L.push("tel. "+a.tel);
     if(a.ip)L.push("ip, "+a.ip);return L};
   for(const a of list.filter(a=>!a.noRealizada))out.push(blk(a,"✅").join("\n"));
-  for(const a of list.filter(a=>a.noRealizada)){const L=blk(a,"");L.unshift("⏳Pendiente, reagendar");if(a.motivo&&a.motivo.trim())L.push("Motivo: "+a.motivo.trim());out.push(L.join("\n"))}
+  for(const a of list.filter(a=>a.noRealizada)){const L=blk(a,"❌");if(a.motivo&&a.motivo.trim())L.push("Motivo: "+a.motivo.trim());out.push(L.join("\n"))}
   if(out.length===1)return out[0];
   return out.join("\n\n");
 }
