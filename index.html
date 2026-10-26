@@ -610,7 +610,7 @@ function renderList(){
     <p class="muted" style="margin:0"><b>¿Venías de la app Marcación?</b> En ella toca Respaldo → Exportar copia, y aquí Importar copia: tus marcaciones pasan a Jornada.</p>
     <div class="backup"><button id="expBtn">Exportar copia</button><label class="filebtn">Importar copia<input type="file" id="impFile" accept="application/json,.json" hidden></label></div>
     <p class="muted" id="bkMsg" style="margin:0" role="status"></p></section>
-    <p class="muted" style="margin:0">Versión de la app: <b>29</b></p>
+    <p class="muted" style="margin:0">Versión de la app: <b>30</b></p>
     <p class="muted" id="offState" style="margin:0">${offReady?'<span class="offok">✓ Lista para usar sin internet</span>':"Preparando uso sin internet… mantén la app abierta con internet unos segundos."}</p>`;
   }
   $("app").innerHTML=h;updateClock();
@@ -909,7 +909,7 @@ function renderRet(){
 }
 function realizHTML(){return `<section class="sec nr ${cur.noRealizada?"on":""}" id="nrSec"><div class="sec-h"><h2>¿Se realizó?</h2></div>
     <div class="chips"><button class="chip" data-real="si" aria-pressed="${!cur.noRealizada}">Se realizó</button><button class="chip bad" data-real="no" aria-pressed="${!!cur.noRealizada}">No se realizó</button></div>
-    <div class="chips" id="motivoQuick" ${cur.noRealizada?"":"hidden"}><button class="chip" data-motivo="ausente">🏠 Cliente no se encuentra</button></div>
+    <div class="chips" id="motivoQuick" ${cur.noRealizada?"":"hidden"}><button class="chip" data-motivo="ausente" aria-pressed="${!!cur.motivoAusente}">🏠 Cliente no se encuentra</button></div>
     <label class="f" id="motivoBox" ${cur.noRealizada?"":"hidden"}>Motivo (sale en el reporte, puedes editarlo)<textarea id="f-motivo" data-k="motivo" placeholder="Ej. cliente no estaba en casa, reagendado para mañana">${esc(cur.motivo)}</textarea></label></section>`}
 function refresh(){
   if(!cur)return;
@@ -1023,7 +1023,8 @@ document.addEventListener("click",async e=>{
       err=>{if(err.code===1){done=true;navigator.geolocation.clearWatch(wid);clearTimeout(tm);delete b.dataset.busy;b.disabled=false;b.classList.add("bad");b.textContent="Permiso de ubicación negado: actívalo en Ajustes › Apps › Safari › Ubicación"}},
       {enableHighAccuracy:true,timeout:15000,maximumAge:0});
     const tm=setTimeout(finish,15000);return}
-  if(b.dataset.motivo&&cur){const n=(cur.cliente||"").replace(/\s*\(.*?\)\s*/g," ").replace(/_/g," ").trim()||"el cliente";
+  if(b.dataset.motivo&&cur&&cur.motivoAusente){cur.motivoAusente=false;cur.motivo="";b.setAttribute("aria-pressed","false");const m=$("f-motivo");if(m)m.value="";refresh();queueSave();return}
+  if(b.dataset.motivo&&cur){cur.motivoAusente=true;b.setAttribute("aria-pressed","true");const n=(cur.cliente||"").replace(/\s*\(.*?\)\s*/g," ").replace(/_/g," ").trim()||"el cliente";
     const tel=(cur.tel||"").split("/")[0].trim();
     cur.motivo=`Se acudió al domicilio del cliente ${n}; los vecinos aledaños nos comentan que no se encuentra en casa en este momento.`+(tel?` Se intentó comunicar al número ${tel} sin obtener respuesta.`:"")+` Queda pendiente reagendar la visita.`;
     const m=$("f-motivo");if(m){m.value=cur.motivo;m.focus()}refresh();queueSave();return}
