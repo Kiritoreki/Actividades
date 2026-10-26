@@ -103,6 +103,14 @@ details.year>.mdays>details.month{background:rgba(0,0,0,.2)}
 .punch{--c:var(--green);border-radius:20px;padding:14px;display:grid;gap:4px;justify-items:start;text-align:left;background:linear-gradient(180deg,color-mix(in srgb,var(--c) 22%,transparent),rgba(20,12,36,.6));border:1.5px solid var(--c);box-shadow:0 0 16px color-mix(in srgb,var(--c) 45%,transparent),inset 0 1px 0 rgba(255,255,255,.12)}
 .punch.out{--c:var(--orange)}.punch.next{box-shadow:0 0 30px var(--c),inset 0 0 14px color-mix(in srgb,var(--c) 30%,transparent)}
 .punch i{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;background:var(--c);color:#06110b;box-shadow:0 0 12px var(--c)}.punch b{font:700 16px var(--display)}.punch small{font-size:12px;color:#d7cfea}
+.lunchbtn{width:100%;border-radius:18px;padding:13px;font-weight:700;font-size:15px;border:1.5px solid var(--amber);background:rgba(251,191,36,.12);box-shadow:0 0 14px rgba(251,191,36,.35)}.lunchbtn small{font-weight:500;color:#fde68a}
+.lunch{border-radius:20px;padding:14px;display:grid;gap:12px;border:1.5px solid var(--amber);background:rgba(251,191,36,.1);box-shadow:0 0 18px rgba(251,191,36,.3)}
+.lunch.late{border-color:var(--pink);background:rgba(255,46,122,.12);box-shadow:0 0 18px rgba(255,46,122,.4)}
+.lunch-h{display:grid;gap:4px}.lunch-h b{font:700 15px var(--display)}.lunch-h span{font:600 14px var(--mono);color:#fde68a}.lunch.late .lunch-h span{color:#ffc2d6}
+.lunch-a{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.alarm{display:flex;align-items:center;justify-content:center;border-radius:14px;padding:11px;font-weight:700;color:#fff;text-decoration:none;border:1px solid var(--line);background:var(--card)}
+.punch-r{border-radius:14px;padding:11px;font-weight:700;color:#03151a;border:0;background:var(--cyan);box-shadow:0 0 14px rgba(34,211,238,.5)}
+.tg.l{color:var(--amber);border:1px solid var(--amber);background:rgba(251,191,36,.15)}.tg.r{color:var(--cyan);border:1px solid var(--cyan);background:rgba(34,211,238,.15)}
 .mnote{width:100%;font:inherit;padding:11px 14px;border-radius:14px;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--fg)}.mnote::placeholder{color:#6f6590}
 .hint{font-size:13px;color:#d7cfea;padding:10px 12px;border-radius:14px;background:rgba(255,138,31,.1);border:1px solid rgba(255,138,31,.45)}
 .total{font:600 14px var(--mono);color:#f5d0fe}
@@ -467,7 +475,9 @@ function saveMarks(){localStorage.setItem(LSM,JSON.stringify(marks))}
 const fmtT=t=>{const d=new Date(t);return pad(d.getHours())+":"+pad(d.getMinutes())+":"+pad(d.getSeconds())};
 const durTxt=ms=>{const m=Math.max(0,Math.round(ms/60000));return Math.floor(m/60)+" h "+pad(m%60)+" min"};
 function marksDay(k){return marks.filter(m=>dayKey(m.ts)===k).sort((a,b)=>a.ts-b.ts)}
-function worked(list){let t=0,o=null;for(const m of list){if(m.tipo==="entrada"){o=m.ts}else if(o){t+=m.ts-o;o=null}}return {t,o}}
+const LUNCH=90*60000;
+const isIn=t=>t==="entrada"||t==="regreso";
+function worked(list){let t=0,o=null;for(const m of list){if(isIn(m.tipo)){o=m.ts}else if(o){t+=m.ts-o;o=null}}return {t,o}}
 function ultimaAct(k){
   const it=acts.filter(a=>dayKey(a.creado)===k&&!a.noRealizada);if(!it.length)return null;
   const w=a=>(a.estado==="terminada"?2e13:0)+(a.terminadaTs||a.actualizado||a.creado);
@@ -490,10 +500,10 @@ function finHTML(){
     h+=`</div></details>`}
   return h}
 function markRow(m){
-  let h=`<div class="mrow"><span class="tg ${m.tipo==="entrada"?"e":"s"}">${m.tipo}</span><span class="hr">${fmtT(m.ts)}${m.nota?`<small>${esc(m.nota)}</small>`:""}</span>
+  let h=`<div class="mrow"><span class="tg ${({entrada:"e",salida:"s",almuerzo:"l",regreso:"r"})[m.tipo]||"s"}">${m.tipo}</span><span class="hr">${fmtT(m.ts)}${m.nota?`<small>${esc(m.nota)}</small>`:""}</span>
     <span class="macts"><button class="mini" data-medit="${m.id}">Editar</button><button class="mini ${mConf===m.id?"danger":""}" data-mdel="${m.id}">${mConf===m.id?"¿Borrar?":"Borrar"}</button></span></div>`;
   if(mEdit===m.id){const d=new Date(m.ts);h+=`<form class="medit" data-mform="${m.id}"><input type="date" id="me-d" value="${dayKey(m.ts)}" required><input type="time" step="1" id="me-t" value="${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}" required>
-    <select id="me-k"><option value="entrada"${m.tipo==="entrada"?" selected":""}>Entrada</option><option value="salida"${m.tipo==="salida"?" selected":""}>Salida</option></select><button type="submit" class="mini">Guardar</button><button type="button" class="mini" data-mcancel>Cancelar</button></form>`}
+    <select id="me-k"><option value="entrada"${m.tipo==="entrada"?" selected":""}>Entrada</option><option value="salida"${m.tipo==="salida"?" selected":""}>Salida</option><option value="almuerzo"${m.tipo==="almuerzo"?" selected":""}>Almuerzo</option><option value="regreso"${m.tipo==="regreso"?" selected":""}>Regreso</option></select><button type="submit" class="mini">Guardar</button><button type="button" class="mini" data-mcancel>Cancelar</button></form>`}
   return h}
 function jornadaHTML(){
   const hoyK=dayKey(Date.now());const hoy=marksDay(hoyK);
@@ -501,6 +511,9 @@ function jornadaHTML(){
   <div class="clock"><div class="dial" id="dial"><div><div class="time" id="jtime">--:--</div><span class="worked" id="jworked"></span></div></div>
     <div class="state" id="jstate"><span class="dot"></span><span id="jstateTxt"></span></div></div>
   <div class="btns"><button class="punch in" data-mark="entrada"><i>${ICON.in}</i><b>Entrada</b><small>Marcar llegada</small></button><button class="punch out" data-mark="salida"><i>${ICON.out}</i><b>Salida</b><small>Marcar salida</small></button></div>
+  <button class="lunchbtn" id="lunchBtn" data-mark="almuerzo">🍽️ Salir a almorzar <small>(regreso en 1 h 30)</small></button>
+  <div class="lunch" id="lunchCard" hidden><div class="lunch-h"><b id="lunchTxt"></b><span id="lunchLeft"></span></div>
+    <div class="lunch-a"><a class="alarm" href="shortcuts://run-shortcut?name=Almuerzo%20Meganet">⏰ Poner alarma</a><button class="punch-r" data-mark="regreso">Regreso de almuerzo</button></div></div>
   <input class="mnote" id="mnote" placeholder="Nota opcional (ej. salida a almuerzo)" maxlength="120">
   <div class="hint">Al tocar <b>Salida</b>, ese día queda unido a tu última actividad terminada.</div>
   <p class="muted" id="mtoast" role="status" style="margin:0;text-align:center"></p>
@@ -514,10 +527,15 @@ function updateClock(){
   const {t,o}=worked(marksDay(hoyK));const live=t+(o?Date.now()-o:0);
   const wd=n.getDay(),goal=wd===6?3.5*3600000:8*3600000;$("dial").style.setProperty("--p",Math.min(100,live/goal*100).toFixed(1));
   $("jworked").textContent=durTxt(live);$("jtotal").textContent=durTxt(live);
-  const last=[...marks].sort((a,b)=>b.ts-a.ts)[0];const inside=last&&last.tipo==="entrada";
+  const last=[...marks].sort((a,b)=>b.ts-a.ts)[0];const inside=last&&isIn(last.tipo);const lunch=last&&last.tipo==="almuerzo";
   $("jstate").classList.toggle("on",!!inside);
-  $("jstateTxt").textContent=!last?"Sin marcaciones todavía":inside?`Dentro desde las ${fmtT(last.ts).slice(0,5)}`:`Fuera · última salida ${fmtT(last.ts).slice(0,5)}`;
-  document.querySelectorAll("[data-mark]").forEach(b=>b.classList.toggle("next",(b.dataset.mark==="salida")===!!inside));
+  $("jstateTxt").textContent=!last?"Sin marcaciones todavía":inside?`Dentro desde las ${fmtT(last.ts).slice(0,5)}`:lunch?`En almuerzo desde las ${fmtT(last.ts).slice(0,5)}`:`Fuera · última salida ${fmtT(last.ts).slice(0,5)}`;
+  document.querySelectorAll(".punch[data-mark]").forEach(b=>b.classList.toggle("next",!lunch&&(b.dataset.mark==="salida")===!!inside));
+  $("lunchBtn").hidden=!inside;$("lunchCard").hidden=!lunch;
+  if(lunch){const back=last.ts+LUNCH,left=back-Date.now();
+    $("lunchTxt").textContent=`🍽️ Almuerzo desde ${fmtT(last.ts).slice(0,5)} · regresa a las ${fmtT(back).slice(0,5)}`;
+    $("lunchLeft").textContent=left>=0?`Faltan ${durTxt(left)}`:`Ya debías volver hace ${durTxt(-left)}`;
+    $("lunchCard").classList.toggle("late",left<0)}
 }
 setInterval(updateClock,1000);
 function renderDock(){const d=$("dock");d.hidden=!!cur;if(cur)return;
@@ -873,7 +891,7 @@ document.addEventListener("click",async e=>{
   const b=e.target.closest("button");if(!b)return;
   if(b.dataset.tab){tab=b.dataset.tab;renderList();window.scrollTo(0,0);return}
   if(b.dataset.mark){const ts=Date.now();const nota=($("mnote")?.value||"").trim();marks.push({id:"l"+ts,tipo:b.dataset.mark,ts,nota});
-    try{saveMarks()}catch{}renderList();const t=$("mtoast");if(t)t.textContent=`${b.dataset.mark==="entrada"?"Entrada":"Salida"} registrada a las ${fmtT(ts)}.`+(b.dataset.mark==="salida"?" Última actividad: "+ultTxt(ultimaAct(dayKey(ts))):"");return}
+    try{saveMarks()}catch{}renderList();const t=$("mtoast");if(t)t.textContent=`${({entrada:"Entrada registrada",salida:"Salida registrada",almuerzo:"Salida a almorzar registrada",regreso:"Regreso de almuerzo registrado"})[b.dataset.mark]} a las ${fmtT(ts)}.`+(b.dataset.mark==="salida"?" Última actividad: "+ultTxt(ultimaAct(dayKey(ts))):b.dataset.mark==="almuerzo"?` Regresa a las ${fmtT(ts+LUNCH).slice(0,5)}.`:"");return}
   if(b.dataset.copyult){const ok=await copyText(ultTxt(ultimaAct(b.dataset.copyult)));b.innerHTML=ok?"Copiado ✓":"No se pudo copiar";setTimeout(()=>b.innerHTML=ICON.copy+"Copiar última actividad",2000);return}
   if(b.dataset.medit){mEdit=mEdit===b.dataset.medit?null:b.dataset.medit;mConf=null;renderList();return}
   if(b.dataset.mdel){if(mConf===b.dataset.mdel){marks=marks.filter(m=>m.id!==b.dataset.mdel);mConf=null;try{saveMarks()}catch{}}else mConf=b.dataset.mdel;renderList();return}
