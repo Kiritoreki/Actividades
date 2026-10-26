@@ -104,6 +104,10 @@ details.year>.mdays>details.month{background:rgba(0,0,0,.2)}
 .punch.out{--c:var(--orange)}.punch.next{box-shadow:0 0 30px var(--c),inset 0 0 14px color-mix(in srgb,var(--c) 30%,transparent)}
 .punch i{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;background:var(--c);color:#06110b;box-shadow:0 0 12px var(--c)}.punch b{font:700 16px var(--display)}.punch small{font-size:12px;color:#d7cfea}
 .lunchbtn{width:100%;border-radius:18px;padding:13px;font-weight:700;font-size:15px;border:1.5px solid var(--amber);background:rgba(251,191,36,.12);box-shadow:0 0 14px rgba(251,191,36,.35)}.lunchbtn small{font-weight:500;color:#fde68a}
+.multi{border-radius:18px;padding:14px;display:grid;gap:10px;border:1.5px solid var(--cyan);background:rgba(34,211,238,.08);box-shadow:0 0 16px rgba(34,211,238,.25)}
+.multi h3{margin:0;font:700 15px var(--display)}.multi ol{margin:0;padding-left:20px;display:grid;gap:4px;font-size:14px}
+.multi-a,.lotenav{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.lotenav{justify-content:space-between}
+.mgo{font-weight:700;border:0;color:#03151a;background:var(--cyan);box-shadow:0 0 14px rgba(34,211,238,.5);border-radius:14px;padding:11px 14px}
 .gpsrow{display:flex}.gpsbtn.bad{border-color:var(--pink);background:rgba(255,46,122,.12);box-shadow:0 0 12px rgba(255,46,122,.4);color:#ffc2d6}.gpsbtn{font-weight:700;font-size:14px;border:1.5px solid var(--cyan);background:rgba(34,211,238,.1);box-shadow:0 0 12px rgba(34,211,238,.35);border-radius:14px;padding:9px 14px}
 .lunchbtn.off{opacity:.55;box-shadow:none}
 .lunch{border-radius:20px;padding:14px;display:grid;gap:12px;border:1.5px solid var(--amber);background:rgba(251,191,36,.1);box-shadow:0 0 18px rgba(251,191,36,.3)}
@@ -320,6 +324,7 @@ function parse(txt){
     {const nm=l.match(/^nap\s*[,.:]?\s*([A-Za-z0-9]+(?:-[A-Za-z0-9]+)*)\s*(?:[,;/]?\s*(?:h(?:ilo)?)\s*[:.#]?\s*(\d+))?\s*$/i);
       if(nm){out.nap=nm[1].toUpperCase();if(nm[2])out.hilo=nm[2];continue}
       const cm=l.match(/^coordenadas?\s*[,.:]?\s*(.+)$/i);if(cm){out.coords=cm[1].trim();continue}
+      {const nn=l.match(/^([A-Za-z]{1,4}\d{1,4}-\d{1,3})\s*(?:[,;/]?\s*h(?:ilo)?\s*[:.#]?\s*(\d+))?\s*$/i);if(nn){out.nap=nn[1].toUpperCase();if(nn[2])out.hilo=nn[2];continue}}
       const hm=l.match(/^hilo\s*[,.:#]?\s*(\d+)\s*$/i);if(hm){out.hilo=hm[1];continue}
       const pm=l.match(/^potencia(?:\s+actual)?\s*[,.:]?\s*(-?\s*\d+(?:[.,]\d+)?)\s*(?:dbm)?\s*$/i);
       if(pm){out.potAntes=pm[1].replace(/\s/g,"").replace(",",".");continue}}
@@ -473,7 +478,7 @@ document.addEventListener("toggle",e=>{const k=e.target.dataset?.k;if(!k)return;
 const isOpen=(key,byDefault,force)=>force||openSet.has(key)||(!openSet.has("x"+key)&&byDefault);
 function cardHTML(a){const t=TIPOS[a.tipo]?a.tipo:"foco_rojo";
   return `<button class="item t-${t}" data-open="${a.id}"><span class="ic">${ICON[t]}</span>
-    <span style="min-width:0"><b>${esc(a.cliente||"Sin cliente")}</b><small>${hhmm(a.creado)}${a.ip?" · "+esc(a.ip):""}${a.nap?" · NAP "+esc(a.nap):""}${a.tipo==="potencia"&&a.hilo?" · H"+esc(a.hilo):""}${a.tipo==="retiro"?(n=>n?` · ${n} ${n===1?"equipo":"equipos"}`:"")(RET.filter(([k])=>a["ret_"+k]).length):""}${!a.ip&&!a.nap&&a.tvMarca?" · TV "+esc(a.tvMarca):""}${a.tipo==="potencia"&&(a.potDespues||a.potAntes)?` · <span class="pv ${potCls(a.potDespues||a.potAntes)}">${potNum(a.potDespues||a.potAntes).toFixed(2)}</span>`:""}</small></span>
+    <span style="min-width:0"><b>${esc(a.cliente||"Sin cliente")}</b><small>${hhmm(a.creado)}${a.ip?" · "+esc(a.ip):""}${a.nap?" · NAP "+esc(a.nap):""}${a.tipo==="potencia"&&a.hilo?" · H"+esc(a.hilo):""}${a.lote?` · ${a.loteIdx}/${a.loteN}`:""}${a.tipo==="retiro"?(n=>n?` · ${n} ${n===1?"equipo":"equipos"}`:"")(RET.filter(([k])=>a["ret_"+k]).length):""}${!a.ip&&!a.nap&&a.tvMarca?" · TV "+esc(a.tvMarca):""}${a.tipo==="potencia"&&(a.potDespues||a.potAntes)?` · <span class="pv ${potCls(a.potDespues||a.potAntes)}">${potNum(a.potDespues||a.potAntes).toFixed(2)}</span>`:""}</small></span>
     <span class="st ${a.noRealizada?"no":a.estado==="terminada"?"ok":"wait"}">${a.noRealizada?"No realizada":a.estado==="terminada"?"Lista":"Pendiente"}</span></button>`}
 function dayBlock(k,items,title){return `<section class="day"><div class="day-top"><h2>${title||fDay(k)}</h2><button class="copyday" data-copyday="${k}">${ICON.copy}Copiar resumen</button></div>${items.map(cardHTML).join("")}</section>`}
 function dayDetails(k,it,forceOpen,pfx=""){const hoyK=dayKey(Date.now());const pend=it.filter(a=>a.estado!=="terminada").length;
@@ -605,7 +610,7 @@ function renderList(){
     <p class="muted" style="margin:0"><b>¿Venías de la app Marcación?</b> En ella toca Respaldo → Exportar copia, y aquí Importar copia: tus marcaciones pasan a Jornada.</p>
     <div class="backup"><button id="expBtn">Exportar copia</button><label class="filebtn">Importar copia<input type="file" id="impFile" accept="application/json,.json" hidden></label></div>
     <p class="muted" id="bkMsg" style="margin:0" role="status"></p></section>
-    <p class="muted" style="margin:0">Versión de la app: <b>27</b></p>
+    <p class="muted" style="margin:0">Versión de la app: <b>28</b></p>
     <p class="muted" id="offState" style="margin:0">${offReady?'<span class="offok">✓ Lista para usar sin internet</span>':"Preparando uso sin internet… mantén la app abierta con internet unos segundos."}</p>`;
   }
   $("app").innerHTML=h;updateClock();
@@ -677,7 +682,8 @@ function renderEditor(){
 
   <section class="sec"><div class="sec-h"><h2>Reporte</h2><span class="step">05</span></div><pre class="report" id="rep"></pre></section>
 
-  <div class="top"><span class="muted">Creada ${fDay(dayKey(cur.creado))}, ${hhmm(cur.creado)}</span><button class="danger" id="del">Borrar actividad</button></div>`;
+  <div class="top"><span class="muted">Creada ${fDay(dayKey(cur.creado))}, ${hhmm(cur.creado)}</span><button class="danger" id="del">Borrar actividad</button></div>
+  ${loteNav()}`;
   $("bar").hidden=false;refresh();
 }
 const notifHTML=()=>`<section class="sec"><div class="sec-h"><h2>Notificación al cliente</h2></div>
@@ -728,7 +734,8 @@ function renderTV(){
   <section class="sec"><div class="sec-h"><h2>Reporte</h2></div>
     <div class="chips">${chip("tvFmt","formal","Formato ACTIVIDAD")}${chip("tvFmt","rapido","Formato rápido ✅")}</div>
     <pre class="report" id="rep"></pre></section>
-  <div class="top"><span class="muted">Creada ${fDay(dayKey(cur.creado))}, ${hhmm(cur.creado)}</span><button class="danger" id="del">Borrar actividad</button></div>`;
+  <div class="top"><span class="muted">Creada ${fDay(dayKey(cur.creado))}, ${hhmm(cur.creado)}</span><button class="danger" id="del">Borrar actividad</button></div>
+  ${loteNav()}`;
   $("bar").hidden=false;refresh();
 }
 function renderInst(){
@@ -788,7 +795,8 @@ function renderInst(){
 
   <section class="sec"><div class="sec-h"><h2>Reporte</h2><span class="step">06</span></div><pre class="report" id="rep"></pre></section>
 
-  <div class="top"><span class="muted">Creada ${fDay(dayKey(cur.creado))}, ${hhmm(cur.creado)}</span><button class="danger" id="del">Borrar actividad</button></div>`;
+  <div class="top"><span class="muted">Creada ${fDay(dayKey(cur.creado))}, ${hhmm(cur.creado)}</span><button class="danger" id="del">Borrar actividad</button></div>
+  ${loteNav()}`;
   $("bar").hidden=false;refresh();
 }
 const telNums=t=>(String(t||"").match(/\+?\d[\d\s-]{5,}\d/g)||[]).map(x=>x.trim());
@@ -859,7 +867,8 @@ function renderPot(){
     <div class="list-chk">${EVID_P.map(([k,l,c])=>`<div data-eq="${c||""}" ${c==="eq"&&!(cur.onu||cur.router)?"hidden":""}>${chk(k,l,"","evid")}</div>`).join("")}</div>
   </section>
   <section class="sec"><div class="sec-h"><h2>Reporte</h2><span class="step">04</span></div><pre class="report" id="rep"></pre></section>
-  <div class="top"><span class="muted">Creada ${fDay(dayKey(cur.creado))}, ${hhmm(cur.creado)}</span><button class="danger" id="del">Borrar actividad</button></div>`;
+  <div class="top"><span class="muted">Creada ${fDay(dayKey(cur.creado))}, ${hhmm(cur.creado)}</span><button class="danger" id="del">Borrar actividad</button></div>
+  ${loteNav()}`;
   $("bar").hidden=false;refresh();
 }
 function renderRet(){
@@ -894,7 +903,8 @@ function renderRet(){
     <div class="list-chk">${EVID_R.map(([k,l])=>`<div>${chk(k,l,"","evid")}</div>`).join("")}</div>
   </section>
   <section class="sec"><div class="sec-h"><h2>Reporte</h2><span class="step">03</span></div><pre class="report" id="rep"></pre></section>
-  <div class="top"><span class="muted">Creada ${fDay(dayKey(cur.creado))}, ${hhmm(cur.creado)}</span><button class="danger" id="del">Borrar actividad</button></div>`;
+  <div class="top"><span class="muted">Creada ${fDay(dayKey(cur.creado))}, ${hhmm(cur.creado)}</span><button class="danger" id="del">Borrar actividad</button></div>
+  ${loteNav()}`;
   $("bar").hidden=false;refresh();
 }
 function realizHTML(){return `<section class="sec nr ${cur.noRealizada?"on":""}" id="nrSec"><div class="sec-h"><h2>¿Se realizó?</h2></div>
@@ -932,6 +942,37 @@ async function saveNow(){clearTimeout(saveT);if(!cur)return;const {id,...data}=c
   catch{const s=$("saved");if(s)s.textContent="No se pudo guardar: el teléfono no tiene espacio."}}
 async function remove(id){acts=acts.filter(a=>a.id!==id);saveLocal()}
 
+const PKEYS=["tecnico","soporte","cliente","direccion","tel","ip","extra","cedula","correo","plan","nap","hilo","potAntes","coords"];
+function applyParsed(o,p,ui){o.mapa=p.mapa;for(const k of PKEYS){if(o.tipo==="instalacion"&&k==="extra")continue;if(!p[k]&&["cedula","correo","plan","nap","hilo","potAntes","coords"].includes(k))continue;o[k]=p[k];if(ui){const el=$("f-"+k);if(el)el.value=p[k]}}}
+const isCli=l=>/^\s*cliente\s*[,.:]/i.test(l);
+function splitBlocks(txt){
+  const lines=txt.split(/\r?\n/);if(lines.filter(isCli).length<2)return null;
+  const paras=txt.split(/\r?\n\s*\r?\n/).map(x=>x.trim()).filter(Boolean);
+  let blocks=paras.filter(x=>x.split(/\r?\n/).some(isCli));
+  if(blocks.length<2){blocks=[];let curB=[];for(const l of lines){if(isCli(l)&&curB.some(isCli)){blocks.push(curB.join("\n"));curB=[]}curB.push(l)}if(curB.length)blocks.push(curB.join("\n"))}
+  return blocks.length>=2?blocks:null}
+let multi=null;
+function multiCheck(txt){
+  const box=$("multiBox");if(box)box.remove();multi=null;
+  if(cur.lote)return;const blocks=splitBlocks(txt);if(!blocks)return;
+  const ps=blocks.map(parse);const tec=parse(txt).tecnico||ps.find(p=>p.tecnico)?.tecnico||"";
+  multi={blocks,ps,tec};
+  const ta=$("f-pegado");const el=document.createElement("div");el.id="multiBox";el.className="multi";
+  el.innerHTML=`<h3>📋 Detecté ${blocks.length} clientes en este mensaje</h3>
+    <ol>${ps.map(p=>`<li><b>${esc(p.cliente||"Sin nombre")}</b>${p.nap?` · ${esc(p.nap)}`:""}${p.hilo?` H${esc(p.hilo)}`:""}${p.potAntes?` · <span class="pv ${potCls(p.potAntes)}">${esc(p.potAntes)}</span>`:""}</li>`).join("")}</ol>
+    ${tec?`<label class="chk"><input type="checkbox" id="multiTec" checked><span>¿Mismos técnicos para todas?<small>${esc(tec)}</small></span></label>`:""}
+    <div class="multi-a"><button class="mgo" data-multi="crear">Crear ${blocks.length} actividades</button><button data-multi="no">No, es una sola</button></div>`;
+  ta.closest("label").after(el)}
+async function multiCreate(){
+  if(!multi)return;const sameTec=$("multiTec")?.checked;const lote="L"+Date.now();const N=multi.blocks.length;const t0=Date.now();
+  multi.blocks.forEach((bt,i)=>{const p=multi.ps[i];if(sameTec&&multi.tec&&!p.tecnico)p.tecnico=multi.tec;
+    let o;if(i===0){o=cur;o.pegado=bt;applyParsed(o,p,false)}else{o={id:"l"+(t0+i),...blank(cur.tipo),creado:t0+i,pegado:bt};applyParsed(o,p,false);acts.push(o)}
+    o.lote=lote;o.loteIdx=i+1;o.loteN=N;if(i>0){o.actualizado=Date.now()}});
+  const i0=acts.findIndex(a=>a.id===cur.id);if(i0>=0)acts[i0]={...cur};
+  try{saveLocal()}catch{}multi=null;renderEditor();window.scrollTo(0,0);await saveNow()}
+function loteNav(){if(!cur||!cur.lote)return "";const g=acts.filter(a=>a.lote===cur.lote).sort((a,b)=>a.loteIdx-b.loteIdx);
+  const nx=g.find(a=>a.loteIdx>cur.loteIdx)||g.find(a=>a.loteIdx<cur.loteIdx&&a.estado!=="terminada");
+  return `<div class="lotenav"><span class="muted">Lote · ${cur.loteIdx}/${cur.loteN}</span>${nx?`<button class="mgo" data-next="${nx.id}">Siguiente: ${esc((nx.cliente||"Sin nombre").replace(/\s*\(.*?\)\s*/g," ").trim())} →</button>`:""}</div>`}
 async function newAct(tipo){
   const a=blank(tipo);let id="l"+a.creado;
   cur={id,...a};acts.push({...cur});renderEditor();window.scrollTo(0,0);
@@ -950,7 +991,7 @@ document.addEventListener("input",e=>{
     if(/^(onuAnt|onuNueva|routerAnt|routerNueva|nap|mac|gpon|r_\w+_(mac|sn|gpon))$/.test(t.dataset.k)){const p=t.selectionStart;v=v.toUpperCase();t.value=v;t.setSelectionRange(p,p)}
     if(/^(potAntes|potDespues)$/.test(t.dataset.k)&&v.includes("/")){const nums=v.match(/-?\d+(?:[.,]\d+)?/g)||[];v=nums[0]||"";t.value=v;const k2=t.dataset.k+"Olt";cur[k2]=(nums[1]||"").replace(",",".");const o=$("f-"+k2);if(o)o.value=cur[k2]}
     cur[t.dataset.k]=v;
-    if(t.dataset.k==="pegado"){const p=parse(v);cur.mapa=p.mapa;for(const k of ["tecnico","soporte","cliente","direccion","tel","ip","extra","cedula","correo","plan","nap","hilo","potAntes","coords"]){if(cur.tipo==="instalacion"&&k==="extra")continue;if(!p[k]&&["cedula","correo","plan","nap","hilo","potAntes","coords"].includes(k))continue;cur[k]=p[k];const el=$("f-"+k);if(el)el.value=p[k]}}
+    if(t.dataset.k==="pegado"){const p=parse(v);applyParsed(cur,p,true);multiCheck(v)}
     refresh();queueSave();}
 });
 document.addEventListener("change",e=>{
@@ -980,6 +1021,8 @@ document.addEventListener("click",async e=>{
       err=>{if(err.code===1){done=true;navigator.geolocation.clearWatch(wid);clearTimeout(tm);delete b.dataset.busy;b.disabled=false;b.classList.add("bad");b.textContent="Permiso de ubicación negado: actívalo en Ajustes › Apps › Safari › Ubicación"}},
       {enableHighAccuracy:true,timeout:15000,maximumAge:0});
     const tm=setTimeout(finish,15000);return}
+  if(b.dataset.multi){if(b.dataset.multi==="crear")return multiCreate();const m=$("multiBox");if(m)m.remove();multi=null;return}
+  if(b.dataset.next){await saveNow();const a=acts.find(x=>x.id===b.dataset.next);if(a){cur=JSON.parse(JSON.stringify(a));renderEditor();window.scrollTo(0,0)}return}
   if(b.dataset.medit){mEdit=mEdit===b.dataset.medit?null:b.dataset.medit;mConf=null;renderList();return}
   if(b.dataset.mdel){if(mConf===b.dataset.mdel){marks=marks.filter(m=>m.id!==b.dataset.mdel);mConf=null;try{saveMarks()}catch{}}else mConf=b.dataset.mdel;renderList();return}
   if("mcancel" in b.dataset){mEdit=null;renderList();return}
