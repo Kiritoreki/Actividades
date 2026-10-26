@@ -574,6 +574,7 @@ function renderList(){
     <p class="muted" style="margin:0"><b>¿Venías de la app Marcación?</b> En ella toca Respaldo → Exportar copia, y aquí Importar copia: tus marcaciones pasan a Jornada.</p>
     <div class="backup"><button id="expBtn">Exportar copia</button><label class="filebtn">Importar copia<input type="file" id="impFile" accept="application/json,.json" hidden></label></div>
     <p class="muted" id="bkMsg" style="margin:0" role="status"></p></section>
+    <p class="muted" style="margin:0">Versión de la app: <b>24</b></p>
     <p class="muted" id="offState" style="margin:0">${offReady?'<span class="offok">✓ Lista para usar sin internet</span>':"Preparando uso sin internet… mantén la app abierta con internet unos segundos."}</p>`;
   }
   $("app").innerHTML=h;updateClock();
