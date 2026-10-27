@@ -118,6 +118,7 @@ details.year>.mdays>details.month{background:rgba(0,0,0,.2)}
 .rep-warn h3{margin:0;font:700 15px var(--display);color:#fde68a}.vis{display:grid;gap:2px;padding:8px 10px;border-radius:12px;background:rgba(0,0,0,.25)}.vis b{font-size:13.5px}.vis span{font-size:13px;color:#d7cfea;overflow-wrap:anywhere}
 .bk{display:grid;gap:8px;border-radius:16px;padding:12px;border:1.5px solid var(--cyan);background:rgba(34,211,238,.08)}.bk .mgo{justify-self:start}
 .grp{font:700 12px var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:2px}
+.bq{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.bq-l{font:600 12px var(--sans);color:var(--cyan)}.bq input{width:96px;text-align:center;letter-spacing:.12em}.bq-h{font-size:11px;color:var(--muted)}
 .pair{display:grid;gap:6px;padding:10px;border-radius:12px;background:rgba(0,0,0,.2);border:1px solid var(--line)}.pair h4{margin:0;font:600 13px var(--sans);color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
 .gpsrow{display:flex}.gpsbtn.bad{border-color:var(--pink);background:rgba(255,46,122,.12);box-shadow:0 0 12px rgba(255,46,122,.4);color:#ffc2d6}.gpsbtn{font-weight:700;font-size:14px;border:1.5px solid var(--cyan);background:rgba(34,211,238,.1);box-shadow:0 0 12px rgba(34,211,238,.35);border-radius:14px;padding:9px 14px}
 .lunchbtn.off{opacity:.55;box-shadow:none}
@@ -628,7 +629,7 @@ function renderList(){
     <div class="backup"><button id="expBtn">Exportar copia</button><label class="filebtn">Importar copia<input type="file" id="impFile" accept="application/json,.json" hidden></label></div>
     <p class="muted" id="bkMsg" style="margin:0" role="status"></p>
     <p class="muted" style="margin:0">${(lb=>lb?`Última copia: ${fDay(dayKey(lb))}, ${hhmm(lb)}`:"Todavía no has exportado ninguna copia.")(+(lsGet("actividades.lastBackup")||0))}</p></section>
-    <p class="muted" style="margin:0">Versión de la app: <b>37</b></p>
+    <p class="muted" style="margin:0">Versión de la app: <b>38</b></p>
     <p class="muted" id="offState" style="margin:0">${offReady?'<span class="offok">✓ Lista para usar sin internet</span>':"Preparando uso sin internet… mantén la app abierta con internet unos segundos."}</p>`;
   }
   $("app").innerHTML=h;updateClock();
@@ -674,8 +675,8 @@ function renderEditor(){
       <button class="chip" data-tog="router" aria-pressed="${!!cur.router}">Router</button></div>
     <div class="box" id="boxFibra" ${cur.fibra?"":"hidden"}><h3>Fibra nueva</h3>${inp("metros","Metros de drop",{unit:"m",attrs:'inputmode="numeric" class="mono" placeholder="0"'})}</div>
     <div class="box" id="boxOnu" ${cur.onu?"":"hidden"}><h3>Cambio de bridge (ONU)</h3>
-      <div class="pair"><h4>Bridge anterior</h4><div class="grid">${inp("onuAnt","MAC",{attrs:'class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="Opcional"'})}${inp("onuSnAnt","SN GPON",{attrs:'class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="Opcional"'})}</div></div>
-      <div class="pair"><h4>Bridge nueva</h4><div class="grid">${inp("onuNueva","MAC",{attrs:'class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="EC-B9-31-…"'})}${inp("onuSnNueva","SN GPON",{attrs:'class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="54504C47…"'})}</div></div></div>
+      <div class="pair"><h4>Bridge anterior</h4>${bq("onuAnt","onuSnAnt")}<div class="grid">${inp("onuAnt","MAC",{attrs:'class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="Opcional"'})}${inp("onuSnAnt","SN GPON",{attrs:'class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="Opcional"'})}</div></div>
+      <div class="pair"><h4>Bridge nueva</h4>${bq("onuNueva","onuSnNueva")}<div class="grid">${inp("onuNueva","MAC",{attrs:'class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="EC-B9-31-…"'})}${inp("onuSnNueva","SN GPON",{attrs:'class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="54504C47…"'})}</div></div></div>
     <div class="box" id="boxRouter" ${cur.router?"":"hidden"}><div class="sec-h"><h3>Cambio de router</h3><span class="progress" id="rprog"></span></div>
       <div class="pair"><h4>Router anterior</h4><div class="grid">${inp("routerAnt","MAC",{attrs:'class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="Opcional"'})}${inp("routerSnAnt","SN",{attrs:'class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="Opcional"'})}</div></div>
       <div class="pair"><h4>Router nuevo</h4><div class="grid">${inp("routerNueva","MAC",{attrs:'class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false"'})}${inp("routerSnNueva","SN",{attrs:'class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false"'})}</div></div>
@@ -918,8 +919,8 @@ function renderPot(){
     <div class="box" id="boxHilo" ${cur.accHilo?"":"hidden"}><h3>Cambio de hilo</h3>${inp("hiloNuevo","Hilo nuevo",{attrs:'inputmode="numeric" class="mono"'})}</div>
     <div class="box" id="boxFibra" ${cur.fibra?"":"hidden"}><h3>Drop nuevo</h3>${inp("metros","Metros de drop",{unit:"m",attrs:'inputmode="numeric" class="mono" placeholder="0"'})}</div>
     <div class="box" id="boxOnu" ${cur.onu?"":"hidden"}><h3>Cambio de ONU (bridge)</h3>
-      <div class="pair"><h4>Bridge anterior</h4><div class="grid">${inp("onuAnt","MAC",{attrs:'class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="Opcional"'})}${inp("onuSnAnt","SN GPON",{attrs:'class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="Opcional"'})}</div></div>
-      <div class="pair"><h4>Bridge nueva</h4><div class="grid">${inp("onuNueva","MAC",{attrs:'class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="EC-B9-31-…"'})}${inp("onuSnNueva","SN GPON",{attrs:'class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="54504C47…"'})}</div></div></div>
+      <div class="pair"><h4>Bridge anterior</h4>${bq("onuAnt","onuSnAnt")}<div class="grid">${inp("onuAnt","MAC",{attrs:'class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="Opcional"'})}${inp("onuSnAnt","SN GPON",{attrs:'class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="Opcional"'})}</div></div>
+      <div class="pair"><h4>Bridge nueva</h4>${bq("onuNueva","onuSnNueva")}<div class="grid">${inp("onuNueva","MAC",{attrs:'class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="EC-B9-31-…"'})}${inp("onuSnNueva","SN GPON",{attrs:'class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="54504C47…"'})}</div></div></div>
     <div class="box" id="boxRouter" ${cur.router?"":"hidden"}><div class="sec-h"><h3>Cambio de router</h3><span class="progress" id="rprog"></span></div>
       <div class="pair"><h4>Router anterior</h4><div class="grid">${inp("routerAnt","MAC",{attrs:'class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="Opcional"'})}${inp("routerSnAnt","SN",{attrs:'class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="Opcional"'})}</div></div>
       <div class="pair"><h4>Router nuevo</h4><div class="grid">${inp("routerNueva","MAC",{attrs:'class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false"'})}${inp("routerSnNueva","SN",{attrs:'class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false"'})}</div></div>
@@ -1067,6 +1068,10 @@ function motivoAusenteTxt(a){
 function loteNav(){if(!cur||!cur.lote)return "";const g=acts.filter(a=>a.lote===cur.lote).sort((a,b)=>a.loteIdx-b.loteIdx);
   const nx=g.find(a=>a.loteIdx>cur.loteIdx)||g.find(a=>a.loteIdx<cur.loteIdx&&a.estado!=="terminada");
   return `<div class="lotenav"><span class="muted">Lote · ${cur.loteIdx}/${cur.loteN}</span>${nx?`<button class="mgo" data-next="${nx.id}">Siguiente: ${esc((nx.cliente||"Sin nombre").replace(/\s*\(.*?\)\s*/g," ").trim())} →</button>`:""}</div>`}
+/* --- autocompletar bridge por modelo --- */
+const BMOD={G7:{n:"TP-Link G7",len:4,mac:h=>"EC-B9-31-FF-"+h.slice(0,2)+"-"+h.slice(2),sn:h=>"54504C4731FF"+h,
+  from:m=>{const x=(m||"").match(/^EC-B9-31-FF-([0-9A-F]{2})-([0-9A-F]{2})$/);return x?x[1]+x[2]:""}}};
+function bq(mk,sk){const m=BMOD.G7;return `<div class="bq"><span class="bq-l">⚡ ${m.n}</span><input class="mono" data-q="G7" data-mk="${mk}" data-sk="${sk}" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="últimos ${m.len}" value="${m.from(cur[mk])}"><span class="bq-h">Llena MAC y SN</span></div>`}
 async function newAct(tipo){
   const a=blank(tipo);let id="l"+a.creado;
   cur={id,...a};acts.push({...cur});renderEditor();window.scrollTo(0,0);
@@ -1081,6 +1086,10 @@ async function back(){
 /* --- eventos --- */
 document.addEventListener("input",e=>{
   if(!cur)return;const t=e.target;
+  if(t.dataset.q){const m=BMOD[t.dataset.q];const h=t.value.toUpperCase().replace(/[^0-9A-F]/g,"").slice(0,m.len);if(h!==t.value)t.value=h;
+    if(h.length===m.len){const mk=t.dataset.mk,sk=t.dataset.sk;cur[mk]=m.mac(h);cur[sk]=m.sn(h);
+      const a=$("f-"+mk),b=$("f-"+sk);if(a)a.value=cur[mk];if(b)b.value=cur[sk];refresh();queueSave();}
+    return}
   if(t.dataset.k){let v=t.value;
     if(/^(onuAnt|onuNueva|routerAnt|routerNueva|onuSnAnt|onuSnNueva|routerSnAnt|routerSnNueva|nap|mac|gpon|r_\w+_(mac|sn|gpon))$/.test(t.dataset.k)){const p=t.selectionStart;v=v.toUpperCase();t.value=v;t.setSelectionRange(p,p)}
     if(/^(potAntes|potDespues)$/.test(t.dataset.k)&&v.includes("/")){const nums=v.match(/-?\d+(?:[.,]\d+)?/g)||[];v=nums[0]||"";t.value=v;const k2=t.dataset.k+"Olt";cur[k2]=(nums[1]||"").replace(",",".");const o=$("f-"+k2);if(o)o.value=cur[k2]}
