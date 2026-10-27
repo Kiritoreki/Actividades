@@ -118,6 +118,7 @@ details.year>.mdays>details.month{background:rgba(0,0,0,.2)}
 .rep-warn h3{margin:0;font:700 15px var(--display);color:#fde68a}.vis{display:grid;gap:2px;padding:8px 10px;border-radius:12px;background:rgba(0,0,0,.25)}.vis b{font-size:13.5px}.vis span{font-size:13px;color:#d7cfea;overflow-wrap:anywhere}
 .bk{display:grid;gap:8px;border-radius:16px;padding:12px;border:1.5px solid var(--cyan);background:rgba(34,211,238,.08)}.bk .mgo{justify-self:start}
 .grp{font:700 12px var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:2px}
+.ipgo{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;margin-top:8px;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,90,120,.5);background:rgba(255,60,100,.12);color:var(--text);text-align:left;font:inherit;cursor:pointer}.ipgo small{color:var(--muted)}
 .bqw{display:grid;gap:8px}.bq-mods{display:flex;gap:6px;flex-wrap:wrap}.chip.sm{padding:5px 10px;font-size:12px;min-height:0}
 .bq{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.bq-l{font:600 12px var(--sans);color:var(--cyan)}.bq input{text-align:center;letter-spacing:.12em}.bq-h{font-size:11px;color:var(--muted)}
 .pair{display:grid;gap:6px;padding:10px;border-radius:12px;background:rgba(0,0,0,.2);border:1px solid var(--line)}.pair h4{margin:0;font:600 13px var(--sans);color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
@@ -630,7 +631,7 @@ function renderList(){
     <div class="backup"><button id="expBtn">Exportar copia</button><label class="filebtn">Importar copia<input type="file" id="impFile" accept="application/json,.json" hidden></label></div>
     <p class="muted" id="bkMsg" style="margin:0" role="status"></p>
     <p class="muted" style="margin:0">${(lb=>lb?`Última copia: ${fDay(dayKey(lb))}, ${hhmm(lb)}`:"Todavía no has exportado ninguna copia.")(+(lsGet("actividades.lastBackup")||0))}</p></section>
-    <p class="muted" style="margin:0">Versión de la app: <b>39</b></p>
+    <p class="muted" style="margin:0">Versión de la app: <b>40</b></p>
     <p class="muted" id="offState" style="margin:0">${offReady?'<span class="offok">✓ Lista para usar sin internet</span>':"Preparando uso sin internet… mantén la app abierta con internet unos segundos."}</p>`;
   }
   $("app").innerHTML=h;updateClock();
@@ -871,12 +872,10 @@ function ipResults(){
 function ipWarn(){const inpEl=$("f-ip");if(!inpEl||!cur)return;let el=$("ipWarn");const ip=ipNorm(cur.ip);
   const others=ip?acts.filter(a=>a.id!==cur.id&&ipNorm(a.ip)===ip).sort((a,b)=>b.creado-a.creado):[];
   if(!others.length){if(el)el.remove();return}
-  const byName=[...new Map(others.map(a=>[normName(a.cliente)||a.id,a])).values()];
-  const diff=byName.filter(a=>!(cur.cliente&&sameClient({cliente:a.cliente},{cliente:cur.cliente})));
-  if(!el){el=document.createElement("p");el.id="ipWarn";el.className="ipwarn full";inpEl.closest("label").after(el)}
-  el.classList.toggle("same",!diff.length);
-  el.innerHTML=diff.length?`⚠️ La IP <b>${esc(ip)}</b> se repite: ya está registrada con ${diff.map(a=>`<b>${esc(a.cliente||"otro cliente")}</b> (${esc(fDay(dayKey(a.creado)).replace(/ de \d{4}$/,""))})`).join(", ")}. Verifica que sea la correcta.`
-    :`ℹ️ La IP <b>${esc(ip)}</b> se repite: ya la usaste ${others.length} ${others.length===1?"vez":"veces"} con este mismo cliente.`}
+  const seen=new Set(),diff=[];for(const a of others){if(cur.cliente&&sameClient({cliente:a.cliente},{cliente:cur.cliente}))continue;const k=normName(a.cliente)||a.id;if(!seen.has(k)){seen.add(k);diff.push(a)}}
+  if(!diff.length){if(el)el.remove();return}
+  if(!el){el=document.createElement("div");el.id="ipWarn";el.className="ipwarn full";inpEl.closest("label").after(el)}
+  el.innerHTML=`⚠️ La IP <b>${esc(ip)}</b> ya está registrada con otro cliente. Toca para ver la actividad:${diff.map(a=>`<button class="ipgo" data-open="${a.id}"><b>${esc(a.cliente||"Cliente sin nombre")}</b><small>${esc(fDay(dayKey(a.creado)).replace(/ de \d{4}$/,""))} · ${esc((TIPOS[a.tipo]||TIPOS.foco_rojo)[0])} ›</small></button>`).join("")}`}
 function mapLink(){const ta=$("f-pegado");if(!ta)return;let el=$("mapLink");
   if(!el){el=document.createElement("p");el.id="mapLink";el.className="muted";el.style.margin="0";ta.closest("label").after(el)}
   el.hidden=!cur.mapa;el.innerHTML=cur.mapa?`📍 Ubicación detectada (no va en el reporte): <a href="${esc(cur.mapa)}" target="_blank" rel="noopener">Abrir en Maps</a>`:""}
@@ -1160,7 +1159,7 @@ document.addEventListener("click",async e=>{
   if(b.dataset.mdel){if(mConf===b.dataset.mdel){marks=marks.filter(m=>m.id!==b.dataset.mdel);mConf=null;try{saveMarks()}catch{}}else mConf=b.dataset.mdel;renderList();return}
   if("mcancel" in b.dataset){mEdit=null;renderList();return}
   if(b.dataset.new)return newAct(b.dataset.new);
-  if(b.dataset.open){const a=acts.find(x=>x.id===b.dataset.open);if(a){cur=JSON.parse(JSON.stringify(a));renderEditor();window.scrollTo(0,0)}return}
+  if(b.dataset.open){if(cur)await saveNow();const a=acts.find(x=>x.id===b.dataset.open);if(a){cur=JSON.parse(JSON.stringify(a));renderEditor();window.scrollTo(0,0)}return}
   if("back" in b.dataset)return back();
   if(b.dataset.deltel){const n=telNums(cur.tel);n.splice(+b.dataset.deltel,1);cur.tel=n.join(" / ");const el=$("f-tel");if(el)el.value=cur.tel;refresh();queueSave();return}
   if(b.dataset.marca){const m=b.dataset.marca;cur.tvMarca=cur.tvMarca===m?"":m;const so=(MARCAS.find(x=>x[0]===m)||[])[1];if(cur.tvMarca&&so)cur.tvSO=so;renderTV();queueSave();return}
