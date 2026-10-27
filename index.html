@@ -108,6 +108,7 @@ details.year>.mdays>details.month{background:rgba(0,0,0,.2)}
 .multi h3{margin:0;font:700 15px var(--display)}.multi ol{margin:0;padding-left:20px;display:grid;gap:4px;font-size:14px}
 .multi-a,.lotenav{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.lotenav{justify-content:space-between}
 .mgo{font-weight:700;border:0;color:#03151a;background:var(--cyan);box-shadow:0 0 14px rgba(34,211,238,.5);border-radius:14px;padding:11px 14px}
+.pair{display:grid;gap:6px;padding:10px;border-radius:12px;background:rgba(0,0,0,.2);border:1px solid var(--line)}.pair h4{margin:0;font:600 13px var(--sans);color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
 .gpsrow{display:flex}.gpsbtn.bad{border-color:var(--pink);background:rgba(255,46,122,.12);box-shadow:0 0 12px rgba(255,46,122,.4);color:#ffc2d6}.gpsbtn{font-weight:700;font-size:14px;border:1.5px solid var(--cyan);background:rgba(34,211,238,.1);box-shadow:0 0 12px rgba(34,211,238,.35);border-radius:14px;padding:9px 14px}
 .lunchbtn.off{opacity:.55;box-shadow:none}
 .lunch{border-radius:20px;padding:14px;display:grid;gap:12px;border:1.5px solid var(--amber);background:rgba(251,191,36,.1);box-shadow:0 0 18px rgba(251,191,36,.3)}
@@ -357,6 +358,7 @@ function reportInst(a){
   {const n=notifLines(a);if(n.length)L.push("Notificación al cliente:",...n.map(x=>"* "+x))}
   return L.join("\n");
 }
+const eqLine=(mac,sn,snL)=>[mac&&mac.trim()?"MAC "+mac.trim():"",sn&&sn.trim()?snL+" "+sn.trim():""].filter(Boolean).join(", ");
 function pendTxt(a){return "❌No se pudo realizar la actividad"+(a.motivo&&a.motivo.trim()?"\nMotivo: "+a.motivo.trim():"")}
 function report(a){
   let t=reportBase(a);
@@ -390,8 +392,8 @@ function reportPot(a){
    if(go||gl)S.push("⚪️mejoró: "+[go&&"ONU "+go,gl&&"OLT "+gl].filter(Boolean).join(" / "))}
   if(a.tests)S.push("⚪️Realización de los distintos test");
   if(a.clienteOk)S.push("⚪️Cliente comprueba y todo Ok");
-  if(a.onu){S.push("⚪️Cambio de nueva bridge");if(a.onuAnt)S.push("⚪️MAC bridge anterior: "+a.onuAnt);if(a.onuNueva)S.push("⚪️MAC bridge nueva: "+a.onuNueva)}
-  if(a.router){S.push("⚪️Cambio de router");if(a.routerAnt)S.push("⚪️MAC router anterior: "+a.routerAnt);if(a.routerNueva)S.push("⚪️MAC router nuevo: "+a.routerNueva)}
+  if(a.onu){S.push("⚪️Cambio de nueva bridge");{const x=eqLine(a.onuAnt,a.onuSnAnt,"SN GPON");if(x)S.push("⚪️bridge anterior: "+x)}{const x=eqLine(a.onuNueva,a.onuSnNueva,"SN GPON");if(x)S.push("⚪️bridge nueva: "+x)}}
+  if(a.router){S.push("⚪️Cambio de router");{const x=eqLine(a.routerAnt,a.routerSnAnt,"SN");if(x)S.push("⚪️router anterior: "+x)}{const x=eqLine(a.routerNueva,a.routerSnNueva,"SN");if(x)S.push("⚪️router nuevo: "+x)}}
   {const n=notifLines(a);if(n.length){S.push("⚪️Notificación al cliente: "+n[0]);for(const x of n.slice(1))S.push("⚪️"+x)}}
   if(a.cumplida)S.push("✅se cumplió con la actividad");
   return L.join("\n")+(S.length?"\n\n"+S.join("\n"):"");
@@ -443,8 +445,8 @@ function reportBase(a){
   if(a.potDespues)S.push(`⚪️potencia después ${neg(a.potDespues)} dBm`);
   if(a.tests)S.push("⚪️Realización de los distintos test");
   if(a.clienteOk)S.push("⚪️Cliente comprueba y todo Ok");
-  if(a.onu){S.push("⚪️Cambio de nueva bridge");if(a.onuAnt)S.push("⚪️MAC bridge anterior: "+a.onuAnt);if(a.onuNueva)S.push("⚪️MAC bridge nueva: "+a.onuNueva)}
-  if(a.router){S.push("⚪️Cambio de router");if(a.routerAnt)S.push("⚪️MAC router anterior: "+a.routerAnt);if(a.routerNueva)S.push("⚪️MAC router nuevo: "+a.routerNueva)}
+  if(a.onu){S.push("⚪️Cambio de nueva bridge");{const x=eqLine(a.onuAnt,a.onuSnAnt,"SN GPON");if(x)S.push("⚪️bridge anterior: "+x)}{const x=eqLine(a.onuNueva,a.onuSnNueva,"SN GPON");if(x)S.push("⚪️bridge nueva: "+x)}}
+  if(a.router){S.push("⚪️Cambio de router");{const x=eqLine(a.routerAnt,a.routerSnAnt,"SN");if(x)S.push("⚪️router anterior: "+x)}{const x=eqLine(a.routerNueva,a.routerSnNueva,"SN");if(x)S.push("⚪️router nuevo: "+x)}}
   {const n=notifLines(a);if(n.length){S.push("⚪️Notificación al cliente: "+n[0]);for(const x of n.slice(1))S.push("⚪️"+x)}}
   if(a.cumplida)S.push("✅se cumplió con la actividad");
   return L.join("\n")+(S.length?"\n\n"+S.join("\n"):"");
@@ -610,7 +612,7 @@ function renderList(){
     <p class="muted" style="margin:0"><b>¿Venías de la app Marcación?</b> En ella toca Respaldo → Exportar copia, y aquí Importar copia: tus marcaciones pasan a Jornada.</p>
     <div class="backup"><button id="expBtn">Exportar copia</button><label class="filebtn">Importar copia<input type="file" id="impFile" accept="application/json,.json" hidden></label></div>
     <p class="muted" id="bkMsg" style="margin:0" role="status"></p></section>
-    <p class="muted" style="margin:0">Versión de la app: <b>32</b></p>
+    <p class="muted" style="margin:0">Versión de la app: <b>33</b></p>
     <p class="muted" id="offState" style="margin:0">${offReady?'<span class="offok">✓ Lista para usar sin internet</span>':"Preparando uso sin internet… mantén la app abierta con internet unos segundos."}</p>`;
   }
   $("app").innerHTML=h;updateClock();
@@ -654,10 +656,12 @@ function renderEditor(){
       <button class="chip" data-tog="onu" aria-pressed="${!!cur.onu}">ONU (bridge)</button>
       <button class="chip" data-tog="router" aria-pressed="${!!cur.router}">Router</button></div>
     <div class="box" id="boxFibra" ${cur.fibra?"":"hidden"}><h3>Fibra nueva</h3>${inp("metros","Metros de drop",{unit:"m",attrs:'inputmode="numeric" class="mono" placeholder="0"'})}</div>
-    <div class="box" id="boxOnu" ${cur.onu?"":"hidden"}><h3>Cambio de bridge (ONU)</h3><div class="grid">
-      ${inp("onuAnt","MAC anterior",{attrs:'class="mono" autocapitalize="characters" placeholder="Opcional"'})}${inp("onuNueva","MAC nueva",{attrs:'class="mono" autocapitalize="characters" placeholder="EC-B9-31-…"'})}</div></div>
-    <div class="box" id="boxRouter" ${cur.router?"":"hidden"}><div class="sec-h"><h3>Cambio de router</h3><span class="progress" id="rprog"></span></div><div class="grid">
-      ${inp("routerAnt","MAC anterior",{attrs:'class="mono" autocapitalize="characters" placeholder="Opcional"'})}${inp("routerNueva","MAC nueva",{attrs:'class="mono" autocapitalize="characters"'})}</div>
+    <div class="box" id="boxOnu" ${cur.onu?"":"hidden"}><h3>Cambio de bridge (ONU)</h3>
+      <div class="pair"><h4>Bridge anterior</h4><div class="grid">${inp("onuAnt","MAC",{attrs:'class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="Opcional"'})}${inp("onuSnAnt","SN GPON",{attrs:'class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="Opcional"'})}</div></div>
+      <div class="pair"><h4>Bridge nueva</h4><div class="grid">${inp("onuNueva","MAC",{attrs:'class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="EC-B9-31-…"'})}${inp("onuSnNueva","SN GPON",{attrs:'class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="54504C47…"'})}</div></div></div>
+    <div class="box" id="boxRouter" ${cur.router?"":"hidden"}><div class="sec-h"><h3>Cambio de router</h3><span class="progress" id="rprog"></span></div>
+      <div class="pair"><h4>Router anterior</h4><div class="grid">${inp("routerAnt","MAC",{attrs:'class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="Opcional"'})}${inp("routerSnAnt","SN",{attrs:'class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="Opcional"'})}</div></div>
+      <div class="pair"><h4>Router nuevo</h4><div class="grid">${inp("routerNueva","MAC",{attrs:'class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false"'})}${inp("routerSnNueva","SN",{attrs:'class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false"'})}</div></div>
       <div class="list-chk">${ROUTER.map(([k,l])=>chk(k,l,"","rchk")).join("")}</div></div>
   </section>
 
@@ -845,10 +849,12 @@ function renderPot(){
       ${tog("fibra","Cambio de drop")}${tog("onu","Cambio de ONU")}${tog("router","Cambio de router")}${tog("accHilo","Cambio de hilo (si lo piden)")}</div>
     <div class="box" id="boxHilo" ${cur.accHilo?"":"hidden"}><h3>Cambio de hilo</h3>${inp("hiloNuevo","Hilo nuevo",{attrs:'inputmode="numeric" class="mono"'})}</div>
     <div class="box" id="boxFibra" ${cur.fibra?"":"hidden"}><h3>Drop nuevo</h3>${inp("metros","Metros de drop",{unit:"m",attrs:'inputmode="numeric" class="mono" placeholder="0"'})}</div>
-    <div class="box" id="boxOnu" ${cur.onu?"":"hidden"}><h3>Cambio de ONU</h3><div class="grid">
-      ${inp("onuAnt","MAC anterior",{attrs:'class="mono" autocapitalize="characters" placeholder="Opcional"'})}${inp("onuNueva","MAC nueva",{attrs:'class="mono" autocapitalize="characters"'})}</div></div>
-    <div class="box" id="boxRouter" ${cur.router?"":"hidden"}><div class="sec-h"><h3>Cambio de router</h3><span class="progress" id="rprog"></span></div><div class="grid">
-      ${inp("routerAnt","MAC anterior",{attrs:'class="mono" autocapitalize="characters" placeholder="Opcional"'})}${inp("routerNueva","MAC nueva",{attrs:'class="mono" autocapitalize="characters"'})}</div>
+    <div class="box" id="boxOnu" ${cur.onu?"":"hidden"}><h3>Cambio de ONU (bridge)</h3>
+      <div class="pair"><h4>Bridge anterior</h4><div class="grid">${inp("onuAnt","MAC",{attrs:'class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="Opcional"'})}${inp("onuSnAnt","SN GPON",{attrs:'class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="Opcional"'})}</div></div>
+      <div class="pair"><h4>Bridge nueva</h4><div class="grid">${inp("onuNueva","MAC",{attrs:'class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="EC-B9-31-…"'})}${inp("onuSnNueva","SN GPON",{attrs:'class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="54504C47…"'})}</div></div></div>
+    <div class="box" id="boxRouter" ${cur.router?"":"hidden"}><div class="sec-h"><h3>Cambio de router</h3><span class="progress" id="rprog"></span></div>
+      <div class="pair"><h4>Router anterior</h4><div class="grid">${inp("routerAnt","MAC",{attrs:'class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="Opcional"'})}${inp("routerSnAnt","SN",{attrs:'class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="Opcional"'})}</div></div>
+      <div class="pair"><h4>Router nuevo</h4><div class="grid">${inp("routerNueva","MAC",{attrs:'class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false"'})}${inp("routerSnNueva","SN",{attrs:'class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false"'})}</div></div>
       <div class="list-chk">${ROUTER.map(([k,l])=>chk(k,l,"","rchk")).join("")}</div></div>
     <label class="f">Otra acción (opcional, una por línea)<textarea id="f-accOtra" data-k="accOtra" style="min-height:60px" placeholder="Ej. se reubicó la roseta">${esc(cur.accOtra)}</textarea></label>
   </section>
@@ -1007,7 +1013,7 @@ async function back(){
 document.addEventListener("input",e=>{
   if(!cur)return;const t=e.target;
   if(t.dataset.k){let v=t.value;
-    if(/^(onuAnt|onuNueva|routerAnt|routerNueva|nap|mac|gpon|r_\w+_(mac|sn|gpon))$/.test(t.dataset.k)){const p=t.selectionStart;v=v.toUpperCase();t.value=v;t.setSelectionRange(p,p)}
+    if(/^(onuAnt|onuNueva|routerAnt|routerNueva|onuSnAnt|onuSnNueva|routerSnAnt|routerSnNueva|nap|mac|gpon|r_\w+_(mac|sn|gpon))$/.test(t.dataset.k)){const p=t.selectionStart;v=v.toUpperCase();t.value=v;t.setSelectionRange(p,p)}
     if(/^(potAntes|potDespues)$/.test(t.dataset.k)&&v.includes("/")){const nums=v.match(/-?\d+(?:[.,]\d+)?/g)||[];v=nums[0]||"";t.value=v;const k2=t.dataset.k+"Olt";cur[k2]=(nums[1]||"").replace(",",".");const o=$("f-"+k2);if(o)o.value=cur[k2]}
     cur[t.dataset.k]=v;
     if(t.dataset.k==="pegado"){const p=parse(v);applyParsed(cur,p,true);multiCheck(v)}

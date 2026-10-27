@@ -1,5 +1,5 @@
 // Cambia VERSION cada vez que subas cambios, para que el teléfono descargue la nueva versión.
-const VERSION = "v32";
+const VERSION = "v33";
 const CACHE = "actividades-" + VERSION;
 const FILES = [
   "./", "index.html", "manifest.webmanifest",
