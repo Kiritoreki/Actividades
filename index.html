@@ -110,7 +110,7 @@ details.year>.mdays>details.month{background:rgba(0,0,0,.2)}
 .mgo{font-weight:700;border:0;color:#03151a;background:var(--cyan);box-shadow:0 0 14px rgba(34,211,238,.5);border-radius:14px;padding:11px 14px}
 .ipwarn{margin:0;font-size:13px;line-height:1.4;padding:9px 11px;border-radius:12px;color:#ffc2d6;border:1.5px solid var(--pink);background:rgba(255,46,122,.12);box-shadow:0 0 12px rgba(255,46,122,.3)}
 .ipwarn.same{color:#fde68a;border-color:var(--amber);background:rgba(251,191,36,.1);box-shadow:0 0 12px rgba(251,191,36,.3)}
-.ipres{display:grid;gap:10px}.ipres:empty{display:none}
+.ipres{display:grid;gap:10px}.vcount{font:700 12.5px var(--sans);color:#03151a;background:var(--cyan);border-radius:99px;padding:3px 10px}.cdata{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:13px;color:#d7cfea}.ipres:empty{display:none}
 .ipcard{border-radius:18px;padding:12px;display:grid;gap:8px;background:var(--card);border:1px solid rgba(168,85,247,.3)}.ipcard.dup{border-color:var(--pink);box-shadow:0 0 14px rgba(255,46,122,.3)}
 .iph{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}.iph b{font-size:17px}.dupb{font-size:12px;font-weight:700;color:#ffc2d6}
 .ipcli{display:grid;gap:2px;text-align:left;padding:10px 12px;border-radius:12px;background:rgba(0,0,0,.25);border:1px solid var(--line)}.ipcli b{font-size:14.5px}.ipcli small{font-size:12.5px;color:var(--muted)}
@@ -601,11 +601,11 @@ function renderList(){
     h=`<div class="top"><div class="hello"><small>${esc(fecha)}</small><h1>Actividades</h1></div></div>
     <div class="stats"><div class="stat"><b>${hoy.length}</b><span>Hoy</span></div><div class="stat g"><b>${ok}</b><span>${ok===1?"Terminada":"Terminadas"}</span></div><div class="stat a"><b>${hoy.length-ok}</b><span>${hoy.length-ok===1?"Pendiente":"Pendientes"}</span></div></div>
     <div class="tiles"><button class="tile red" data-new="foco_rojo"><i>${ICON.foco_rojo}</i>Foco rojo</button><button class="tile" data-new="instalacion"><i>${ICON.instalacion}</i>Instalación alámbrica</button><button class="tile tv" data-new="tv"><i>${ICON.tv}</i>App de TV</button><button class="tile pot" data-new="potencia"><i>${ICON.potencia}</i>Potencias elevadas</button><button class="tile ret" data-new="retiro"><i>${ICON.retiro}</i>Retiro de equipos</button></div>`;
+    h+=`<label class="searchbox">${ICON.search}<input class="search mono" id="qip" type="search" inputmode="decimal" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="Buscar cliente por IP o cédula" value="${esc(qip)}"></label>
+    <div id="ipRes" class="ipres">${qip.trim()?ipResults():""}</div>`;
     const viejas=acts.filter(a=>dayKey(a.creado)<hoyK&&a.estado!=="terminada").sort((a,b)=>a.creado-b.creado);
     if(viejas.length)h+=`<section class="pend"><div class="pend-h">⏳ Tienes ${viejas.length} ${viejas.length===1?"pendiente":"pendientes"} de días anteriores</div>
       ${viejas.map(a=>`<div class="pend-row">${cardHTML(a).replace('<small>',`<small>${esc(new Date(dayKey(a.creado)+"T12:00").toLocaleDateString("es-EC",{day:"numeric",month:"short"}).replace(".",""))} · `)}<button class="pasar" data-pasar="${a.id}">Pasar a hoy</button></div>`).join("")}</section>`;
-    h+=`<label class="searchbox">${ICON.search}<input class="search mono" id="qip" type="search" inputmode="decimal" placeholder="Buscar cliente por IP (ej. 10.10.45.8)" value="${esc(qip)}"></label>
-    <div id="ipRes" class="ipres">${qip.trim()?ipResults():""}</div>`;
     {const lb=+(lsGet("actividades.lastBackup")||0),first=acts.length?Math.min(...acts.map(a=>a.creado)):0,ref=lb||first,days=ref?Math.floor((Date.now()-ref)/86400000):0;
       if(acts.length&&days>=7)h+=`<div class="bk"><span>💾 ${lb?`Hace <b>${days} días</b> que no guardas una copia de tus datos.`:"Aún no has guardado una copia de tus datos."} Si pierdes el celular, se pierde todo.</span><button class="mgo" id="expBtn">Exportar ahora</button></div>`}
     if(!hoy.length)h+=`<div class="empty">Aún no tienes actividades hoy.<br>Toca una opción de arriba y pega el mensaje que te llega.</div>`;
@@ -628,11 +628,11 @@ function renderList(){
     <div class="backup"><button id="expBtn">Exportar copia</button><label class="filebtn">Importar copia<input type="file" id="impFile" accept="application/json,.json" hidden></label></div>
     <p class="muted" id="bkMsg" style="margin:0" role="status"></p>
     <p class="muted" style="margin:0">${(lb=>lb?`Última copia: ${fDay(dayKey(lb))}, ${hhmm(lb)}`:"Todavía no has exportado ninguna copia.")(+(lsGet("actividades.lastBackup")||0))}</p></section>
-    <p class="muted" style="margin:0">Versión de la app: <b>36</b></p>
+    <p class="muted" style="margin:0">Versión de la app: <b>37</b></p>
     <p class="muted" id="offState" style="margin:0">${offReady?'<span class="offok">✓ Lista para usar sin internet</span>':"Preparando uso sin internet… mantén la app abierta con internet unos segundos."}</p>`;
   }
   $("app").innerHTML=h;updateClock();
-  const si=$("qip");if(si)si.oninput=()=>{qip=si.value;$("ipRes").innerHTML=qip.trim()?ipResults():""};
+  const si=$("qip");if(si)si.oninput=()=>{const nv=si.value.replace(/,/g,".").replace(/[^0-9.]/g,"");if(nv!==si.value)si.value=nv;qip=nv;$("ipRes").innerHTML=qip.trim()?ipResults():""};
   const s=$("q");if(s)s.oninput=()=>{q=s.value;const pos=s.selectionStart;renderList();const n=$("q");n.focus();n.setSelectionRange(pos,pos)};
 }
 
@@ -662,7 +662,7 @@ function renderEditor(){
       ${inp("cliente","Cliente",{cls:"full",attrs:'autocapitalize="characters"'})}
       ${inp("direccion","Dirección",{cls:"full"})}
       ${coordInp()}
-      ${inp("tel","Teléfono",{attrs:'inputmode="tel" class="mono"'})}${inp("ip","IP",{attrs:'inputmode="decimal" class="mono"'})}
+      ${inp("tel","Teléfono",{attrs:'inputmode="tel" class="mono"'})}${inp("ip","IP",{attrs:'inputmode="decimal" class="mono" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="10.10.45.8"'})}
       <div class="chips full" id="telChips"></div>
     </div></section>
 
@@ -777,13 +777,13 @@ function renderInst(){
   <section class="sec"><div class="sec-h"><h2>Cliente</h2><span class="step">02</span></div>
     <div class="grid">
       ${inp("cliente","Nombres completos",{cls:"full",attrs:'autocapitalize="words"'})}
-      ${inp("cedula","Cédula",{attrs:'inputmode="numeric" class="mono" maxlength="13"'})}${inp("tel","Teléfono",{attrs:'inputmode="tel" class="mono"'})}
+      ${inp("cedula","Cédula",{attrs:'inputmode="numeric" pattern="[0-9]*" class="mono" maxlength="13"'})}${inp("tel","Teléfono",{attrs:'inputmode="tel" class="mono"'})}
       <div class="chips full" id="telChips"></div>
       <div class="chips full"><span class="muted" style="align-self:center">Correo:</span>${chip("correoEstado","tiene","Tiene correo")}${chip("correoEstado","no","No tiene","no")}</div>
       ${inp("correo","Correo electrónico",{cls:"full",attrs:'type="email" inputmode="email" autocapitalize="off" autocorrect="off" spellcheck="false"'})}
       ${inp("direccion","Dirección",{cls:"full"})}
       ${coordInp()}
-      ${inp("plan","Plan",{unit:"Mbps",attrs:'inputmode="numeric" class="mono" placeholder="200"'})}${inp("ip","IP",{attrs:'inputmode="decimal" class="mono"'})}
+      ${inp("plan","Plan",{unit:"Mbps",attrs:'inputmode="numeric" class="mono" placeholder="200"'})}${inp("ip","IP",{attrs:'inputmode="decimal" class="mono" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="10.10.45.8"'})}
     </div></section>
 
   <section class="sec"><div class="sec-h"><h2>Red y potencia</h2><span class="step">03</span></div>
@@ -850,15 +850,22 @@ function repBox(){const ta=$("f-pegado");if(!ta||!cur)return;let el=$("repBox");
 let ipMode=false,qip="";
 const ipNorm=v=>String(v||"").trim();
 function ipResults(){
-  const f=qip.trim();const map={};
-  for(const a of acts){const ip=ipNorm(a.ip);if(!ip||(f&&!ip.includes(f)))continue;(map[ip]??=[]).push(a)}
-  const ips=Object.keys(map).sort((x,y)=>{const A=x.split(".").map(Number),B=y.split(".").map(Number);for(let i=0;i<4;i++){if((A[i]||0)!==(B[i]||0))return (A[i]||0)-(B[i]||0)}return 0});
-  if(!ips.length)return `<div class="empty">${f?`Ninguna IP coincide con “${esc(f)}”.`:"Aún no hay actividades con IP."}</div>`;
-  return `<p class="muted" style="margin:0">${ips.length} ${ips.length===1?(f?"IP encontrada":"IP registrada"):(f?"IPs encontradas":"IPs registradas")}</p>`+ips.map(ip=>{
-    const g={};for(const a of map[ip]){const k=normName(a.cliente)||"(sin nombre)";(g[k]??=[]).push(a)}
-    const cl=Object.values(g).map(arr=>arr.sort((a,b)=>b.creado-a.creado));
-    return `<div class="ipcard ${cl.length>1?"dup":""}"><div class="iph"><b class="mono">${esc(ip)}</b>${cl.length>1?`<span class="dupb">⚠️ ${cl.length} clientes con esta IP</span>`:""}</div>
-      ${cl.map(arr=>`<button class="ipcli" data-open="${arr[0].id}"><b>${esc(arr[0].cliente||"Sin nombre")}</b><small>${arr.length} ${arr.length===1?"visita":"visitas"} · última ${esc(fDay(dayKey(arr[0].creado)).replace(/ de \d{4}$/,""))} · ${esc((TIPOS[arr[0].tipo]||TIPOS.foco_rojo)[0])}</small></button>`).join("")}</div>`}).join("")}
+  const f=qip.trim();if(!f)return "";const digits=f.replace(/\D/g,"");
+  const hits=acts.filter(a=>ipNorm(a.ip).includes(f)||(digits.length>=4&&!f.includes(".")&&String(a.cedula||"").includes(digits)));
+  if(!hits.length)return `<div class="empty">No encontré ningún cliente con la IP o cédula “${esc(f)}”.</div>`;
+  const g={};for(const a of hits){const k=normName(a.cliente)||("ip:"+ipNorm(a.ip));(g[k]??=[]).push(a)}
+  // add the rest of that client's visits (even without IP) so the ficha is complete
+  for(const k of Object.keys(g)){const base=g[k][0];for(const a of acts){if(!g[k].includes(a)&&sameClient({cliente:a.cliente},{cliente:base.cliente})&&normName(a.cliente))g[k].push(a)}}
+  const cls=Object.values(g).map(arr=>arr.sort((a,b)=>b.creado-a.creado)).sort((x,y)=>y[0].creado-x[0].creado);
+  const ipsAll={};for(const arr of cls){for(const ip of new Set(arr.map(a=>ipNorm(a.ip)).filter(Boolean)))(ipsAll[ip]??=new Set()).add(normName(arr[0].cliente))}
+  const short=k=>{const t=new Date(k+"T12:00").toLocaleDateString("es-EC",{weekday:"short",day:"numeric",month:"short",year:"2-digit"}).replace(/\./g,"");return t[0].toUpperCase()+t.slice(1)};
+  return `<p class="muted" style="margin:0">${cls.length} ${cls.length===1?"cliente encontrado":"clientes encontrados"}</p>`+cls.map(arr=>{
+    const a0=arr[0];const ips=[...new Set(arr.map(a=>ipNorm(a.ip)).filter(Boolean))];const ced=arr.map(a=>a.cedula).find(Boolean);const tel=arr.map(a=>a.tel).find(Boolean);const dir=arr.map(a=>a.direccion).find(Boolean);
+    const dup=ips.some(ip=>ipsAll[ip]&&ipsAll[ip].size>1)||acts.some(x=>ips.includes(ipNorm(x.ip))&&!sameClient({cliente:x.cliente},{cliente:a0.cliente}));
+    return `<div class="ipcard ${dup?"dup":""}"><div class="iph"><b>${esc(a0.cliente||"Sin nombre")}</b><span class="vcount">${arr.length} ${arr.length===1?"visita":"visitas"}</span></div>
+      <div class="cdata">${ips.map(ip=>`<span class="mono">IP ${esc(ip)}</span>`).join("")}${ced?`<span class="mono">CI ${esc(ced)}</span>`:""}${tel?`<span class="mono">☎ ${esc(tel)}</span>`:""}${dir?`<span>${esc(dir)}</span>`:""}</div>
+      ${dup?`<span class="dupb">⚠️ Esta IP también aparece con otro cliente</span>`:""}
+      ${arr.map(a=>`<button class="ipcli" data-open="${a.id}"><b>${esc(short(dayKey(a.creado)))} · ${esc((TIPOS[a.tipo]||TIPOS.foco_rojo)[0])}${a.noRealizada?"":a.estado==="terminada"?" · ✅":" · ⏳"}</b><small>${esc(visitTxt(a))}</small></button>`).join("")}</div>`}).join("")}
 function ipWarn(){const inpEl=$("f-ip");if(!inpEl||!cur)return;let el=$("ipWarn");const ip=ipNorm(cur.ip);
   const others=ip?acts.filter(a=>a.id!==cur.id&&ipNorm(a.ip)===ip).sort((a,b)=>b.creado-a.creado):[];
   if(!others.length){if(el)el.remove();return}
@@ -900,7 +907,7 @@ function renderPot(){
     <div class="grid">
       ${inp("tecnico","Técnico")}${inp("tecnico2","Segundo técnico (cuadrilla)",{attrs:'placeholder="Opcional"'})}
       ${inp("cliente","Cliente",{cls:"full"})}${inp("direccion","Dirección",{cls:"full"})}
-      ${inp("tel","Teléfono",{attrs:'inputmode="tel" class="mono"'})}${inp("ip","IP",{attrs:'inputmode="decimal" class="mono"'})}
+      ${inp("tel","Teléfono",{attrs:'inputmode="tel" class="mono"'})}${inp("ip","IP",{attrs:'inputmode="decimal" class="mono" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="10.10.45.8"'})}
       <div class="chips full" id="telChips"></div>
       ${inp("nap","NAP",{attrs:'class="mono" autocapitalize="characters" placeholder="B00-4"'})}${inp("hilo","Hilo",{attrs:'inputmode="numeric" class="mono" placeholder="1"'})}
       ${coordInp()}
@@ -955,7 +962,7 @@ function renderRet(){
       ${inp("soporte","Soporte",{cls:"full"})}
       ${inp("cliente","Cliente",{cls:"full"})}${inp("direccion","Dirección",{cls:"full"})}
       ${coordInp()}
-      ${inp("tel","Teléfono",{attrs:'inputmode="tel" class="mono"'})}${inp("ip","IP",{attrs:'inputmode="decimal" class="mono"'})}
+      ${inp("tel","Teléfono",{attrs:'inputmode="tel" class="mono"'})}${inp("ip","IP",{attrs:'inputmode="decimal" class="mono" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="10.10.45.8"'})}
       <div class="chips full" id="telChips"></div>
     </div></section>
   <section class="sec"><div class="sec-h"><h2>Equipos retirados</h2><span class="step">02</span></div>
@@ -1077,6 +1084,8 @@ document.addEventListener("input",e=>{
   if(t.dataset.k){let v=t.value;
     if(/^(onuAnt|onuNueva|routerAnt|routerNueva|onuSnAnt|onuSnNueva|routerSnAnt|routerSnNueva|nap|mac|gpon|r_\w+_(mac|sn|gpon))$/.test(t.dataset.k)){const p=t.selectionStart;v=v.toUpperCase();t.value=v;t.setSelectionRange(p,p)}
     if(/^(potAntes|potDespues)$/.test(t.dataset.k)&&v.includes("/")){const nums=v.match(/-?\d+(?:[.,]\d+)?/g)||[];v=nums[0]||"";t.value=v;const k2=t.dataset.k+"Olt";cur[k2]=(nums[1]||"").replace(",",".");const o=$("f-"+k2);if(o)o.value=cur[k2]}
+    if(t.dataset.k==="ip"){const p0=t.selectionStart;const nv=v.replace(/,/g,".").replace(/[^0-9.]/g,"");if(nv!==v){v=nv;t.value=nv;try{t.setSelectionRange(p0,p0)}catch{}}}
+    if(t.dataset.k==="cedula"){const nv=v.replace(/\D/g,"");if(nv!==v){v=nv;t.value=nv}}
     cur[t.dataset.k]=v;
     if(t.dataset.k==="pegado"){const p=parse(v);applyParsed(cur,p,true);multiCheck(v)}
     refresh();queueSave();}
