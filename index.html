@@ -631,7 +631,7 @@ function renderList(){
     <div class="backup"><button id="expBtn">Exportar copia</button><label class="filebtn">Importar copia<input type="file" id="impFile" accept="application/json,.json" hidden></label></div>
     <p class="muted" id="bkMsg" style="margin:0" role="status"></p>
     <p class="muted" style="margin:0">${(lb=>lb?`Última copia: ${fDay(dayKey(lb))}, ${hhmm(lb)}`:"Todavía no has exportado ninguna copia.")(+(lsGet("actividades.lastBackup")||0))}</p></section>
-    <p class="muted" style="margin:0">Versión de la app: <b>40</b></p>
+    <p class="muted" style="margin:0">Versión de la app: <b>41</b></p>
     <p class="muted" id="offState" style="margin:0">${offReady?'<span class="offok">✓ Lista para usar sin internet</span>':"Preparando uso sin internet… mantén la app abierta con internet unos segundos."}</p>`;
   }
   $("app").innerHTML=h;updateClock();
@@ -1071,7 +1071,7 @@ function loteNav(){if(!cur||!cur.lote)return "";const g=acts.filter(a=>a.lote===
 /* --- autocompletar bridge por modelo --- */
 const HEX=v=>(v||"").toUpperCase().replace(/[^0-9A-F]/g,"");
 const fmtMac=h=>h.match(/../g).join("-");
-const HW_OUI0=["08C021","886639","5C9157"];
+const HW_OUI0=["08C021","886639","5C9157","C0BFC0","707990"];
 function hwOuis(){const set=new Set(HW_OUI0);for(const x of acts)for(const[m,s]of[[x.onuAnt,x.onuSnAnt],[x.onuNueva,x.onuSnNueva]]){const h=HEX(m);if(h.length===12&&HEX(s).startsWith("48575443"))set.add(h.slice(0,6))}return[...set]}
 const BMODS={G7:"TP-Link G7",HW:"Huawei EG8120L",FULL:"Otro"};
 function bqMod(mk){return cur[mk+"Mod"]||(lsGet("bmod.last")||"G7")}
@@ -1103,9 +1103,10 @@ async function back(){
 document.addEventListener("input",e=>{
   if(!cur)return;const t=e.target;
   if(t.dataset.q){const q=t.dataset.q,part=t.dataset.part,mk=t.dataset.mk,sk=t.dataset.sk;
-    const len=part==="both"?4:part==="mac"?6:8;const h=HEX(t.value).slice(0,len);if(h!==t.value)t.value=h;
+    const len=part==="both"?4:part==="mac"?(HEX(t.value).length>6?12:6):8;const h=HEX(t.value).slice(0,len);if(h!==t.value)t.value=h;
     if(h.length===len){
       if(q==="G7"){cur[mk]=fmtMac("ECB931FF"+h);cur[sk]="54504C4731FF"+h}
+      else if(part==="mac"&&len===12){cur[mk]=fmtMac(h)}
       else if(part==="mac"){const w=$("bq-"+mk);const o=w.querySelector('[data-oui][aria-pressed="true"]');if(o)cur[mk]=fmtMac(o.dataset.oui+h)}
       else cur[sk]="48575443"+h;
       cur[mk+"Mod"]=q;lsSet("bmod.last",q);
