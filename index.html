@@ -631,7 +631,7 @@ function renderList(){
     <div class="backup"><button id="expBtn">Exportar copia</button><label class="filebtn">Importar copia<input type="file" id="impFile" accept="application/json,.json" hidden></label></div>
     <p class="muted" id="bkMsg" style="margin:0" role="status"></p>
     <p class="muted" style="margin:0">${(lb=>lb?`Última copia: ${fDay(dayKey(lb))}, ${hhmm(lb)}`:"Todavía no has exportado ninguna copia.")(+(lsGet("actividades.lastBackup")||0))}</p></section>
-    <p class="muted" style="margin:0">Versión de la app: <b>42</b></p>
+    <p class="muted" style="margin:0">Versión de la app: <b>43</b></p>
     <p class="muted" id="offState" style="margin:0">${offReady?'<span class="offok">✓ Lista para usar sin internet</span>':"Preparando uso sin internet… mantén la app abierta con internet unos segundos."}</p>`;
   }
   $("app").innerHTML=h;updateClock();
@@ -680,8 +680,8 @@ function renderEditor(){
       <div class="pair"><h4>Bridge anterior</h4>${bq("onuAnt","onuSnAnt")}<div class="grid">${inp("onuAnt","MAC",{attrs:'class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="Opcional"'})}${inp("onuSnAnt","SN GPON",{attrs:'class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="Opcional"'})}</div></div>
       <div class="pair"><h4>Bridge nueva</h4>${bq("onuNueva","onuSnNueva")}<div class="grid">${inp("onuNueva","MAC",{attrs:'class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="EC-B9-31-…"'})}${inp("onuSnNueva","SN GPON",{attrs:'class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="54504C47…"'})}</div></div></div>
     <div class="box" id="boxRouter" ${cur.router?"":"hidden"}><div class="sec-h"><h3>Cambio de router</h3><span class="progress" id="rprog"></span></div>
-      <div class="pair"><h4>Router anterior</h4><div class="grid">${inp("routerAnt","MAC",{attrs:'class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="Opcional"'})}${inp("routerSnAnt","SN",{attrs:'class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="Opcional"'})}</div></div>
-      <div class="pair"><h4>Router nuevo</h4><div class="grid">${inp("routerNueva","MAC",{attrs:'class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false"'})}${inp("routerSnNueva","SN",{attrs:'class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false"'})}</div></div>
+      <div class="pair"><h4>Router anterior</h4>${bq("routerAnt","routerSnAnt")}<div class="grid">${inp("routerAnt","MAC",{attrs:'class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="Opcional"'})}${inp("routerSnAnt","SN",{attrs:'class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="Opcional"'})}</div></div>
+      <div class="pair"><h4>Router nuevo</h4>${bq("routerNueva","routerSnNueva")}<div class="grid">${inp("routerNueva","MAC",{attrs:'class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false"'})}${inp("routerSnNueva","SN",{attrs:'class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false"'})}</div></div>
       <div class="list-chk">${ROUTER.map(([k,l])=>chk(k,l,"","rchk")).join("")}</div></div>
   </section>
 
@@ -922,8 +922,8 @@ function renderPot(){
       <div class="pair"><h4>Bridge anterior</h4>${bq("onuAnt","onuSnAnt")}<div class="grid">${inp("onuAnt","MAC",{attrs:'class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="Opcional"'})}${inp("onuSnAnt","SN GPON",{attrs:'class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="Opcional"'})}</div></div>
       <div class="pair"><h4>Bridge nueva</h4>${bq("onuNueva","onuSnNueva")}<div class="grid">${inp("onuNueva","MAC",{attrs:'class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="EC-B9-31-…"'})}${inp("onuSnNueva","SN GPON",{attrs:'class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="54504C47…"'})}</div></div></div>
     <div class="box" id="boxRouter" ${cur.router?"":"hidden"}><div class="sec-h"><h3>Cambio de router</h3><span class="progress" id="rprog"></span></div>
-      <div class="pair"><h4>Router anterior</h4><div class="grid">${inp("routerAnt","MAC",{attrs:'class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="Opcional"'})}${inp("routerSnAnt","SN",{attrs:'class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="Opcional"'})}</div></div>
-      <div class="pair"><h4>Router nuevo</h4><div class="grid">${inp("routerNueva","MAC",{attrs:'class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false"'})}${inp("routerSnNueva","SN",{attrs:'class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false"'})}</div></div>
+      <div class="pair"><h4>Router anterior</h4>${bq("routerAnt","routerSnAnt")}<div class="grid">${inp("routerAnt","MAC",{attrs:'class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="Opcional"'})}${inp("routerSnAnt","SN",{attrs:'class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="Opcional"'})}</div></div>
+      <div class="pair"><h4>Router nuevo</h4>${bq("routerNueva","routerSnNueva")}<div class="grid">${inp("routerNueva","MAC",{attrs:'class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false"'})}${inp("routerSnNueva","SN",{attrs:'class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false"'})}</div></div>
       <div class="list-chk">${ROUTER.map(([k,l])=>chk(k,l,"","rchk")).join("")}</div></div>
     <label class="f">Otra acción (opcional, una por línea)<textarea id="f-accOtra" data-k="accOtra" style="min-height:60px" placeholder="Ej. se reubicó la roseta">${esc(cur.accOtra)}</textarea></label>
   </section>
@@ -1068,25 +1068,36 @@ function motivoAusenteTxt(a){
 function loteNav(){if(!cur||!cur.lote)return "";const g=acts.filter(a=>a.lote===cur.lote).sort((a,b)=>a.loteIdx-b.loteIdx);
   const nx=g.find(a=>a.loteIdx>cur.loteIdx)||g.find(a=>a.loteIdx<cur.loteIdx&&a.estado!=="terminada");
   return `<div class="lotenav"><span class="muted">Lote · ${cur.loteIdx}/${cur.loteN}</span>${nx?`<button class="mgo" data-next="${nx.id}">Siguiente: ${esc((nx.cliente||"Sin nombre").replace(/\s*\(.*?\)\s*/g," ").trim())} →</button>`:""}</div>`}
-/* --- autocompletar bridge por modelo --- */
+/* --- autocompletar equipos por modelo --- */
 const HEX=v=>(v||"").toUpperCase().replace(/[^0-9A-F]/g,"");
 const fmtMac=h=>h.match(/../g).join("-");
-const HW_OUI0=["08C021","886639","5C9157","C0BFC0","707990","9C1D36","D4B108"];
-function hwOuis(){const set=new Set(HW_OUI0);for(const x of acts)for(const[m,s]of[[x.onuAnt,x.onuSnAnt],[x.onuNueva,x.onuSnNueva]]){const h=HEX(m);if(h.length===12&&HEX(s).startsWith("48575443"))set.add(h.slice(0,6))}return[...set]}
-const BMODS={G7:"TP-Link G7",HW:"Huawei",FULL:"Otro"};
-function bqMod(mk){return cur[mk+"Mod"]||(lsGet("bmod.last")||"G7")}
+/* g7: MAC y SN salen de los mismos 4 dígitos. Los demás: inicio de MAC (botones) + resto; SN = prefijo fijo + resto */
+const EQM={
+  onu:{def:"G7",m:{G7:{n:"TP-Link G7",g7:1},HW:{n:"Huawei",ouis:["08C021","886639","5C9157","C0BFC0","707990","9C1D36","D4B108"],sn:"48575443",snLen:16,snPh:"707C659B"}}},
+  router:{def:"EW1200GP",m:{
+    EW1200GP:{n:"EW1200G PRO",ouis:["C4B25B","7085C4"],sn:"ZA",snLen:13,snPh:"T71RH083989"},
+    EW3000GX:{n:"EW3000GX",ouis:["9CCE88","4C4968"],sn:"G1U0",snLen:13,snPh:"81V002503"},
+    EW1200:{n:"EW1200",ouis:["105F02","E05D54"],sn:"G1",snLen:13,snPh:"TQAZM025513"},
+    EW1300G:{n:"EW1300G",ouis:["C0A476"],sn:"G1T0",snLen:13,snPh:"3Z516094C"},
+    EW300N:{n:"EW300N",ouis:["984A6B"],sn:"G1T0BH2",snLen:13,snPh:"169720"}}}};
+const eqKind=mk=>mk.startsWith("onu")?"onu":"router";
+function eqOuis(kind,mod){const M=EQM[kind].m[mod];let extra=[];try{extra=JSON.parse(lsGet("oui."+mod)||"[]")}catch{}return[...new Set([...(M.ouis||[]),...extra])]}
+function eqLearn(kind,mod,h){const k="oui."+mod;let l=[];try{l=JSON.parse(lsGet(k)||"[]")}catch{}const o=h.slice(0,6);if(!l.includes(o)&&!eqOuis(kind,mod).includes(o)){l.push(o);lsSet(k,JSON.stringify(l))}}
+function bqMod(mk){const k=eqKind(mk);const v=cur[mk+"Mod"]||lsGet("bmod."+k)||EQM[k].def;return v==="FULL"||EQM[k].m[v]?v:EQM[k].def}
 function bq(mk,sk){return `<div class="bqw" id="bq-${mk}" data-sk="${sk}">${bqInner(mk,sk)}</div>`}
 function bqInner(mk,sk){
-  const mod=bqMod(mk),mh=HEX(cur[mk]),sh=HEX(cur[sk]);
-  const chips=`<div class="bq-mods">${Object.entries(BMODS).map(([k,l])=>`<button class="chip sm" data-bm="${k}" data-mk="${mk}" aria-pressed="${mod===k}">${l}</button>`).join("")}</div>`;
-  const I=(part,len,val,ph)=>`<input class="mono" data-q="${mod}" data-part="${part}" data-mk="${mk}" data-sk="${sk}" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="${ph}" value="${val}" style="width:${len*14+34}px">`;
-  if(mod==="G7"){const v=/^ECB931FF[0-9A-F]{4}$/.test(mh)?mh.slice(8):"";
+  const kind=eqKind(mk),mod=bqMod(mk),mh=HEX(cur[mk]),sh=(cur[sk]||"").toUpperCase().replace(/[^0-9A-Z]/g,"");
+  const chips=`<div class="bq-mods">${[...Object.entries(EQM[kind].m).map(([k,v])=>[k,v.n]),["FULL","Otro"]].map(([k,l])=>`<button class="chip sm" data-bm="${k}" data-mk="${mk}" aria-pressed="${mod===k}">${l}</button>`).join("")}</div>`;
+  if(mod==="FULL")return chips;
+  const M=EQM[kind].m[mod];
+  const I=(part,len,val,ph)=>`<input class="mono" data-q="${mod}" data-part="${part}" data-mk="${mk}" data-sk="${sk}" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="${ph}" value="${val}" style="width:${Math.min(len,12)*14+34}px">`;
+  if(M.g7){const v=/^ECB931FF[0-9A-F]{4}$/.test(mh)?mh.slice(8):"";
     return chips+`<div class="bq"><span class="bq-l">⚡ Últimos 4</span>${I("both",4,v,"C668")}<span class="bq-h">Llena MAC y SN</span></div>`}
-  if(mod==="HW"){const ouis=hwOuis();const oui=cur[mk+"Oui"]||(mh.length===12&&ouis.includes(mh.slice(0,6))?mh.slice(0,6):(lsGet("bmod.oui")||ouis[0]));
-    return chips+`<div class="bq"><span class="bq-l">MAC inicia</span>${ouis.map(o=>`<button class="chip sm mono" data-oui="${o}" data-mk="${mk}" aria-pressed="${o===oui}">${fmtMac(o)}</button>`).join("")}</div>
-      <div class="bq"><span class="bq-l">⚡ MAC últimos 6</span>${I("mac",6,mh.length===12&&mh.startsWith(oui)?mh.slice(6):"","992E05")}</div>
-      <div class="bq"><span class="bq-l">⚡ SN 48575443 +</span>${I("sn",8,/^48575443[0-9A-Z]{8}$/.test(sh)?sh.slice(8):"","707C659B")}</div>`}
-  return chips}
+  const ouis=eqOuis(kind,mod);const oui=cur[mk+"Oui"]&&ouis.includes(cur[mk+"Oui"])?cur[mk+"Oui"]:(mh.length===12&&ouis.includes(mh.slice(0,6))?mh.slice(0,6):ouis[0]);
+  const snN=M.snLen-M.sn.length;
+  return chips+`<div class="bq"><span class="bq-l">MAC inicia</span>${ouis.map(o=>`<button class="chip sm mono" data-oui="${o}" data-mk="${mk}" aria-pressed="${o===oui}">${fmtMac(o)}</button>`).join("")}</div>
+    <div class="bq"><span class="bq-l">⚡ MAC últimos 6</span>${I("mac",6,mh.length===12&&mh.startsWith(oui)?mh.slice(6):"","······")}<span class="bq-h">o los 12 si es otro inicio</span></div>
+    <div class="bq"><span class="bq-l">⚡ SN ${M.sn} +</span>${I("sn",snN,sh.length===M.snLen&&sh.startsWith(M.sn)?sh.slice(M.sn.length):"",M.snPh)}<span class="bq-h">${snN} caracteres</span></div>`}
 function bqRedraw(mk){const w=$("bq-"+mk);if(w)w.innerHTML=bqInner(mk,w.dataset.sk)}
 async function newAct(tipo){
   const a=blank(tipo);let id="l"+a.creado;
@@ -1102,14 +1113,15 @@ async function back(){
 /* --- eventos --- */
 document.addEventListener("input",e=>{
   if(!cur)return;const t=e.target;
-  if(t.dataset.q){const q=t.dataset.q,part=t.dataset.part,mk=t.dataset.mk,sk=t.dataset.sk;
-    const len=part==="both"?4:part==="mac"?(HEX(t.value).length>6?12:6):8;const h=(part==="sn"?t.value.toUpperCase().replace(/[^0-9A-Z]/g,""):HEX(t.value)).slice(0,len);if(h!==t.value)t.value=h;
+  if(t.dataset.q){const q=t.dataset.q,part=t.dataset.part,mk=t.dataset.mk,sk=t.dataset.sk,kind=eqKind(mk),M=EQM[kind].m[q];
+    const raw=part==="sn"?t.value.toUpperCase().replace(/[^0-9A-Z]/g,""):HEX(t.value);
+    const len=part==="both"?4:part==="mac"?(raw.length>6?12:6):M.snLen-M.sn.length;const h=raw.slice(0,len);if(h!==t.value)t.value=h;
     if(h.length===len){
-      if(q==="G7"){cur[mk]=fmtMac("ECB931FF"+h);cur[sk]="54504C4731FF"+h}
-      else if(part==="mac"&&len===12){cur[mk]=fmtMac(h)}
-      else if(part==="mac"){const w=$("bq-"+mk);const o=w.querySelector('[data-oui][aria-pressed="true"]');if(o)cur[mk]=fmtMac(o.dataset.oui+h)}
-      else cur[sk]="48575443"+h;
-      cur[mk+"Mod"]=q;lsSet("bmod.last",q);
+      if(M.g7){cur[mk]=fmtMac("ECB931FF"+h);cur[sk]="54504C4731FF"+h}
+      else if(part==="mac"&&len===12){cur[mk]=fmtMac(h);eqLearn(kind,q,h)}
+      else if(part==="mac"){const o=$("bq-"+mk).querySelector('[data-oui][aria-pressed="true"]');if(o)cur[mk]=fmtMac(o.dataset.oui+h)}
+      else cur[sk]=M.sn+h;
+      cur[mk+"Mod"]=q;lsSet("bmod."+kind,q);
       const A=$("f-"+mk),B=$("f-"+sk);if(A)A.value=cur[mk]||"";if(B)B.value=cur[sk]||"";refresh();queueSave();}
     return}
   if(t.dataset.k){let v=t.value;
@@ -1128,8 +1140,8 @@ document.addEventListener("change",e=>{
 });
 document.addEventListener("click",async e=>{
   const b=e.target.closest("button");if(!b)return;
-  if(b.dataset.bm&&cur){const mk=b.dataset.mk;cur[mk+"Mod"]=b.dataset.bm;lsSet("bmod.last",b.dataset.bm);bqRedraw(mk);queueSave();return}
-  if(b.dataset.oui&&cur){const mk=b.dataset.mk;cur[mk+"Oui"]=b.dataset.oui;lsSet("bmod.oui",b.dataset.oui);const w=$("bq-"+mk);const mi=w.querySelector('[data-part="mac"]');
+  if(b.dataset.bm&&cur){const mk=b.dataset.mk;cur[mk+"Mod"]=b.dataset.bm;delete cur[mk+"Oui"];lsSet("bmod."+eqKind(mk),b.dataset.bm);bqRedraw(mk);queueSave();return}
+  if(b.dataset.oui&&cur){const mk=b.dataset.mk;cur[mk+"Oui"]=b.dataset.oui;const w=$("bq-"+mk);const mi=w.querySelector('[data-part="mac"]');
     if(mi&&mi.value.length===6){cur[mk]=fmtMac(b.dataset.oui+mi.value);const A=$("f-"+mk);if(A)A.value=cur[mk];refresh()}bqRedraw(mk);queueSave();return}
   if(b.dataset.tab){tab=b.dataset.tab;renderList();window.scrollTo(0,0);return}
   if(b.dataset.mark==="almuerzo"&&b.classList.contains("off")){const t=$("mtoast");if(t)t.textContent="Primero marca tu Entrada; luego puedes salir a almorzar.";return}
