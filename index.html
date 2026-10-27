@@ -108,6 +108,10 @@ details.year>.mdays>details.month{background:rgba(0,0,0,.2)}
 .multi h3{margin:0;font:700 15px var(--display)}.multi ol{margin:0;padding-left:20px;display:grid;gap:4px;font-size:14px}
 .multi-a,.lotenav{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.lotenav{justify-content:space-between}
 .mgo{font-weight:700;border:0;color:#03151a;background:var(--cyan);box-shadow:0 0 14px rgba(34,211,238,.5);border-radius:14px;padding:11px 14px}
+.rep-warn{border-radius:16px;padding:12px;display:grid;gap:8px;border:1.5px solid var(--amber);background:rgba(251,191,36,.1);box-shadow:0 0 14px rgba(251,191,36,.3)}
+.rep-warn h3{margin:0;font:700 15px var(--display);color:#fde68a}.vis{display:grid;gap:2px;padding:8px 10px;border-radius:12px;background:rgba(0,0,0,.25)}.vis b{font-size:13.5px}.vis span{font-size:13px;color:#d7cfea;overflow-wrap:anywhere}
+.bk{display:grid;gap:8px;border-radius:16px;padding:12px;border:1.5px solid var(--cyan);background:rgba(34,211,238,.08)}.bk .mgo{justify-self:start}
+.grp{font:700 12px var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:2px}
 .pair{display:grid;gap:6px;padding:10px;border-radius:12px;background:rgba(0,0,0,.2);border:1px solid var(--line)}.pair h4{margin:0;font:600 13px var(--sans);color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
 .gpsrow{display:flex}.gpsbtn.bad{border-color:var(--pink);background:rgba(255,46,122,.12);box-shadow:0 0 12px rgba(255,46,122,.4);color:#ffc2d6}.gpsbtn{font-weight:700;font-size:14px;border:1.5px solid var(--cyan);background:rgba(34,211,238,.1);box-shadow:0 0 12px rgba(34,211,238,.35);border-radius:14px;padding:9px 14px}
 .lunchbtn.off{opacity:.55;box-shadow:none}
@@ -486,7 +490,8 @@ function dayBlock(k,items,title){return `<section class="day"><div class="day-to
 function dayDetails(k,it,forceOpen,pfx=""){const hoyK=dayKey(Date.now());const pend=it.filter(a=>a.estado!=="terminada").length;
   const key=pfx+"d"+k,dOpen=isOpen(key,k===hoyK,forceOpen);
   return `<details class="dayd" data-k="${key}" ${dOpen?"open":""}><summary><span class="l">${esc(fDay(k).replace(/ de \d{4}$/,""))}${k===hoyK?' <span class="today">Hoy</span>':""}<span class="cnt">${it.length} ${it.length===1?"actividad":"actividades"}${pend?` · <em>${pend} ${pend===1?"pendiente":"pendientes"}</em>`:""}</span></span></summary>
-    <div class="dbody"><div class="dtools"><button class="copyday" data-copyday="${k}">${ICON.copy}Copiar resumen</button></div>${it.map(cardHTML).join("")}</div></details>`}
+    <div class="dbody"><div class="dtools"><button class="copyday" data-copyday="${k}">${ICON.copy}Copiar resumen</button></div>${(()=>{const P=it.filter(a=>a.estado!=="terminada"||a.noRealizada),T=it.filter(a=>!(a.estado!=="terminada"||a.noRealizada));
+      return P.length&&T.length?`<div class="grp">Pendientes</div>${P.map(cardHTML).join("")}<div class="grp">Terminadas</div>${T.map(cardHTML).join("")}`:[...P,...T].map(cardHTML).join("")})()}</div></details>`}
 function treeHTML(list,force,pfx){
   const hoyK=dayKey(Date.now());const g={};
   for(const a of [...list].sort((a,b)=>b.creado-a.creado))(g[dayKey(a.creado)]??=[]).push(a);
@@ -593,6 +598,8 @@ function renderList(){
     const viejas=acts.filter(a=>dayKey(a.creado)<hoyK&&a.estado!=="terminada").sort((a,b)=>a.creado-b.creado);
     if(viejas.length)h+=`<section class="pend"><div class="pend-h">⏳ Tienes ${viejas.length} ${viejas.length===1?"pendiente":"pendientes"} de días anteriores</div>
       ${viejas.map(a=>`<div class="pend-row">${cardHTML(a).replace('<small>',`<small>${esc(new Date(dayKey(a.creado)+"T12:00").toLocaleDateString("es-EC",{day:"numeric",month:"short"}).replace(".",""))} · `)}<button class="pasar" data-pasar="${a.id}">Pasar a hoy</button></div>`).join("")}</section>`;
+    {const lb=+(lsGet("actividades.lastBackup")||0),first=acts.length?Math.min(...acts.map(a=>a.creado)):0,ref=lb||first,days=ref?Math.floor((Date.now()-ref)/86400000):0;
+      if(acts.length&&days>=7)h+=`<div class="bk"><span>💾 ${lb?`Hace <b>${days} días</b> que no guardas una copia de tus datos.`:"Aún no has guardado una copia de tus datos."} Si pierdes el celular, se pierde todo.</span><button class="mgo" id="expBtn">Exportar ahora</button></div>`}
     if(!hoy.length)h+=`<div class="empty">Aún no tienes actividades hoy.<br>Toca una opción de arriba y pega el mensaje que te llega.</div>`;
     h+=treeHTML(acts,false,"i");
   }else if(tab==="historial"){
@@ -611,8 +618,9 @@ function renderList(){
     <p class="muted" style="margin:0">Todo se guarda en este teléfono y funciona sin internet. Exporta una copia de vez en cuando (a Archivos o iCloud) para no perder tu historial si cambias de celular. La copia incluye actividades y marcaciones.</p>
     <p class="muted" style="margin:0"><b>¿Venías de la app Marcación?</b> En ella toca Respaldo → Exportar copia, y aquí Importar copia: tus marcaciones pasan a Jornada.</p>
     <div class="backup"><button id="expBtn">Exportar copia</button><label class="filebtn">Importar copia<input type="file" id="impFile" accept="application/json,.json" hidden></label></div>
-    <p class="muted" id="bkMsg" style="margin:0" role="status"></p></section>
-    <p class="muted" style="margin:0">Versión de la app: <b>33</b></p>
+    <p class="muted" id="bkMsg" style="margin:0" role="status"></p>
+    <p class="muted" style="margin:0">${(lb=>lb?`Última copia: ${fDay(dayKey(lb))}, ${hhmm(lb)}`:"Todavía no has exportado ninguna copia.")(+(lsGet("actividades.lastBackup")||0))}</p></section>
+    <p class="muted" style="margin:0">Versión de la app: <b>34</b></p>
     <p class="muted" id="offState" style="margin:0">${offReady?'<span class="offok">✓ Lista para usar sin internet</span>':"Preparando uso sin internet… mantén la app abierta con internet unos segundos."}</p>`;
   }
   $("app").innerHTML=h;updateClock();
@@ -807,6 +815,29 @@ const telNums=t=>(String(t||"").match(/\+?\d[\d\s-]{5,}\d/g)||[]).map(x=>x.trim(
 function telChips(){const box=$("telChips");if(!box)return;const n=telNums(cur.tel);
   box.hidden=n.length<2;
   box.innerHTML=n.length<2?"":`<span class="muted" style="align-self:center">Toca ✕ para quitar:</span>`+n.map((x,i)=>`<button class="chip num" data-deltel="${i}" aria-label="Quitar ${esc(x)}"><span class="mono">${esc(x)}</span> <b aria-hidden="true">✕</b></button>`).join("");}
+const normName=n=>String(n||"").replace(/\(.*?\)/g," ").replace(/[_\-–]/g," ").replace(/\b(casa|local)\b/gi," ").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-zñ ]/g," ").replace(/\s+/g," ").trim();
+function sameClient(a,b){
+  if(a.ip&&b.ip&&a.ip.trim()===b.ip.trim())return true;
+  const x=normName(a.cliente),y=normName(b.cliente);if(!x||!y)return false;if(x===y)return true;
+  const tx=x.split(" "),ty=y.split(" ");const [s1,l1]=tx.length<=ty.length?[tx,ty]:[ty,tx];
+  return s1.length>=2&&s1.every(t=>l1.includes(t))}
+function visitTxt(a){
+  if(a.noRealizada)return "❌ No realizada"+(a.motivo?": "+a.motivo.slice(0,80)+(a.motivo.length>80?"…":""):"");
+  const r=[];
+  if(a.tipo==="potencia"){if(a.accFusion)r.push("nueva fusión en NAP");if(a.accOrdenar)r.push("caja ordenada");if(a.accRoseta)r.push("revisión de roseta");
+    const pa=potNum(a.potAntes),pd=potNum(a.potDespues);if(a.antesOffline&&pd!==null)r.push(`offline → ${pd.toFixed(2)} dBm`);else if(pa!==null&&pd!==null)r.push(`ONU ${pa.toFixed(2)} → ${pd.toFixed(2)} dBm`);else if(pa!==null)r.push(`potencia ${pa.toFixed(2)} dBm`)}
+  else if(a.tipo==="tv"){if(a.tvApp)r.push(a.tvApp+(a.tvMarca?" en TV "+a.tvMarca:""))}
+  else if(a.tipo==="retiro"){const e=RET.filter(([k])=>a["ret_"+k]).map(([,l])=>l.split(" /")[0]);if(e.length)r.push("retiro: "+e.join(", "))}
+  else if(a.tipo==="instalacion"){r.push("instalación nueva"+(a.nap?" · NAP "+a.nap:""))}
+  else{const t=(a.trabajo||"").split(/\r?\n/).map(x=>x.trim()).filter(Boolean)[0];if(t)r.push(t);if(a.fibra&&a.metros)r.push(a.metros+" m de drop")}
+  if(a.tipo!=="potencia"&&a.tipo!=="retiro"){if(a.onu)r.push("cambio de bridge");if(a.router)r.push("cambio de router")}
+  return r.join(" · ")||(a.soporte||"sin detalle")}
+function repBox(){const ta=$("f-pegado");if(!ta||!cur)return;let el=$("repBox");
+  const prev=(cur.cliente||cur.ip)?acts.filter(a=>a.id!==cur.id&&sameClient(a,cur)).sort((a,b)=>b.creado-a.creado):[];
+  if(!prev.length){if(el)el.remove();return}
+  if(!el){el=document.createElement("div");el.id="repBox";el.className="rep-warn";(($("mapLink"))||ta.closest("label")).after(el)}
+  const short=k=>{const t=new Date(k+"T12:00").toLocaleDateString("es-EC",{weekday:"short",day:"numeric",month:"short"}).replace(/\./g,"");return t[0].toUpperCase()+t.slice(1)};
+  el.innerHTML=`<h3>⚠️ Este cliente ya tuvo ${prev.length} ${prev.length===1?"visita":"visitas"}</h3>`+prev.slice(0,5).map(a=>`<div class="vis"><b>${esc(short(dayKey(a.creado)))} · ${esc((TIPOS[a.tipo]||TIPOS.foco_rojo)[0])}</b><span>${esc(visitTxt(a))}</span></div>`).join("")+(prev.length>5?`<p class="muted" style="margin:0">y ${prev.length-5} más en el Historial.</p>`:"")}
 function mapLink(){const ta=$("f-pegado");if(!ta)return;let el=$("mapLink");
   if(!el){el=document.createElement("p");el.id="mapLink";el.className="muted";el.style.margin="0";ta.closest("label").after(el)}
   el.hidden=!cur.mapa;el.innerHTML=cur.mapa?`📍 Ubicación detectada (no va en el reporte): <a href="${esc(cur.mapa)}" target="_blank" rel="noopener">Abrir en Maps</a>`:""}
@@ -919,6 +950,7 @@ function realizHTML(){return `<section class="sec nr ${cur.noRealizada?"on":""}"
     <label class="f" id="motivoBox" ${cur.noRealizada?"":"hidden"}>Motivo (sale en el reporte, puedes editarlo)<textarea id="f-motivo" data-k="motivo" placeholder="Ej. cliente no estaba en casa, reagendado para mañana">${esc(cur.motivo)}</textarea></label></section>`}
 function refresh(){
   if(!cur)return;
+  repBox();
   coordLinkUpd();
   {const mq=$("motivoQuick");if(mq)mq.hidden=!cur.noRealizada}
   {const mb=$("motivoBox");if(mb)mb.hidden=!cur.noRealizada;const ns=$("nrSec");if(ns)ns.classList.toggle("on",!!cur.noRealizada)}
@@ -1110,15 +1142,17 @@ $("copy").onclick=async()=>{
 };
 
 /* --- respaldo --- */
+function lsGet(k){try{return localStorage.getItem(k)}catch{return null}}
+function lsSet(k,v){try{localStorage.setItem(k,v)}catch{}}
 async function exportar(){
   const data=JSON.stringify({app:"actividades",version:2,exportado:new Date().toISOString(),actividades:acts,marcaciones:marks},null,1);
   const name="actividades-"+dayKey(Date.now())+".json";
   const file=new File([data],name,{type:"application/json"});
   try{
-    if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:name});$("bkMsg").textContent="Copia lista. Guárdala en Archivos o iCloud.";return}
+    if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:name});lsSet("actividades.lastBackup",String(Date.now()));const m=$("bkMsg");if(m)m.textContent="Copia lista. Guárdala en Archivos o iCloud.";else renderList();return}
   }catch(e){if(e&&e.name==="AbortError")return}
   const u=URL.createObjectURL(file);const a=document.createElement("a");a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);
-  $("bkMsg").textContent="Copia descargada: "+name;
+  lsSet("actividades.lastBackup",String(Date.now()));const m=$("bkMsg");if(m)m.textContent="Copia descargada: "+name;else renderList();
 }
 async function importar(f){
   try{const j=JSON.parse(await f.text());const list=Array.isArray(j)?j:(j.actividades||[]);const ml=Array.isArray(j?.marcaciones)?j.marcaciones:[];
