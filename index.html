@@ -647,7 +647,7 @@ function renderList(){if(!ACC.ok)return;document.body.classList.remove("ausente"
     <p class="muted" style="margin:0">${(lb=>lb?`Última copia: ${fDay(dayKey(lb))}, ${hhmm(lb)}`:"Todavía no has exportado ninguna copia.")(+(lsGet("actividades.lastBackup")||0))}</p></section>
     ${syncSecHTML()}
     ${devsHTML()}
-    <p class="muted" style="margin:0">Versión de la app: <b>46</b></p>
+    <p class="muted" style="margin:0">Versión de la app: <b>47</b></p>
     <p class="muted" id="offState" style="margin:0">${offReady?'<span class="offok">✓ Lista para usar sin internet</span>':"Preparando uso sin internet… mantén la app abierta con internet unos segundos."}</p>`;
   }
   $("app").innerHTML=h;updateClock();
@@ -1496,6 +1496,8 @@ if("serviceWorker" in navigator){
     if(reg.waiting&&navigator.serviceWorker.controller)show(reg.waiting);
     reg.addEventListener("updatefound",()=>{const w=reg.installing;w&&w.addEventListener("statechange",()=>{if(w.state==="installed"&&navigator.serviceWorker.controller)show(w)})});
     setInterval(()=>reg.update().catch(()=>{}),60*60*1000);
+    document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")reg.update().catch(()=>{})});
+    setTimeout(()=>reg.update().catch(()=>{}),3000);
   }).catch(()=>{});
   let reloaded=false;const hadCtl=!!navigator.serviceWorker.controller;navigator.serviceWorker.addEventListener("controllerchange",()=>{if(reloaded||!hadCtl)return;reloaded=true;if(cur)saveNow();location.reload()});
 }
