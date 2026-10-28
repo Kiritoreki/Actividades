@@ -119,6 +119,10 @@ details.year>.mdays>details.month{background:rgba(0,0,0,.2)}
 .bk{display:grid;gap:8px;border-radius:16px;padding:12px;border:1.5px solid var(--cyan);background:rgba(34,211,238,.08)}.bk .mgo{justify-self:start}
 .grp{font:700 12px var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:2px}
 .ipgo{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;margin-top:8px;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,90,120,.5);background:rgba(255,60,100,.12);color:var(--text);text-align:left;font:inherit;cursor:pointer}.ipgo small{color:var(--muted)}
+.aus{gap:10px}.ausbtn{width:100%;padding:14px;border-radius:14px;border:1.5px solid var(--line);background:rgba(255,255,255,.04);color:var(--text);font:600 16px var(--sans);cursor:pointer}
+.aus.on .ausbtn,.ausbtn[aria-pressed="true"]{border-color:var(--pink);background:rgba(255,46,122,.14);box-shadow:0 0 14px rgba(255,46,122,.3)}
+.ausrow{display:flex;gap:8px;align-items:stretch}.ausrow textarea{flex:1;min-height:120px}.frbtn{flex:none;width:52px;border-radius:12px;border:1.5px solid var(--cyan);background:rgba(34,211,238,.1);font-size:22px;cursor:pointer}
+body.ausente .sec.wk{opacity:.28;pointer-events:none;filter:grayscale(1)}
 .bqw{display:grid;gap:8px}.bq-mods{display:flex;gap:6px;flex-wrap:wrap}.chip.sm{padding:5px 10px;font-size:12px;min-height:0}
 .bq{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.bq-l{font:600 12px var(--sans);color:var(--cyan)}.bq input{text-align:center;letter-spacing:.12em}.bq-h{font-size:11px;color:var(--muted)}
 .pair{display:grid;gap:6px;padding:10px;border-radius:12px;background:rgba(0,0,0,.2);border:1px solid var(--line)}.pair h4{margin:0;font:600 13px var(--sans);color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
@@ -359,7 +363,7 @@ function reportInst(a){
   add("Fecha",fechaLarga(a.fecha||dayKey(a.creado)));
   const tec=[a.tecnico,a.tecnico2].filter(Boolean).join(" y ");if(tec)L.push("Técnico: "+tec+".");
   add("Cliente",a.cliente);add("Dirección",a.direccion);add("Coordenadas",a.coords);add("Cédula",a.cedula);add("Telef",a.tel);if(a.correoEstado==="no")L.push("Correo electrónico: El cliente no cuenta con correo electrónico.");else add("Correo electrónico",a.correo);
-  add("IP",a.ip);add("NAP",a.nap);add("HILO",a.hilo);add("HILOS LIBRES",a.hilosLibres);add("Mac ONT ACTUAL",a.mac);add("GPON SN",a.gpon);
+  add("IP",a.ip);add("NAP",a.nap);add("HILO",a.hilo);add("HILOS LIBRES",a.hilosLibres);add("Mac ONT ACTUAL",a.mac);add("GPON SN",a.gpon);add("Mac Router",a.router?a.routerNueva:"");add("SN Router",a.router?a.routerSnNueva:"");
   if(a.pot)L.push("Potencia: "+neg(a.pot)+" dBm");
   if(a.plan)L.push("Plan: "+(/^\d+$/.test(a.plan.trim())?a.plan.trim()+" Mbps":a.plan.trim()));
   const N=[];
@@ -374,6 +378,8 @@ function reportInst(a){
 const eqLine=(mac,sn,snL)=>[mac&&mac.trim()?"MAC "+mac.trim():"",sn&&sn.trim()?snL+" "+sn.trim():""].filter(Boolean).join(", ");
 function pendTxt(a){return "❌No se pudo realizar la actividad"+(a.motivo&&a.motivo.trim()?"\nMotivo: "+a.motivo.trim():"")}
 function report(a){
+  if(a.ausente&&a.tipo!=="tv"){let t=reportBase(soloEncabezado(a)).replace(/\s+$/,"");
+    return t+"\n\n❌No se pudo realizar la actividad"+(a.motivo&&a.motivo.trim()?"\nMotivo: "+a.motivo.trim():"")+"\n"+posponeTxt(a)}
   let t=reportBase(a);
   if(a.noRealizada){t=t.split("\n").filter(l=>!/^✅\s*se cumplió con la actividad|Cliente comprueba y todo Ok|Realización de los distintos test|Se realizan pruebas de potencia|^\* Cliente comprueba/i.test(l)).join("\n").replace(/\s+$/,"");t+="\n\n"+pendTxt(a)}
   return t;
@@ -593,7 +599,7 @@ function updateClock(){
 setInterval(updateClock,1000);
 function renderDock(){const d=$("dock");d.hidden=!!cur;if(cur)return;
   d.innerHTML=[["inicio","Inicio","home"],["jornada","Jornada","clk"],["historial","Historial","cal"],["respaldo","Respaldo","save"]].map(([k,l,i])=>`<button data-tab="${k}" ${tab===k?'aria-current="page"':""}>${ICON[i]}${l}</button>`).join("")}
-function renderList(){
+function renderList(){document.body.classList.remove("ausente");
   $("bar").hidden=true;renderDock();
   const hoyK=dayKey(Date.now());
   const fecha=fDay(hoyK).split(",").slice(0,2).join(",");
@@ -631,7 +637,7 @@ function renderList(){
     <div class="backup"><button id="expBtn">Exportar copia</button><label class="filebtn">Importar copia<input type="file" id="impFile" accept="application/json,.json" hidden></label></div>
     <p class="muted" id="bkMsg" style="margin:0" role="status"></p>
     <p class="muted" style="margin:0">${(lb=>lb?`Última copia: ${fDay(dayKey(lb))}, ${hhmm(lb)}`:"Todavía no has exportado ninguna copia.")(+(lsGet("actividades.lastBackup")||0))}</p></section>
-    <p class="muted" style="margin:0">Versión de la app: <b>43</b></p>
+    <p class="muted" style="margin:0">Versión de la app: <b>44</b></p>
     <p class="muted" id="offState" style="margin:0">${offReady?'<span class="offok">✓ Lista para usar sin internet</span>':"Preparando uso sin internet… mantén la app abierta con internet unos segundos."}</p>`;
   }
   $("app").innerHTML=h;updateClock();
@@ -669,7 +675,7 @@ function renderEditor(){
       <div class="chips full" id="telChips"></div>
     </div></section>
 
-  <section class="sec"><div class="sec-h"><h2>Caso</h2><span class="step">02</span></div>
+  <section class="sec wk"><div class="sec-h"><h2>Caso</h2><span class="step">02</span></div>
     <p class="muted" style="margin:0">Marca todo lo que cambiaste; puedes combinar.</p>
     <div class="chips">
       <button class="chip" data-tog="fibra" aria-pressed="${!!cur.fibra}">Fibra / drop</button>
@@ -685,7 +691,7 @@ function renderEditor(){
       <div class="list-chk">${ROUTER.map(([k,l])=>chk(k,l,"","rchk")).join("")}</div></div>
   </section>
 
-  <section class="sec"><div class="sec-h"><h2>NAP y potencia</h2><span class="step">03</span></div>
+  <section class="sec wk"><div class="sec-h"><h2>NAP y potencia</h2><span class="step">03</span></div>
     <div class="chips">${chip("napInterv","si","Se intervino la NAP")}${chip("napInterv","no","No se intervino","no")}</div>
     <div class="grid">${inp("nap","Código NAP",{cls:"full",attrs:'class="mono" autocapitalize="characters" placeholder="A07-4"'})}
       ${inp("potAntes","Potencia antes",{unit:"dBm",attrs:'inputmode="decimal" class="mono" placeholder="-27.50"'})}
@@ -693,13 +699,13 @@ function renderEditor(){
     <p class="muted" style="margin:0">Si escribes sin el signo, se agrega el “-” solo.</p>
   </section>
 
-  <section class="sec"><div class="sec-h"><h2>Trabajo realizado</h2><span class="step">04</span></div>
+  <section class="sec wk"><div class="sec-h"><h2>Trabajo realizado</h2><span class="step">04</span></div>
     <label class="f">Una línea por cada punto; cada una sale con ⚪️<textarea id="f-trabajo" data-k="trabajo" placeholder="fibra rota, se procede a pasar nueva drop">${esc(cur.trabajo)}</textarea></label>
     <div class="list-chk">${chk("tests","Realización de los distintos test")}${chk("clienteOk","Cliente comprueba y todo Ok")}${chk("cumplida","✅ Se cumplió con la actividad")}</div>
   </section>
   ${notifHTML()}
 
-  <section class="sec"><div class="sec-h"><h2>Checklist y evidencias</h2><span class="progress" id="eprog"></span></div>
+  <section class="sec wk"><div class="sec-h"><h2>Checklist y evidencias</h2><span class="progress" id="eprog"></span></div>
     <p class="muted" style="margin:0">Solo para acordarte (fotos y stickers); las fotos van al WhatsApp.</p>
     <div class="list-chk">${EVID.map(([k,l,c])=>`<div data-eq="${c||""}" ${c==="eq"&&!(cur.onu||cur.router)?"hidden":""}>${chk(k,l,"","evid")}</div>`).join("")}</div>
   </section>
@@ -710,7 +716,7 @@ function renderEditor(){
   ${loteNav()}`;
   $("bar").hidden=false;refresh();
 }
-const notifHTML=()=>`<section class="sec"><div class="sec-h"><h2>Notificación al cliente</h2></div>
+const notifHTML=()=>`<section class="sec wk"><div class="sec-h"><h2>Notificación al cliente</h2></div>
     <div class="chips">${chip("notif","si","Hay notificación")}${chip("notif","no","No hay","no")}</div>
     <label class="f" id="notifBox" ${cur.notif==="si"?"":"hidden"}>¿Qué se le indicó al cliente?<textarea id="f-notifTxt" data-k="notifTxt" placeholder="El cliente debe…">${esc(cur.notifTxt)}</textarea></label></section>`;
 const notifLines=a=>a.notif==="si"?(a.notifTxt||"").split(/\r?\n/).map(x=>x.trim()).filter(Boolean):[];
@@ -752,7 +758,7 @@ function renderTV(){
   <section class="sec"><div class="sec-h"><h2>4 · Pasos</h2><span class="progress" id="tvprog">${done}/${TVSTEPS.length}</span></div>
     <div class="list-chk">${TVSTEPS.map(([k,l,sub])=>chk(k,l,sub,"tvchk")).join("")}</div></section>`:""}
 
-  <section class="sec"><div class="sec-h"><h2>Trabajo realizado</h2></div>
+  <section class="sec wk"><div class="sec-h"><h2>Trabajo realizado</h2></div>
     <label class="f">Una línea por punto (ej. se restableció el TV de fábrica)<textarea id="f-trabajo" data-k="trabajo">${esc(cur.trabajo)}</textarea></label></section>
   ${notifHTML()}
   <section class="sec"><div class="sec-h"><h2>Reporte</h2></div>
@@ -789,30 +795,31 @@ function renderInst(){
       ${inp("plan","Plan",{unit:"Mbps",attrs:'inputmode="numeric" class="mono" placeholder="200"'})}${inp("ip","IP",{attrs:'inputmode="decimal" class="mono" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="10.10.45.8"'})}
     </div></section>
 
-  <section class="sec"><div class="sec-h"><h2>Red y potencia</h2><span class="step">03</span></div>
+  <section class="sec wk"><div class="sec-h"><h2>Red y potencia</h2><span class="step">03</span></div>
     <div class="grid">
       ${inp("nap","NAP",{cls:"full",attrs:'class="mono" autocapitalize="characters" placeholder="B04-1"'})}
       ${inp("hilo","Hilo",{attrs:'inputmode="numeric" class="mono"'})}${inp("hilosLibres","Hilos libres",{attrs:'inputmode="numeric" class="mono"'})}
       ${inp("pot","Potencia",{unit:"dBm",attrs:'inputmode="decimal" class="mono" placeholder="-14.50"'})}${inp("metros","Fibra usada",{unit:"m",attrs:'inputmode="numeric" class="mono" placeholder="103"'})}
     </div></section>
 
-  <section class="sec"><div class="sec-h"><h2>Equipos</h2><span class="step">04</span></div>
+  <section class="sec wk"><div class="sec-h"><h2>Equipos</h2><span class="step">04</span></div>
     <div class="chips"><button class="chip" data-tog="onu" aria-pressed="${!!cur.onu}">Bridge nuevo</button><button class="chip" data-tog="router" aria-pressed="${!!cur.router}">Router nuevo</button></div>
-    <div class="grid">
-      ${inp("mac","Mac ONT actual",{attrs:'class="mono" autocapitalize="characters" placeholder="EC-B9-31-…"'})}${inp("gpon","GPON SN",{attrs:'class="mono" autocapitalize="characters"'})}
-    </div>
+    <div class="pair"><h4>Bridge</h4>${bq("mac","gpon")}<div class="grid">
+      ${inp("mac","Mac ONT actual",{attrs:'class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="EC-B9-31-…"'})}${inp("gpon","GPON SN",{attrs:'class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false"'})}
+    </div></div>
     <div class="box" id="boxRouter" ${cur.router?"":"hidden"}><div class="sec-h"><h3>Configuración del router</h3><span class="progress" id="rprog"></span></div>
+      <div class="pair"><h4>Router nuevo</h4>${bq("routerNueva","routerSnNueva")}<div class="grid">${inp("routerNueva","MAC",{attrs:'class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="Opcional"'})}${inp("routerSnNueva","SN",{attrs:'class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="Opcional"'})}</div></div>
       <div class="list-chk">${ROUTER.map(([k,l])=>chk(k,l,"","rchk")).join("")}</div></div>
   </section>
 
-  <section class="sec"><div class="sec-h"><h2>Notas</h2><span class="step">05</span></div>
+  <section class="sec wk"><div class="sec-h"><h2>Notas</h2><span class="step">05</span></div>
     <div class="list-chk">${chk("pruebas","Pruebas de potencia y test de velocidad","Agrega: el cliente cuenta con servicio de internet")}</div>
     <label class="f">Otras notas, una por línea; cada una sale con *<textarea id="f-notas" data-k="notas">${esc(cur.notas)}</textarea></label>
     <p class="muted" style="margin:0">Los metros de fibra y los equipos nuevos se agregan solos a las notas.</p>
   </section>
   ${notifHTML()}
 
-  <section class="sec"><div class="sec-h"><h2>Checklist y evidencias</h2><span class="progress" id="eprog"></span></div>
+  <section class="sec wk"><div class="sec-h"><h2>Checklist y evidencias</h2><span class="progress" id="eprog"></span></div>
     <p class="muted" style="margin:0">Solo para acordarte (fotos y stickers); las fotos van al WhatsApp.</p>
     <div class="list-chk">${EVID_I.map(([k,l,c])=>`<div data-eq="${c||""}" ${c==="eq"&&!(cur.onu||cur.router)?"hidden":""}>${chk(k,l,"","evid")}</div>`).join("")}</div>
   </section>
@@ -913,7 +920,7 @@ function renderPot(){
       ${inp("nap","NAP",{attrs:'class="mono" autocapitalize="characters" placeholder="B00-4"'})}${inp("hilo","Hilo",{attrs:'inputmode="numeric" class="mono" placeholder="1"'})}
       ${coordInp()}
     </div></section>
-  <section class="sec"><div class="sec-h"><h2>Qué se hizo</h2><span class="step">02</span></div>
+  <section class="sec wk"><div class="sec-h"><h2>Qué se hizo</h2><span class="step">02</span></div>
     <div class="chips">${tog("accFusion","Nueva fusión del hilo en la NAP")}${tog("accOrdenar","Ordenar la caja NAP")}${tog("accRoseta","Revisar fusión en la roseta")}
       ${tog("fibra","Cambio de drop")}${tog("onu","Cambio de ONU")}${tog("router","Cambio de router")}${tog("accHilo","Cambio de hilo (si lo piden)")}</div>
     <div class="box" id="boxHilo" ${cur.accHilo?"":"hidden"}><h3>Cambio de hilo</h3>${inp("hiloNuevo","Hilo nuevo",{attrs:'inputmode="numeric" class="mono"'})}</div>
@@ -927,7 +934,7 @@ function renderPot(){
       <div class="list-chk">${ROUTER.map(([k,l])=>chk(k,l,"","rchk")).join("")}</div></div>
     <label class="f">Otra acción (opcional, una por línea)<textarea id="f-accOtra" data-k="accOtra" style="min-height:60px" placeholder="Ej. se reubicó la roseta">${esc(cur.accOtra)}</textarea></label>
   </section>
-  <section class="sec"><div class="sec-h"><h2>Potencia</h2><span class="step">03</span></div>
+  <section class="sec wk"><div class="sec-h"><h2>Potencia</h2><span class="step">03</span></div>
     <p class="muted" style="margin:0">Pega la línea “Señal Rx ONU/OLT” tal cual (ej. -19.74 dBm / -26.2 dBm) o escribe los dos valores.</p>
     <div class="box"><div class="sec-h"><h3>Antes</h3><button class="chip bad" data-tog="antesOffline" aria-pressed="${!!cur.antesOffline}">Sin señal / Offline</button></div><div class="grid" id="antesGrid" ${cur.antesOffline?"hidden":""}>${inp("potAntes","ONU Rx",{unit:"dBm",attrs:'inputmode="decimal" class="mono" placeholder="-33.02"'})}${inp("potAntesOlt","OLT Rx",{unit:"dBm",attrs:'inputmode="decimal" class="mono" placeholder="-32.22"'})}</div></div>
     <div class="box"><h3>Después</h3><div class="grid">${inp("potDespues","ONU Rx",{unit:"dBm",attrs:'inputmode="decimal" class="mono" placeholder="-17.69"'})}${inp("potDespuesOlt","OLT Rx",{unit:"dBm",attrs:'inputmode="decimal" class="mono" placeholder="-23.77"'})}</div></div>
@@ -937,7 +944,7 @@ function renderPot(){
     <div class="list-chk">${chk("tests","Realización de los distintos test")}${chk("clienteOk","Cliente comprueba y todo Ok")}${chk("cumplida","✅ Se cumplió con la actividad")}</div>
   </section>
   ${notifHTML()}
-  <section class="sec"><div class="sec-h"><h2>Checklist y evidencias</h2><span class="progress" id="eprog"></span></div>
+  <section class="sec wk"><div class="sec-h"><h2>Checklist y evidencias</h2><span class="progress" id="eprog"></span></div>
     <p class="muted" style="margin:0">Solo para acordarte (fotos y stickers); las fotos van al WhatsApp.</p>
     <div class="list-chk">${EVID_P.map(([k,l,c])=>`<div data-eq="${c||""}" ${c==="eq"&&!(cur.onu||cur.router)?"hidden":""}>${chk(k,l,"","evid")}</div>`).join("")}</div>
   </section>
@@ -949,6 +956,7 @@ function renderPot(){
 function renderRet(){
   const tog=(k,l)=>`<button class="chip" data-tog="ret_${k}" aria-pressed="${!!cur["ret_"+k]}">${l}</button>`;
   const boxes=RET.map(([k,label,fs])=>`<div class="box" id="rbox_${k}" ${cur["ret_"+k]?"":"hidden"}><h3>${label}</h3>
+    ${k==="onu"?bq("r_onu_mac","r_onu_gpon"):k==="router"?bq("r_router_mac","r_router_sn"):""}
     ${fs.length?`<div class="grid">${fs.map(f=>inp(`r_${k}_${RETF[f]}`,f,{attrs:f==="Modelo"||f==="Equipo"?'':'class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="Opcional"'})).join("")}</div>`:""}
     <div class="chips">${chip(`r_${k}_estado`,"ok","✅ Funciona")}${chip(`r_${k}_estado`,"dan","⚠️ Dañado","no")}${chip(`r_${k}_estado`,"np","❓ Sin probar")}</div></div>`).join("");
   $("app").innerHTML=`
@@ -966,14 +974,14 @@ function renderRet(){
       ${inp("tel","Teléfono",{attrs:'inputmode="tel" class="mono"'})}${inp("ip","IP",{attrs:'inputmode="decimal" class="mono" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="10.10.45.8"'})}
       <div class="chips full" id="telChips"></div>
     </div></section>
-  <section class="sec"><div class="sec-h"><h2>Equipos retirados</h2><span class="step">02</span></div>
+  <section class="sec wk"><div class="sec-h"><h2>Equipos retirados</h2><span class="step">02</span></div>
     <div class="chips">${RET.map(([k,l])=>tog(k,l)).join("")}</div>
     ${boxes}
     <label class="f">Otra observación (opcional, una por línea)<textarea id="f-accOtra" data-k="accOtra" style="min-height:60px" placeholder="Ej. se retira también el cable de red">${esc(cur.accOtra)}</textarea></label>
     <div class="list-chk">${chk("cumplida","✅ Se cumplió con la actividad")}</div>
   </section>
   ${notifHTML()}
-  <section class="sec"><div class="sec-h"><h2>Checklist y evidencias</h2><span class="progress" id="eprog"></span></div>
+  <section class="sec wk"><div class="sec-h"><h2>Checklist y evidencias</h2><span class="progress" id="eprog"></span></div>
     <p class="muted" style="margin:0">“Entregados en bodega” también sale en el reporte.</p>
     <div class="list-chk">${EVID_R.map(([k,l])=>`<div>${chk(k,l,"","evid")}</div>`).join("")}</div>
   </section>
@@ -982,12 +990,69 @@ function renderRet(){
   ${loteNav()}`;
   $("bar").hidden=false;refresh();
 }
-function realizHTML(){return `<section class="sec nr ${cur.noRealizada?"on":""}" id="nrSec"><div class="sec-h"><h2>¿Se realizó?</h2></div>
+function realizHTML(){
+  const aus=cur.tipo!=="tv";
+  const ausHTML=aus?`<section class="sec aus ${cur.ausente?"on":""}" id="ausSec">
+    <button class="ausbtn" data-aus aria-pressed="${!!cur.ausente}">🏠 Cliente no está${cur.ausente?" · toca para desbloquear":""}</button>
+    ${cur.ausente?`<p class="muted" style="margin:0">Todo lo de abajo queda bloqueado; el reporte lleva solo los datos del cliente y el motivo.</p>
+    <label class="f">Motivo (puedes editarlo)<span class="ausrow"><textarea id="f-motivo" data-k="motivo">${esc(cur.motivo)}</textarea><button class="frbtn" data-frase aria-label="Otra frase">🔄</button></span></label>
+    <label class="f">Se pospone la visita para el día…<input id="f-pospone" data-k="pospone" value="${esc(cur.pospone)}" placeholder="Ej. jueves 30 de octubre a las 10:00"></label>
+    <p class="muted" style="margin:0">Si lo dejas vacío sale “el día ____ a las ____” para completarlo al enviar.</p>`:""}
+  </section>`:"";
+  if(aus&&cur.ausente)return ausHTML;
+  return ausHTML+`<section class="sec nr ${cur.noRealizada?"on":""}" id="nrSec"><div class="sec-h"><h2>¿Se realizó?</h2></div>
     <div class="chips"><button class="chip" data-real="si" aria-pressed="${!cur.noRealizada}">Se realizó</button><button class="chip bad" data-real="no" aria-pressed="${!!cur.noRealizada}">No se realizó</button></div>
-    <div class="chips" id="motivoQuick" ${cur.noRealizada?"":"hidden"}><button class="chip" data-motivo="ausente" aria-pressed="${!!cur.motivoAusente}">🏠 Cliente no se encuentra</button><button class="chip" data-motivo="otro" id="motivoOtro" ${cur.motivoAusente?"":"hidden"}>🔄 Otro texto</button></div>
-    <label class="f" id="motivoBox" ${cur.noRealizada?"":"hidden"}>Motivo (sale en el reporte, puedes editarlo)<textarea id="f-motivo" data-k="motivo" placeholder="Ej. cliente no estaba en casa, reagendado para mañana">${esc(cur.motivo)}</textarea></label></section>`}
+    ${aus?"":`<div class="chips" id="motivoQuick" ${cur.noRealizada?"":"hidden"}><button class="chip" data-motivo="ausente" aria-pressed="${!!cur.motivoAusente}">🏠 Cliente no se encuentra</button><button class="chip" data-motivo="otro" id="motivoOtro" ${cur.motivoAusente?"":"hidden"}>🔄 Otro texto</button></div>`}
+    <label class="f" id="motivoBox" ${cur.noRealizada?"":"hidden"}>Motivo (sale en el reporte, puedes editarlo)<textarea id="f-motivo" data-k="motivo" placeholder="Ej. no hay hilos libres en la NAP, se reagenda">${esc(cur.motivo)}</textarea></label></section>`}
+/* --- frases para "Cliente no está": rotan sin repetirse hasta usarlas todas --- */
+const FRASES=[
+ "Al llegar al domicilio del cliente {n} para {act}, los vecinos del sector nos indican que el cliente salió de viaje y regresa en unos días.",
+ "Se acudió al domicilio de {n} para {act}; la vivienda se encuentra cerrada y los moradores del lugar comentan que el cliente no se encuentra en la ciudad.",
+ "Nos presentamos en el domicilio de {n}, pero no hubo respuesta. Vecinos cercanos indican que el cliente salió fuera de Palanda y no saben cuándo regresa.",
+ "Se visitó el domicilio del cliente {n} para {act}; los vecinos nos informan que el cliente se fue a otro lugar y volverá en algunos días.",
+ "Al llegar a la dirección de {n}, la casa está cerrada. Según los vecinos, el cliente viajó y estará de regreso en los próximos días.",
+ "Se acudió a la vivienda de {n} para {act}, pero el cliente no se encontraba. Los lugareños comentan que salió y retorna en unos días.",
+ "Nos acercamos al domicilio de {n} y nadie atendió. Una vecina nos comenta que el cliente está fuera de casa por unos días.",
+ "Se llegó al domicilio del cliente {n} para {act}; los moradores del sector indican que no se encuentra y que regresa a fin de semana.",
+ "Al acudir al domicilio de {n}, no se encontró a nadie. Los vecinos aledaños nos informan que el cliente salió de viaje.",
+ "Se visitó la dirección indicada para {act}, pero el cliente {n} no se encuentra en casa. Los vecinos nos comentan que está fuera de la ciudad.",
+ "Nos presentamos en el domicilio de {n} para {act}; la vivienda permanece cerrada y, según los vecinos, el cliente vuelve en unos días.",
+ "Se acudió al domicilio del cliente {n}; nadie atendió el llamado y los vecinos indican que el cliente salió temprano y no regresa hoy.",
+ "Al llegar al domicilio de {n} para {act}, los habitantes del sector nos informan que el cliente se encuentra de viaje.",
+ "Se visitó al cliente {n} para {act}, pero no se encontraba. Los vecinos comentan que se fue al campo y regresa en algunos días.",
+ "Nos dirigimos al domicilio de {n}; la casa está cerrada y los vecinos indican que el cliente salió a otra ciudad por unos días.",
+ "Se acudió al domicilio de {n} para {act}; se tocó la puerta varias veces sin respuesta y los vecinos confirman que el cliente no está.",
+ "Al llegar al domicilio del cliente {n}, una persona del sector nos comenta que el cliente salió de la localidad y regresa la próxima semana.",
+ "Se visitó la vivienda de {n} para {act}; los vecinos nos informan que el cliente no se encuentra y que está de viaje por trabajo.",
+ "Nos presentamos en la dirección de {n}, pero el cliente no se encontraba. Los moradores del lugar indican que retornará en unos días.",
+ "Se acudió al domicilio del cliente {n} para {act}; no hubo nadie que atienda y, según los vecinos, el cliente se ausentó por unos días.",
+ "Al acudir a la vivienda de {n}, los vecinos aledaños nos comentan que el cliente salió a la ciudad y no tiene fecha de regreso confirmada.",
+ "Se llegó al domicilio de {n} para {act}; la casa se encuentra sola y los vecinos indican que la familia salió de viaje.",
+ "Nos acercamos al domicilio del cliente {n}, sin embargo no se encontraba. Según los lugareños, el cliente está fuera y regresa en los próximos días.",
+ "Se visitó el domicilio de {n} para {act}; el cliente no se encuentra y tampoco contesta las llamadas. Los vecinos indican que salió de viaje.",
+ "Al llegar al domicilio de {n} no fue posible {act2}, ya que el cliente no se encuentra; los vecinos comentan que regresa en unos días."
+];
+function fraseAus(a){
+  /* nunca repite ninguna de las últimas 20 frases usadas */
+  let h=[];try{h=JSON.parse(lsGet("frases.hist")||"[]")}catch{}if(!Array.isArray(h))h=[];
+  const lim=Math.min(20,FRASES.length-1);h=h.filter(i=>i>=0&&i<FRASES.length).slice(-lim);
+  const libres=[...FRASES.keys()].filter(i=>!h.includes(i));const idx=libres[Math.floor(Math.random()*libres.length)];
+  h.push(idx);lsSet("frases.hist",JSON.stringify(h.slice(-lim)));
+  a._fi=idx;a._motGen=fraseTxt(a,idx);return a._motGen}
+function fraseTxt(a,idx){
+  const n=(a.cliente||"").replace(/\s*\(.*?\)\s*/g," ").replace(/_/g," ").replace(/\s+/g," ").trim()||"el cliente";
+  const act={foco_rojo:"atender el soporte",instalacion:"realizar la instalación",potencia:"revisar y mejorar la potencia",retiro:"realizar el retiro de equipos"}[a.tipo]||"realizar la actividad";
+  return FRASES[idx%FRASES.length].replace(/\{n\}/g,n).replace(/\{act2?\}/g,act).replace(/\b(del|al|el) cliente el cliente\b/g,"$1 cliente").replace(/\bde el cliente\b/g,"del cliente");
+}
+/* copia del registro solo con los datos del encabezado (para el reporte de "Cliente no está") */
+function soloEncabezado(a){const h={...a,trabajo:"",fibra:false,metros:"",napInterv:"",potAntes:"",potDespues:"",potAntesOlt:"",potDespuesOlt:"",antesOffline:false,
+  tests:false,clienteOk:false,cumplida:false,onu:false,router:false,accFusion:false,accOrdenar:false,accRoseta:false,accHilo:false,hiloNuevo:"",accOtra:"",
+  pruebas:false,notas:"",mac:"",gpon:"",pot:"",hilosLibres:"",notif:"",notifTxt:"",evid:{}};
+  for(const [k] of RET)h["ret_"+k]=false;return h}
+function posponeTxt(a){const p=(a.pospone||"").trim().replace(/^(para\s+)?(el\s+)?d[ií]a\s+/i,"");return "Se pospone la visita para el día "+(p||"____ a las ____")}
 function refresh(){
   if(!cur)return;
+  document.body.classList.toggle("ausente",!!cur.ausente&&cur.tipo!=="tv");
   repBox();ipWarn();
   coordLinkUpd();
   {const mq=$("motivoQuick");if(mq)mq.hidden=!cur.noRealizada}
@@ -998,6 +1063,8 @@ function refresh(){
   {const nb=$("notifBox");if(nb)nb.hidden=cur.notif!=="si"}
   {const c=$("f-correo");if(c)c.closest("label").hidden=cur.correoEstado==="no"}
   $("rep").textContent=report(cur);
+  if(cur.ausente){$("miss").textContent=(cur.pospone||"").trim()?"❌ No realizada · lista para copiar":"❌ No realizada · completa la fecha";$("miss").classList.toggle("ok",true);$("copy").classList.add("ready");
+    const hb=(id,v)=>{const e=$(id);if(e)e.hidden=v};hb("boxFibra",!cur.fibra);hb("boxOnu",!cur.onu);hb("boxRouter",!cur.router);return}
   const {m,r}=missing(cur);
   const total=evidFor(cur).filter(([,,c])=>c!=="eq"||cur.onu||cur.router).length;
   $("eprog").textContent=`${total-m.length}/${total}`;
@@ -1080,7 +1147,7 @@ const EQM={
     EW1200:{n:"EW1200",ouis:["105F02","E05D54"],sn:"G1",snLen:13,snPh:"TQAZM025513"},
     EW1300G:{n:"EW1300G",ouis:["C0A476"],sn:"G1T0",snLen:13,snPh:"3Z516094C"},
     EW300N:{n:"EW300N",ouis:["984A6B"],sn:"G1T0BH2",snLen:13,snPh:"169720"}}}};
-const eqKind=mk=>mk.startsWith("onu")?"onu":"router";
+const eqKind=mk=>/onu|^mac$/.test(mk)?"onu":"router";
 function eqOuis(kind,mod){const M=EQM[kind].m[mod];let extra=[];try{extra=JSON.parse(lsGet("oui."+mod)||"[]")}catch{}return[...new Set([...(M.ouis||[]),...extra])]}
 function eqLearn(kind,mod,h){const k="oui."+mod;let l=[];try{l=JSON.parse(lsGet(k)||"[]")}catch{}const o=h.slice(0,6);if(!l.includes(o)&&!eqOuis(kind,mod).includes(o)){l.push(o);lsSet(k,JSON.stringify(l))}}
 function bqMod(mk){const k=eqKind(mk);const v=cur[mk+"Mod"]||lsGet("bmod."+k)||EQM[k].def;return v==="FULL"||EQM[k].m[v]?v:EQM[k].def}
@@ -1105,7 +1172,7 @@ async function newAct(tipo){
   $("f-pegado").focus();await saveNow();
 }
 async function back(){
-  if(cur){const empty=!cur.pegado&&!cur.cliente&&!cur.trabajo&&!cur.ip&&!cur.notas&&!cur.tvSO;
+  if(cur){const empty=!cur.pegado&&!cur.cliente&&!cur.trabajo&&!cur.ip&&!cur.notas&&!cur.tvSO&&!cur.ausente&&!cur.tel;
     if(empty)await remove(cur.id).catch(()=>{});else await saveNow();}
   cur=null;renderList();window.scrollTo(0,0);
 }
@@ -1131,6 +1198,7 @@ document.addEventListener("input",e=>{
     if(t.dataset.k==="cedula"){const nv=v.replace(/\D/g,"");if(nv!==v){v=nv;t.value=nv}}
     cur[t.dataset.k]=v;
     if(t.dataset.k==="pegado"){const p=parse(v);applyParsed(cur,p,true);multiCheck(v)}
+    if(cur.ausente&&/^(pegado|cliente)$/.test(t.dataset.k)&&cur._fi!=null&&cur.motivo===cur._motGen){cur.motivo=cur._motGen=fraseTxt(cur,cur._fi);const m=$("f-motivo");if(m)m.value=cur.motivo}
     refresh();queueSave();}
 });
 document.addEventListener("change",e=>{
@@ -1166,6 +1234,11 @@ document.addEventListener("click",async e=>{
   if(b.dataset.motivo==="ausente"&&cur&&cur.motivoAusente){cur.motivoAusente=false;cur.motivo="";b.setAttribute("aria-pressed","false");const m=$("f-motivo");if(m)m.value="";const o=$("motivoOtro");if(o)o.hidden=true;refresh();queueSave();return}
   if(b.dataset.motivo&&cur){cur.motivoAusente=true;document.querySelector('[data-motivo="ausente"]')?.setAttribute("aria-pressed","true");const o=$("motivoOtro");if(o)o.hidden=false;
     cur.motivo=motivoAusenteTxt(cur);const m=$("f-motivo");if(m){m.value=cur.motivo;m.focus()}refresh();queueSave();return}
+  if("aus" in b.dataset&&cur){const y=window.scrollY;cur.ausente=!cur.ausente;
+    if(cur.ausente){cur._prevEstado=cur.estado;cur.noRealizada=true;cur.estado="pendiente";if(!cur.motivo||!cur.motivo.trim()||cur.motivoAusente){cur.motivo=fraseAus(cur);cur.motivoAusente=true}}
+    else{cur.noRealizada=false;if(cur.motivoAusente){cur.motivo="";cur.motivoAusente=false}cur.estado=cur._prevEstado||"pendiente"}
+    renderEditor();window.scrollTo(0,y);queueSave();return}
+  if("frase" in b.dataset&&cur){cur.motivo=fraseAus(cur);cur.motivoAusente=true;const m=$("f-motivo");if(m)m.value=cur.motivo;refresh();queueSave();return}
   if(b.dataset.multi){if(b.dataset.multi==="crear")return multiCreate();const m=$("multiBox");if(m)m.remove();multi=null;return}
   if(b.dataset.next){await saveNow();const a=acts.find(x=>x.id===b.dataset.next);if(a){cur=JSON.parse(JSON.stringify(a));renderEditor();window.scrollTo(0,0)}return}
   if(b.dataset.medit){mEdit=mEdit===b.dataset.medit?null:b.dataset.medit;mConf=null;renderList();return}
@@ -1183,7 +1256,7 @@ document.addEventListener("click",async e=>{
     document.querySelectorAll('[data-chip="estado"]').forEach(x=>x.setAttribute("aria-pressed",String(x.dataset.v===cur.estado)));
     refresh();queueSave();if(cur.noRealizada){const m=$("f-motivo");m&&m.focus()}return}
   if(b.dataset.pasar){const a=acts.find(x=>x.id===b.dataset.pasar);if(!a)return;
-    a.reagendadoDe=a.reagendadoDe||dayKey(a.creado);a.creado=Date.now();a.noRealizada=false;a.estado="pendiente";if(a.tipo==="instalacion")a.fecha=dayKey(a.creado);a.actualizado=Date.now();
+    a.reagendadoDe=a.reagendadoDe||dayKey(a.creado);a.creado=Date.now();a.noRealizada=false;a.ausente=false;a.pospone="";a.estado="pendiente";if(a.tipo==="instalacion")a.fecha=dayKey(a.creado);a.actualizado=Date.now();
     try{saveLocal()}catch{}renderList();return}
   if(b.dataset.tog){const k=b.dataset.tog;cur[k]=!cur[k];b.setAttribute("aria-pressed",String(cur[k]));refresh();queueSave();return}
   if(b.dataset.chip){const k=b.dataset.chip,v=b.dataset.v;cur[k]=(cur[k]===v&&k!=="estado")?"":v;if(k==="estado"&&v==="terminada")cur.terminadaTs=Date.now();
@@ -1207,7 +1280,7 @@ function resumenDia(k){
     if(a.tel)L.push("tel. "+a.tel);
     if(a.ip)L.push("ip, "+a.ip);return L};
   for(const a of list.filter(a=>!a.noRealizada))out.push(blk(a,"✅").join("\n"));
-  for(const a of list.filter(a=>a.noRealizada)){const L=blk(a,"❌");if(a.motivo&&a.motivo.trim())L.push("Motivo: "+a.motivo.trim());out.push(L.join("\n"))}
+  for(const a of list.filter(a=>a.noRealizada)){const L=blk(a,"❌");if(a.motivo&&a.motivo.trim())L.push("Motivo: "+a.motivo.trim());if(a.ausente&&a.tipo!=="tv")L.push(posponeTxt(a));out.push(L.join("\n"))}
   if(out.length===1)return out[0];
   return out.join("\n\n");
 }
