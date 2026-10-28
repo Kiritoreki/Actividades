@@ -119,6 +119,8 @@ details.year>.mdays>details.month{background:rgba(0,0,0,.2)}
 .bk{display:grid;gap:8px;border-radius:16px;padding:12px;border:1.5px solid var(--cyan);background:rgba(34,211,238,.08)}.bk .mgo{justify-self:start}
 .grp{font:700 12px var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:2px}
 .ipgo{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;margin-top:8px;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,90,120,.5);background:rgba(255,60,100,.12);color:var(--fg);text-align:left;font:inherit;cursor:pointer}.ipgo small{color:var(--muted)}
+.syncpill{position:fixed;top:calc(env(safe-area-inset-top) + 8px);right:12px;z-index:30;padding:5px 10px;border-radius:999px;border:1px solid rgba(52,211,153,.45);background:rgba(10,8,20,.85);color:var(--green);font:600 11px var(--sans);backdrop-filter:blur(8px);cursor:pointer}
+.syncpill.bad{border-color:rgba(251,191,36,.5);color:var(--amber)}.por{color:var(--cyan)}
 .gate{display:grid;gap:14px;padding-top:24px}.gate .sec{gap:12px}.gbtn{width:100%;flex:none}.ghostb{padding:13px;border-radius:16px;border:1.5px solid var(--line);background:transparent;color:var(--fg);font:600 15px var(--sans);cursor:pointer}
 .code{font:600 42px var(--mono);letter-spacing:.25em;text-align:center;padding:14px;border:1.5px dashed var(--cyan);border-radius:14px;color:var(--cyan)}
 .devrow{display:grid;gap:8px;padding:10px 12px;border:1px solid var(--line);border-radius:12px}.devrow.pendiente{border-color:var(--amber)}.devrow.bloqueado{opacity:.6}
@@ -505,7 +507,7 @@ document.addEventListener("toggle",e=>{const k=e.target.dataset?.k;if(!k)return;
 const isOpen=(key,byDefault,force)=>force||openSet.has(key)||(!openSet.has("x"+key)&&byDefault);
 function cardHTML(a){const t=TIPOS[a.tipo]?a.tipo:"foco_rojo";
   return `<button class="item t-${t}" data-open="${a.id}"><span class="ic">${ICON[t]}</span>
-    <span style="min-width:0"><b>${esc(a.cliente||"Sin cliente")}</b><small>${hhmm(a.creado)}${a.ip?" · "+esc(a.ip):""}${a.nap?" · NAP "+esc(a.nap):""}${a.tipo==="potencia"&&a.hilo?" · H"+esc(a.hilo):""}${a.lote?` · ${a.loteIdx}/${a.loteN}`:""}${a.tipo==="retiro"?(n=>n?` · ${n} ${n===1?"equipo":"equipos"}`:"")(RET.filter(([k])=>a["ret_"+k]).length):""}${!a.ip&&!a.nap&&a.tvMarca?" · TV "+esc(a.tvMarca):""}${a.tipo==="potencia"&&(a.potDespues||a.potAntes)?` · <span class="pv ${potCls(a.potDespues||a.potAntes)}">${potNum(a.potDespues||a.potAntes).toFixed(2)}</span>`:""}</small></span>
+    <span style="min-width:0"><b>${esc(a.cliente||"Sin cliente")}</b><small>${hhmm(a.creado)}${a.ip?" · "+esc(a.ip):""}${a.nap?" · NAP "+esc(a.nap):""}${a.tipo==="potencia"&&a.hilo?" · H"+esc(a.hilo):""}${a.lote?` · ${a.loteIdx}/${a.loteN}`:""}${a.tipo==="retiro"?(n=>n?` · ${n} ${n===1?"equipo":"equipos"}`:"")(RET.filter(([k])=>a["ret_"+k]).length):""}${!a.ip&&!a.nap&&a.tvMarca?" · TV "+esc(a.tvMarca):""}${porOtro(a)?` · <span class="por">${esc(porOtro(a))}</span>`:""}${a.tipo==="potencia"&&(a.potDespues||a.potAntes)?` · <span class="pv ${potCls(a.potDespues||a.potAntes)}">${potNum(a.potDespues||a.potAntes).toFixed(2)}</span>`:""}</small></span>
     <span class="st ${a.noRealizada?"no":a.estado==="terminada"?"ok":"wait"}">${a.noRealizada?"No realizada":a.estado==="terminada"?"Lista":"Pendiente"}</span></button>`}
 function dayBlock(k,items,title){return `<section class="day"><div class="day-top"><h2>${title||fDay(k)}</h2><button class="copyday" data-copyday="${k}">${ICON.copy}Copiar resumen</button></div>${items.map(cardHTML).join("")}</section>`}
 function dayDetails(k,it,forceOpen,pfx=""){const hoyK=dayKey(Date.now());const pend=it.filter(a=>a.estado!=="terminada").length;
@@ -605,7 +607,7 @@ function updateClock(){
 setInterval(updateClock,1000);
 function renderDock(){const d=$("dock");d.hidden=!!cur;if(cur)return;
   d.innerHTML=[["inicio","Inicio","home"],["jornada","Jornada","clk"],["historial","Historial","cal"],["respaldo","Respaldo","save"]].map(([k,l,i])=>`<button data-tab="${k}" ${tab===k?'aria-current="page"':""}>${ICON[i]}${l}</button>`).join("")}
-function renderList(){if(!ACC.ok)return;document.body.classList.remove("ausente");
+function renderList(){if(!ACC.ok)return;document.body.classList.remove("ausente");setTimeout(syncUI,0);
   $("bar").hidden=true;renderDock();
   const hoyK=dayKey(Date.now());
   const fecha=fDay(hoyK).split(",").slice(0,2).join(",");
@@ -643,8 +645,9 @@ function renderList(){if(!ACC.ok)return;document.body.classList.remove("ausente"
     <div class="backup"><button id="expBtn">Exportar copia</button><label class="filebtn">Importar copia<input type="file" id="impFile" accept="application/json,.json" hidden></label></div>
     <p class="muted" id="bkMsg" style="margin:0" role="status"></p>
     <p class="muted" style="margin:0">${(lb=>lb?`Última copia: ${fDay(dayKey(lb))}, ${hhmm(lb)}`:"Todavía no has exportado ninguna copia.")(+(lsGet("actividades.lastBackup")||0))}</p></section>
+    ${syncSecHTML()}
     ${devsHTML()}
-    <p class="muted" style="margin:0">Versión de la app: <b>45</b></p>
+    <p class="muted" style="margin:0">Versión de la app: <b>46</b></p>
     <p class="muted" id="offState" style="margin:0">${offReady?'<span class="offok">✓ Lista para usar sin internet</span>':"Preparando uso sin internet… mantén la app abierta con internet unos segundos."}</p>`;
   }
   $("app").innerHTML=h;updateClock();
@@ -658,7 +661,7 @@ const chk=(k,label,sub,group)=>`<label class="chk"><input type="checkbox" id="c-
 const chip=(k,v,label,cls="")=>`<button class="chip ${cls}" data-chip="${k}" data-v="${v}" aria-pressed="${cur[k]===v}">${label}</button>`;
 const caso=()=>cur.fibra&&cur.onu?"ambos":cur.fibra?"fibra":cur.onu?"onu":"";
 
-function renderEditor(){if(!ACC.ok)return;
+function renderEditor(){if(!ACC.ok)return;{const sp=$("syncPill");if(sp)sp.hidden=true}
   confirmDel=false;$("dock").hidden=true;
   if(cur.tipo==="tv")return renderTV();
   if(cur.tipo==="instalacion")return renderInst();
@@ -719,7 +722,7 @@ function renderEditor(){if(!ACC.ok)return;
 
   <section class="sec"><div class="sec-h"><h2>Reporte</h2><span class="step">05</span></div><pre class="report" id="rep"></pre></section>
 
-  <div class="top"><span class="muted">Creada ${fDay(dayKey(cur.creado))}, ${hhmm(cur.creado)}</span><button class="danger" id="del">Borrar actividad</button></div>
+  <div class="top"><span class="muted">Creada ${fDay(dayKey(cur.creado))}, ${hhmm(cur.creado)}${quienTxt(cur)}</span><button class="danger" id="del">Borrar actividad</button></div>
   ${loteNav()}`;
   $("bar").hidden=false;refresh();
 }
@@ -771,7 +774,7 @@ function renderTV(){
   <section class="sec"><div class="sec-h"><h2>Reporte</h2></div>
     <div class="chips">${chip("tvFmt","formal","Formato ACTIVIDAD")}${chip("tvFmt","rapido","Formato rápido ✅")}</div>
     <pre class="report" id="rep"></pre></section>
-  <div class="top"><span class="muted">Creada ${fDay(dayKey(cur.creado))}, ${hhmm(cur.creado)}</span><button class="danger" id="del">Borrar actividad</button></div>
+  <div class="top"><span class="muted">Creada ${fDay(dayKey(cur.creado))}, ${hhmm(cur.creado)}${quienTxt(cur)}</span><button class="danger" id="del">Borrar actividad</button></div>
   ${loteNav()}`;
   $("bar").hidden=false;refresh();
 }
@@ -833,7 +836,7 @@ function renderInst(){
 
   <section class="sec"><div class="sec-h"><h2>Reporte</h2><span class="step">06</span></div><pre class="report" id="rep"></pre></section>
 
-  <div class="top"><span class="muted">Creada ${fDay(dayKey(cur.creado))}, ${hhmm(cur.creado)}</span><button class="danger" id="del">Borrar actividad</button></div>
+  <div class="top"><span class="muted">Creada ${fDay(dayKey(cur.creado))}, ${hhmm(cur.creado)}${quienTxt(cur)}</span><button class="danger" id="del">Borrar actividad</button></div>
   ${loteNav()}`;
   $("bar").hidden=false;refresh();
 }
@@ -956,7 +959,7 @@ function renderPot(){
     <div class="list-chk">${EVID_P.map(([k,l,c])=>`<div data-eq="${c||""}" ${c==="eq"&&!(cur.onu||cur.router)?"hidden":""}>${chk(k,l,"","evid")}</div>`).join("")}</div>
   </section>
   <section class="sec"><div class="sec-h"><h2>Reporte</h2><span class="step">04</span></div><pre class="report" id="rep"></pre></section>
-  <div class="top"><span class="muted">Creada ${fDay(dayKey(cur.creado))}, ${hhmm(cur.creado)}</span><button class="danger" id="del">Borrar actividad</button></div>
+  <div class="top"><span class="muted">Creada ${fDay(dayKey(cur.creado))}, ${hhmm(cur.creado)}${quienTxt(cur)}</span><button class="danger" id="del">Borrar actividad</button></div>
   ${loteNav()}`;
   $("bar").hidden=false;refresh();
 }
@@ -993,7 +996,7 @@ function renderRet(){
     <div class="list-chk">${EVID_R.map(([k,l])=>`<div>${chk(k,l,"","evid")}</div>`).join("")}</div>
   </section>
   <section class="sec"><div class="sec-h"><h2>Reporte</h2><span class="step">03</span></div><pre class="report" id="rep"></pre></section>
-  <div class="top"><span class="muted">Creada ${fDay(dayKey(cur.creado))}, ${hhmm(cur.creado)}</span><button class="danger" id="del">Borrar actividad</button></div>
+  <div class="top"><span class="muted">Creada ${fDay(dayKey(cur.creado))}, ${hhmm(cur.creado)}${quienTxt(cur)}</span><button class="danger" id="del">Borrar actividad</button></div>
   ${loteNav()}`;
   $("bar").hidden=false;refresh();
 }
@@ -1060,7 +1063,7 @@ function posponeTxt(a){const p=(a.pospone||"").trim().replace(/^(para\s+)?(el\s+
 function refresh(){
   if(!cur)return;
   document.body.classList.toggle("ausente",!!cur.ausente&&cur.tipo!=="tv");
-  repBox();ipWarn();
+  repBox();ipWarn();dupWarn();
   coordLinkUpd();
   {const mq=$("motivoQuick");if(mq)mq.hidden=!cur.noRealizada}
   {const mb=$("motivoBox");if(mb)mb.hidden=!cur.noRealizada;const ns=$("nrSec");if(ns)ns.classList.toggle("on",!!cur.noRealizada)}
@@ -1086,7 +1089,7 @@ function refresh(){
 }
 
 /* --- guardar --- */
-function saveLocal(){try{localStorage.setItem(LS,JSON.stringify(acts))}catch(e){throw new Error("storage")}}
+function saveLocal(quiet){try{localStorage.setItem(LS,JSON.stringify(acts))}catch(e){throw new Error("storage")}if(!quiet&&typeof syncSoon==="function")syncSoon()}
 function queueSave(){clearTimeout(saveT);const s=$("saved");if(s)s.textContent="Guardando…";saveT=setTimeout(saveNow,600)}
 async function saveNow(){clearTimeout(saveT);if(!cur)return;const {id,...data}=cur;data.actualizado=Date.now();
   const i=acts.findIndex(a=>a.id===id);if(i>=0)acts[i]={...cur};
@@ -1118,7 +1121,7 @@ function multiCheck(txt){
 async function multiCreate(){
   if(!multi)return;const sameTec=$("multiTec")?.checked;const lote="L"+Date.now();const N=multi.blocks.length;const t0=Date.now();
   multi.blocks.forEach((bt,i)=>{const p=multi.ps[i];if(sameTec&&multi.tec&&!p.tecnico)p.tecnico=multi.tec;
-    let o;if(i===0){o=cur;o.pegado=bt;applyParsed(o,p,false)}else{o={id:"l"+(t0+i),...blank(cur.tipo),creado:t0+i,pegado:bt};applyParsed(o,p,false);acts.push(o)}
+    let o;if(i===0){o=cur;o.pegado=bt;applyParsed(o,p,false)}else{o={id:"l"+(t0+i)+Math.random().toString(36).slice(2,6),...blank(cur.tipo),creado:t0+i,pegado:bt};applyParsed(o,p,false);acts.push(o)}
     o.lote=lote;o.loteIdx=i+1;o.loteN=N;if(i>0){o.actualizado=Date.now()}});
   const i0=acts.findIndex(a=>a.id===cur.id);if(i0>=0)acts[i0]={...cur};
   try{saveLocal()}catch{}multi=null;renderEditor();window.scrollTo(0,0);await saveNow()}
@@ -1174,11 +1177,11 @@ function bqInner(mk,sk){
     <div class="bq"><span class="bq-l">⚡ SN ${M.sn} +</span>${I("sn",snN,sh.length===M.snLen&&sh.startsWith(M.sn)?sh.slice(M.sn.length):"",M.snPh)}<span class="bq-h">${snN} caracteres</span></div>`}
 function bqRedraw(mk){const w=$("bq-"+mk);if(w)w.innerHTML=bqInner(mk,w.dataset.sk)}
 async function newAct(tipo){if(!ACC.ok)return;
-  const a=blank(tipo);let id="l"+a.creado;
+  const a=blank(tipo);let id="l"+a.creado+Math.random().toString(36).slice(2,6);
   cur={id,...a};acts.push({...cur});renderEditor();window.scrollTo(0,0);
   $("f-pegado").focus();await saveNow();
 }
-async function back(){
+async function back(){setTimeout(()=>syncSoon(200),0);
   if(cur){const empty=!cur.pegado&&!cur.cliente&&!cur.trabajo&&!cur.ip&&!cur.notas&&!cur.tvSO&&!cur.ausente&&!cur.tel;
     if(empty)await remove(cur.id).catch(()=>{});else await saveNow();}
   cur=null;renderList();window.scrollTo(0,0);
@@ -1340,6 +1343,69 @@ document.addEventListener("change",e=>{if(e.target.id==="impFile"&&e.target.file
 document.addEventListener("submit",e=>{const f=e.target.closest("[data-mform]");if(!f)return;e.preventDefault();
   const ts=new Date($("me-d").value+"T"+$("me-t").value).getTime();if(isNaN(ts))return;const m=marks.find(x=>x.id===f.dataset.mform);
   if(m){m.ts=ts;m.tipo=$("me-k").value}mEdit=null;try{saveMarks()}catch{}renderList()});
+/* ============ actividades compartidas (Supabase) ============ */
+const SY={busy:false,again:false,state:"",last:0,err:"",pend:0};let syT=null;
+const porNom=n=>String(n||"").replace(/^(mi\s+)?(iphone|celular|cel|tel[eé]fono|android|samsung|xiaomi|motorola|huawei|redmi)\s+(de|del)\s+/i,"").trim();
+const yoNom=()=>porNom(ACC.disp?.nombre||"");
+function porOtro(a){const p=porNom(a&&a._por);return p&&p!==yoNom()?p:""}
+function quienTxt(a){const c=porNom(a._por),e=porNom(a._edit);if(!c)return "";return ` · por ${esc(c)}${e&&e!==c?` · editada por ${esc(e)}`:""}`}
+function stableStr(v){if(Array.isArray(v))return "["+v.map(stableStr).join(",")+"]";if(v&&typeof v==="object")return "{"+Object.keys(v).filter(k=>v[k]!==undefined).sort().map(k=>JSON.stringify(k)+":"+stableStr(v[k])).join(",")+"}";return JSON.stringify(v===undefined?null:v)}
+function syHash(a){const {_upd,_edit,_por,...r}=a;const t=stableStr(r);let h=2166136261;for(let i=0;i<t.length;i++){h^=t.charCodeAt(i);h=Math.imul(h,16777619)}return (h>>>0).toString(36)+t.length.toString(36)}
+const syOn=()=>!!sb&&ACC.ok&&accAprob(ACC.rol);
+function syncSoon(ms=1500){if(!syOn())return;clearTimeout(syT);syT=setTimeout(syncNow,ms)}
+function syncPend(){const H=accGet("act-sync-h")||{};const ids=new Set(acts.map(a=>a.id));let n=0;for(const a of acts)if(H[a.id]!==syHash(a))n++;for(const id in H)if(!ids.has(id))n++;return n}
+async function syncNow(){
+  if(!syOn())return;if(SY.busy){SY.again=true;return}
+  if(!navigator.onLine){SY.state="off";SY.pend=syncPend();syncUI();return}
+  SY.busy=true;SY.state="sync";syncUI();
+  try{
+    const H=accGet("act-sync-h")||{};const me=yoNom()||"Yo";const now=Date.now();const rows=[],hs=[];const ids=new Set();
+    for(const a of acts){ids.add(a.id);const h=syHash(a);if(H[a.id]!==h){if(!a._por)a._por=me;a._upd=Math.max(now,(a._upd||0)+1);a._edit=me;
+      rows.push({id:a.id,data:a,upd:a._upd,borrado:false,creado_por:a._por,editado_por:me});hs.push([a.id,h])}}
+    for(const id of Object.keys(H))if(!ids.has(id)){rows.push({id,data:{},upd:now,borrado:true,editado_por:me});hs.push([id,null])}
+    if(rows.length){saveLocal(true);
+      for(let i=0;i<rows.length;i+=100){const part=rows.slice(i,i+100);const {error}=await sb.rpc("act_guardar",{p:JSON.parse(JSON.stringify(part))});if(error)throw error;
+        for(const [id,h] of hs.slice(i,i+100)){if(h===null)delete H[id];else H[id]=h}accSet("act-sync-h",H)}}
+    let ts=accGet("act-sync-ts")||"1970-01-01T00:00:00Z",changed=false;const redo=new Set(accGet("act-sync-redo")||[]);
+    const apply=r=>{const i=acts.findIndex(x=>x.id===r.id);const loc=i>=0?acts[i]:null;const dirty=loc&&H[r.id]!==syHash(loc);
+      if(cur&&cur.id===r.id){redo.add(r.id);return}   /* la tienes abierta: se aplica al salir */
+      redo.delete(r.id);
+      if(r.borrado){if(loc&&(!dirty||(loc._upd||0)<=r.upd)){acts.splice(i,1);delete H[r.id];changed=true}else if(!loc)delete H[r.id];return}
+      const d={...r.data,id:r.id,_upd:Number(r.upd)};
+      if(!loc){acts.push(d);H[r.id]=syHash(d);changed=true}
+      else if(!dirty||(loc._upd||0)<=d._upd){if((loc._upd||0)!==d._upd||dirty){acts[i]=d;changed=true}H[r.id]=syHash(acts[i])}};
+    /* si el servidor se quedó con otra versión (reloj del otro teléfono adelantado), la traemos para que ambos queden iguales */
+    {const sent=rows.filter(r=>!r.borrado).map(r=>r.id);for(let i=0;i<sent.length;i+=100){const {data,error}=await sb.from("act_actividades").select("*").in("id",sent.slice(i,i+100));if(error)throw error;for(const r of data)apply(r)}}
+    const pendRedo=[...redo].filter(id=>!(cur&&cur.id===id));
+    if(pendRedo.length){const {data,error}=await sb.from("act_actividades").select("*").in("id",pendRedo);if(error)throw error;for(const r of data)apply(r);for(const id of pendRedo)if(!data.some(r=>r.id===id))redo.delete(id)}
+    for(;;){const {data,error}=await sb.from("act_actividades").select("*").gt("srv_ts",ts).order("srv_ts").limit(500);if(error)throw error;
+      for(const r of data){ts=r.srv_ts;apply(r)}
+      if(data.length<500)break}
+    accSet("act-sync-redo",[...redo]);
+    accSet("act-sync-ts",ts);accSet("act-sync-h",H);
+    if(changed){saveLocal(true);if(!cur&&ACC.ok){const y=window.scrollY;renderList();window.scrollTo(0,y)}}
+    SY.state="ok";SY.err="";SY.last=Date.now()}
+  catch(e){SY.state="err";SY.err=accMsg(e)}
+  SY.busy=false;SY.pend=syncPend();syncUI();if(SY.again){SY.again=false;syncSoon(300)}}
+function syncLabel(){if(!syOn())return "";const p=SY.pend;
+  if(SY.state==="sync")return "⟳ Sincronizando…";if(SY.state==="off")return p?`Sin señal · ${p} por subir`:"Sin señal";
+  if(SY.state==="err")return `⚠️ Sin sincronizar${p?" · "+p+" por subir":""}`;if(SY.state==="ok")return p?`${p} por subir`:`✓ Sincronizado ${hhmm(SY.last)}`;return ""}
+function syncUI(){let el=$("syncPill");if(!el){el=document.createElement("button");el.id="syncPill";el.className="syncpill";el.dataset.syncnow="1";document.body.appendChild(el)}
+  const t=syncLabel();el.hidden=!t||!!cur||!ACC.ok;el.textContent=t;el.classList.toggle("bad",SY.state==="err"||SY.state==="off");
+  const r=$("syncInfo");if(r)r.innerHTML=syncInfoHTML()}
+function syncInfoHTML(){return `${esc(syncLabel()||"—")}${SY.state==="err"&&SY.err?`<br><small style="color:var(--pink)">${esc(SY.err)}${/act_guardar|act_actividades|function|relation|schema cache/i.test(SY.err)?" — falta ejecutar sync.sql en Supabase":""}</small>`:""}`}
+function syncSecHTML(){if(!syOn())return "";return `<section class="sec"><div class="sec-h"><h2>Actividades compartidas</h2><button class="chip sm" data-syncnow="1">Sincronizar ahora</button></div>
+  <p class="muted" style="margin:0">Lo que tú y tu compañero registran aparece en los dos teléfonos. Sin señal se guarda aquí y se sube solo al volver. La Jornada es personal y no se comparte.</p>
+  <p style="margin:0" id="syncInfo">${syncInfoHTML()}</p></section>`}
+function dupWarn(){const inpEl=$("f-cliente");if(!inpEl||!cur)return;let el=$("dupWarn");const k=dayKey(cur.creado);
+  const o=cur.cliente?acts.filter(a=>a.id!==cur.id&&dayKey(a.creado)===k&&sameClient({cliente:a.cliente},{cliente:cur.cliente})&&porOtro(a)):[];
+  if(!o.length){if(el)el.remove();return}
+  if(!el){el=document.createElement("div");el.id="dupWarn";el.className="ipwarn full";inpEl.closest("label").after(el)}
+  el.innerHTML=`⚠️ <b>${esc(porOtro(o[0]))}</b> ya registró a este cliente hoy. Revisa para no duplicarlo:${o.map(a=>`<button class="ipgo" data-open="${a.id}"><b>${esc(a.cliente)}</b><small>${esc((TIPOS[a.tipo]||TIPOS.foco_rojo)[0])} · ${hhmm(a.creado)} ›</small></button>`).join("")}`}
+document.addEventListener("click",e=>{const b=e.target.closest("[data-syncnow]");if(b){e.stopPropagation();syncNow()}},true);
+window.addEventListener("online",()=>syncSoon(500));window.addEventListener("offline",()=>{SY.state="off";syncUI()});
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")syncSoon(300)});
+setInterval(()=>{if(document.visibilityState==="visible"&&!SY.busy)syncNow()},20000);
 /* ============ acceso por dispositivo (Supabase, mismo proyecto de Visitas) ============ */
 const ACC={rol:null,disp:null,ok:false,hayAdmin:true,abiertas:true,devs:null,devErr:"",loading:false};
 let sb=null;
@@ -1360,7 +1426,7 @@ function accRender(kind,err){
   else if(kind==="bloqueado")accGate(`<section class="sec"><h2>Acceso bloqueado</h2><p class="muted" style="margin:0">Este dispositivo no tiene permiso para usar la app.</p></section>`);
   else if(kind==="offline")accGate(`<section class="sec"><h2>Sin internet</h2><p class="muted" style="margin:0">Conéctate a internet la primera vez para autorizar este dispositivo. Después funciona sin señal.</p><button class="gbtn ghostb" data-acc="check">Reintentar</button></section>`);
   else accGate(`<section class="sec"><h2>No se pudo conectar</h2><p class="muted" style="margin:0">${esc(err||"")}</p>${/anonymous/i.test(err||"")?`<p class="muted" style="margin:0">Activa <b>Allow anonymous sign-ins</b> en Supabase › Authentication › Sign In / Providers.</p>`:""}${/act_dispositivos|relation|schema cache|does not exist/i.test(err||"")?`<p class="muted" style="margin:0">Falta ejecutar <b>acceso.sql</b> en Supabase › SQL Editor.</p>`:""}<button class="gbtn ghostb" data-acc="check">Reintentar</button></section>`)}
-function accStart(){if(ACC.ok)return;ACC.ok=true;renderList()}
+function accStart(){if(ACC.ok)return;ACC.ok=true;renderList();syncSoon(200)}
 async function accCheck(){
   accCheck.last=Date.now();
   if(!sb){if(!ACC.ok)accRender("error","No se pudo cargar la librería de acceso. Abre la app con internet una vez.");return}
@@ -1369,7 +1435,7 @@ async function accCheck(){
     if(!session){const r=await sb.auth.signInAnonymously();if(r.error)throw r.error;session=r.data.session}
     const {data,error}=await sb.from("act_dispositivos").select("*").eq("user_id",session.user.id).maybeSingle();if(error)throw error;
     ACC.disp=data;accSet("act-disp",data);accSet("act-gated",true);const prev=ACC.rol;ACC.rol=data?data.rol:null;accSet("act-rol",ACC.rol);
-    if(accAprob(ACC.rol)){if(!ACC.ok)accStart();else if(prev!==ACC.rol&&!cur)renderList()}
+    if(accAprob(ACC.rol)){if(!ACC.ok)accStart();else{if(prev!==ACC.rol&&!cur)renderList();syncSoon(200)}}
     else{if(cur){try{await saveNow()}catch{}}
       ACC.hayAdmin=!!(await sb.rpc("act_hay_admin")).data;ACC.abiertas=(await sb.rpc("act_solicitudes_abiertas")).data!==false;accRender(data?data.rol:"nuevo")}}
   catch(e){if(ACC.ok)return;
