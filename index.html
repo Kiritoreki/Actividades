@@ -118,8 +118,12 @@ details.year>.mdays>details.month{background:rgba(0,0,0,.2)}
 .rep-warn h3{margin:0;font:700 15px var(--display);color:#fde68a}.vis{display:grid;gap:2px;padding:8px 10px;border-radius:12px;background:rgba(0,0,0,.25)}.vis b{font-size:13.5px}.vis span{font-size:13px;color:#d7cfea;overflow-wrap:anywhere}
 .bk{display:grid;gap:8px;border-radius:16px;padding:12px;border:1.5px solid var(--cyan);background:rgba(34,211,238,.08)}.bk .mgo{justify-self:start}
 .grp{font:700 12px var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:2px}
-.ipgo{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;margin-top:8px;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,90,120,.5);background:rgba(255,60,100,.12);color:var(--text);text-align:left;font:inherit;cursor:pointer}.ipgo small{color:var(--muted)}
-.aus{gap:10px}.ausbtn{width:100%;padding:14px;border-radius:14px;border:1.5px solid var(--line);background:rgba(255,255,255,.04);color:var(--text);font:600 16px var(--sans);cursor:pointer}
+.ipgo{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;margin-top:8px;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,90,120,.5);background:rgba(255,60,100,.12);color:var(--fg);text-align:left;font:inherit;cursor:pointer}.ipgo small{color:var(--muted)}
+.gate{display:grid;gap:14px;padding-top:24px}.gate .sec{gap:12px}.gbtn{width:100%;flex:none}.ghostb{padding:13px;border-radius:16px;border:1.5px solid var(--line);background:transparent;color:var(--fg);font:600 15px var(--sans);cursor:pointer}
+.code{font:600 42px var(--mono);letter-spacing:.25em;text-align:center;padding:14px;border:1.5px dashed var(--cyan);border-radius:14px;color:var(--cyan)}
+.devrow{display:grid;gap:8px;padding:10px 12px;border:1px solid var(--line);border-radius:12px}.devrow.pendiente{border-color:var(--amber)}.devrow.bloqueado{opacity:.6}
+.tagme{font-size:11px;padding:2px 7px;border-radius:8px;background:rgba(34,211,238,.15);color:var(--cyan)}
+.aus{gap:10px}.ausbtn{width:100%;padding:14px;border-radius:14px;border:1.5px solid var(--line);background:rgba(255,255,255,.04);color:var(--fg);font:600 16px var(--sans);cursor:pointer}
 .aus.on .ausbtn,.ausbtn[aria-pressed="true"]{border-color:var(--pink);background:rgba(255,46,122,.14);box-shadow:0 0 14px rgba(255,46,122,.3)}
 .ausrow{display:flex;gap:8px;align-items:stretch}.ausrow textarea{flex:1;min-height:120px}.frbtn{flex:none;width:52px;border-radius:12px;border:1.5px solid var(--cyan);background:rgba(34,211,238,.1);font-size:22px;cursor:pointer}
 body.ausente .sec.wk{opacity:.28;pointer-events:none;filter:grayscale(1)}
@@ -241,6 +245,8 @@ a{color:var(--fuchsia)}
 <div class="bar" id="bar" hidden><div class="bar-in"><span class="note" id="miss"></span><button class="primary" id="copy"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><span>Copiar reporte</span></button></div></div>
 <textarea id="clip" aria-hidden="true" style="position:fixed;left:-9999px;top:0;opacity:0"></textarea>
 
+<script src="vendor/supabase.js"></script>
+<script src="config.js"></script>
 <script>
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -599,7 +605,7 @@ function updateClock(){
 setInterval(updateClock,1000);
 function renderDock(){const d=$("dock");d.hidden=!!cur;if(cur)return;
   d.innerHTML=[["inicio","Inicio","home"],["jornada","Jornada","clk"],["historial","Historial","cal"],["respaldo","Respaldo","save"]].map(([k,l,i])=>`<button data-tab="${k}" ${tab===k?'aria-current="page"':""}>${ICON[i]}${l}</button>`).join("")}
-function renderList(){document.body.classList.remove("ausente");
+function renderList(){if(!ACC.ok)return;document.body.classList.remove("ausente");
   $("bar").hidden=true;renderDock();
   const hoyK=dayKey(Date.now());
   const fecha=fDay(hoyK).split(",").slice(0,2).join(",");
@@ -637,7 +643,8 @@ function renderList(){document.body.classList.remove("ausente");
     <div class="backup"><button id="expBtn">Exportar copia</button><label class="filebtn">Importar copia<input type="file" id="impFile" accept="application/json,.json" hidden></label></div>
     <p class="muted" id="bkMsg" style="margin:0" role="status"></p>
     <p class="muted" style="margin:0">${(lb=>lb?`Última copia: ${fDay(dayKey(lb))}, ${hhmm(lb)}`:"Todavía no has exportado ninguna copia.")(+(lsGet("actividades.lastBackup")||0))}</p></section>
-    <p class="muted" style="margin:0">Versión de la app: <b>44</b></p>
+    ${devsHTML()}
+    <p class="muted" style="margin:0">Versión de la app: <b>45</b></p>
     <p class="muted" id="offState" style="margin:0">${offReady?'<span class="offok">✓ Lista para usar sin internet</span>':"Preparando uso sin internet… mantén la app abierta con internet unos segundos."}</p>`;
   }
   $("app").innerHTML=h;updateClock();
@@ -651,7 +658,7 @@ const chk=(k,label,sub,group)=>`<label class="chk"><input type="checkbox" id="c-
 const chip=(k,v,label,cls="")=>`<button class="chip ${cls}" data-chip="${k}" data-v="${v}" aria-pressed="${cur[k]===v}">${label}</button>`;
 const caso=()=>cur.fibra&&cur.onu?"ambos":cur.fibra?"fibra":cur.onu?"onu":"";
 
-function renderEditor(){
+function renderEditor(){if(!ACC.ok)return;
   confirmDel=false;$("dock").hidden=true;
   if(cur.tipo==="tv")return renderTV();
   if(cur.tipo==="instalacion")return renderInst();
@@ -1166,7 +1173,7 @@ function bqInner(mk,sk){
     <div class="bq"><span class="bq-l">⚡ MAC últimos 6</span>${I("mac",6,mh.length===12&&mh.startsWith(oui)?mh.slice(6):"","······")}<span class="bq-h">o los 12 si es otro inicio</span></div>
     <div class="bq"><span class="bq-l">⚡ SN ${M.sn} +</span>${I("sn",snN,sh.length===M.snLen&&sh.startsWith(M.sn)?sh.slice(M.sn.length):"",M.snPh)}<span class="bq-h">${snN} caracteres</span></div>`}
 function bqRedraw(mk){const w=$("bq-"+mk);if(w)w.innerHTML=bqInner(mk,w.dataset.sk)}
-async function newAct(tipo){
+async function newAct(tipo){if(!ACC.ok)return;
   const a=blank(tipo);let id="l"+a.creado;
   cur={id,...a};acts.push({...cur});renderEditor();window.scrollTo(0,0);
   $("f-pegado").focus();await saveNow();
@@ -1333,9 +1340,88 @@ document.addEventListener("change",e=>{if(e.target.id==="impFile"&&e.target.file
 document.addEventListener("submit",e=>{const f=e.target.closest("[data-mform]");if(!f)return;e.preventDefault();
   const ts=new Date($("me-d").value+"T"+$("me-t").value).getTime();if(isNaN(ts))return;const m=marks.find(x=>x.id===f.dataset.mform);
   if(m){m.ts=ts;m.tipo=$("me-k").value}mEdit=null;try{saveMarks()}catch{}renderList()});
+/* ============ acceso por dispositivo (Supabase, mismo proyecto de Visitas) ============ */
+const ACC={rol:null,disp:null,ok:false,hayAdmin:true,abiertas:true,devs:null,devErr:"",loading:false};
+let sb=null;
+const accGet=k=>{try{return JSON.parse(localStorage.getItem(k)||"null")}catch{return null}};
+const accSet=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}};
+const accAprob=r=>r==="admin"||r==="tecnico";
+const accMsg=e=>{const m=(e&&(e.message||e.error_description))||String(e);return /failed to fetch|load failed|networkerror|network request failed/i.test(m)?"No hay conexión con el servidor. Revisa tu internet y toca Reintentar.":m};
+const accLegacy=()=>acts.length>0||marks.length>0;
+const ROLTXT={admin:"Administrador",tecnico:"Aprobado",pendiente:"Pendiente",bloqueado:"Bloqueado"};
+function accGate(html){ACC.ok=false;cur=null;$("dock").hidden=true;$("bar").hidden=true;document.body.classList.remove("ausente");
+  $("app").innerHTML=`<div class="gate"><div class="hello"><small>Meganet</small><h1>Actividades</h1></div>${html}</div>`}
+function accRender(kind,err){
+  if(kind==="nuevo"&&ACC.abiertas===false)accGate(`<section class="sec"><h2>Acceso cerrado</h2><p class="muted" style="margin:0">Esta app no acepta nuevos dispositivos.</p></section>`);
+  else if(kind==="nuevo")accGate(`<section class="sec"><h2>Este dispositivo no tiene acceso</h2><p class="muted" style="margin:0">Cada celular se autoriza una sola vez. Ponle un nombre y pide acceso; el administrador te aprueba con el código que te sale.</p>
+    <label class="f">Nombre del dispositivo<input id="devNombre" placeholder="Ej. iPhone de Kirito / Celular de Anderson" autocomplete="off"></label><button class="primary gbtn" data-acc="pedir">Pedir acceso</button></section>`);
+  else if(kind==="pendiente")accGate(`<section class="sec"><h2>Esperando aprobación</h2><p class="muted" style="margin:0">Dale este código al administrador para que apruebe <b>${esc(ACC.disp?.nombre||"este dispositivo")}</b>:</p><div class="code">${esc(ACC.disp?.codigo||"")}</div><button class="gbtn ghostb" data-acc="check">Ya me aprobaron, comprobar</button></section>
+    ${ACC.hayAdmin?"":`<section class="sec" style="border-color:var(--fuchsia)"><h2>¿Primer uso?</h2><p class="muted" style="margin:0">Aún no hay administrador. Si este es <b>tu</b> celular, conviértelo en el administrador: podrás aprobar, bloquear y quitar dispositivos.</p><button class="primary gbtn" data-acc="reclamar">Este dispositivo es el administrador</button></section>`}`);
+  else if(kind==="bloqueado")accGate(`<section class="sec"><h2>Acceso bloqueado</h2><p class="muted" style="margin:0">Este dispositivo no tiene permiso para usar la app.</p></section>`);
+  else if(kind==="offline")accGate(`<section class="sec"><h2>Sin internet</h2><p class="muted" style="margin:0">Conéctate a internet la primera vez para autorizar este dispositivo. Después funciona sin señal.</p><button class="gbtn ghostb" data-acc="check">Reintentar</button></section>`);
+  else accGate(`<section class="sec"><h2>No se pudo conectar</h2><p class="muted" style="margin:0">${esc(err||"")}</p>${/anonymous/i.test(err||"")?`<p class="muted" style="margin:0">Activa <b>Allow anonymous sign-ins</b> en Supabase › Authentication › Sign In / Providers.</p>`:""}${/act_dispositivos|relation|schema cache|does not exist/i.test(err||"")?`<p class="muted" style="margin:0">Falta ejecutar <b>acceso.sql</b> en Supabase › SQL Editor.</p>`:""}<button class="gbtn ghostb" data-acc="check">Reintentar</button></section>`)}
+function accStart(){if(ACC.ok)return;ACC.ok=true;renderList()}
+async function accCheck(){
+  accCheck.last=Date.now();
+  if(!sb){if(!ACC.ok)accRender("error","No se pudo cargar la librería de acceso. Abre la app con internet una vez.");return}
+  if(!navigator.onLine){if(!ACC.ok)accRender("offline");return}
+  try{let {data:{session}}=await sb.auth.getSession();
+    if(!session){const r=await sb.auth.signInAnonymously();if(r.error)throw r.error;session=r.data.session}
+    const {data,error}=await sb.from("act_dispositivos").select("*").eq("user_id",session.user.id).maybeSingle();if(error)throw error;
+    ACC.disp=data;accSet("act-disp",data);accSet("act-gated",true);const prev=ACC.rol;ACC.rol=data?data.rol:null;accSet("act-rol",ACC.rol);
+    if(accAprob(ACC.rol)){if(!ACC.ok)accStart();else if(prev!==ACC.rol&&!cur)renderList()}
+    else{if(cur){try{await saveNow()}catch{}}
+      ACC.hayAdmin=!!(await sb.rpc("act_hay_admin")).data;ACC.abiertas=(await sb.rpc("act_solicitudes_abiertas")).data!==false;accRender(data?data.rol:"nuevo")}}
+  catch(e){if(ACC.ok)return;
+    /* este celular ya tenía datos antes del control de acceso: no lo dejamos fuera por una falla de conexión */
+    if(accLegacy()&&!accGet("act-gated")){accStart();return}
+    accRender("error",accMsg(e))}}
+const accCodigo=()=>Array.from({length:4},()=>"ABCDEFGHJKLMNPQRSTUVWXYZ23456789"[Math.floor(Math.random()*32)]).join("");
+async function accPedir(){
+  const nombre=($("devNombre")?.value||"").trim();if(!nombre){const i=$("devNombre");if(i){i.focus();i.placeholder="Escribe un nombre primero"}return}
+  try{const {data:{session}}=await sb.auth.getSession();
+    const {error}=await sb.from("act_dispositivos").insert({user_id:session.user.id,nombre,codigo:accCodigo(),rol:"pendiente"});
+    if(error)accRender("error",/row-level|policy/i.test(accMsg(error))?"Las solicitudes de acceso están cerradas.":accMsg(error));else accCheck()}catch(e){accRender("error",accMsg(e))}}
+async function accLoadDevs(){if(!sb||ACC.loading||ACC.rol!=="admin")return;ACC.loading=true;ACC.devErr="";
+  try{const {data,error}=await sb.from("act_dispositivos").select("*").order("creado");if(error)throw error;ACC.devs=data;
+    const a=await sb.from("act_ajustes").select("*").eq("id",1).maybeSingle();ACC.abiertas=a.error?null:(a.data?a.data.solicitudes_abiertas!==false:true)}
+  catch(e){ACC.devErr=accMsg(e);ACC.devs=ACC.devs||[]}
+  ACC.loading=false;if(tab==="respaldo"&&!cur&&ACC.ok){const y=window.scrollY;renderList();window.scrollTo(0,y)}}
+function devsHTML(){
+  if(ACC.rol!=="admin")return ACC.rol==="tecnico"?`<section class="sec"><div class="sec-h"><h2>Este dispositivo</h2></div><p style="margin:0"><b>${esc(ACC.disp?.nombre||"")}</b> · Aprobado · código <span class="mono">${esc(ACC.disp?.codigo||"")}</span></p></section>`:"";
+  if(ACC.devs===null&&navigator.onLine)setTimeout(accLoadDevs,0);
+  const d=ACC.devs;const yo=ACC.disp?.user_id;
+  const btn=(id,v,l,cls="")=>`<button class="chip sm ${cls}" data-devrol="${v}" data-id="${id}">${l}</button>`;
+  return `<section class="sec"><div class="sec-h"><h2>Dispositivos</h2><button class="chip sm" data-devload>Actualizar</button></div>
+    <p class="muted" style="margin:0">Este dispositivo: <b>${esc(ACC.disp?.nombre||"")}</b> · Administrador · código <span class="mono">${esc(ACC.disp?.codigo||"")}</span></p>
+    ${ACC.devErr?`<p class="muted" style="margin:0;color:var(--pink)">${esc(ACC.devErr)}</p>`:""}
+    ${d===null?`<p class="muted" style="margin:0">${navigator.onLine?"Cargando…":"Necesitas internet para ver los dispositivos."}</p>`:d.map(x=>{const me=x.user_id===yo;return `<div class="devrow ${x.rol}"><div><b>${esc(x.nombre)}</b> <span class="mono muted">${esc(x.codigo)}</span>${me?' <span class="tagme">Este</span>':""}<br><small class="muted">${ROLTXT[x.rol]||x.rol} · ${fDay(dayKey(new Date(x.creado).getTime()))}</small></div>
+      ${me?"":`<div class="chips">${x.rol!=="tecnico"?btn(x.user_id,"tecnico","✅ Aprobar"):""}${x.rol!=="bloqueado"?btn(x.user_id,"bloqueado","⛔ Bloquear","no"):""}<button class="chip sm no" data-devdel="${x.user_id}">${ACC.delConf===x.user_id?"Toca otra vez para quitar":"🗑 Quitar"}</button></div>`}</div>`}).join("")}
+    ${ACC.abiertas===null?"":`<div class="devrow"><div><b>Solicitudes de acceso</b><br><small class="muted">${ACC.abiertas?"Abiertas: cualquiera con el enlace puede pedir acceso (tú decides si lo apruebas).":"Cerradas: nadie más puede pedir acceso."}</small></div><button class="chip sm ${ACC.abiertas?"":"no"}" data-sol="${ACC.abiertas?0:1}">${ACC.abiertas?"🔒 Cerrar solicitudes":"🔓 Abrir solicitudes"}</button></div>`}
+  </section>`}
+document.addEventListener("click",async e=>{const b=e.target.closest("button");if(!b)return;
+  const a=b.dataset.acc;
+  if(a==="pedir"){if(($("devNombre")?.value||"").trim())b.disabled=true;await accPedir();return}
+  if(a==="check"){b.disabled=true;b.textContent="Comprobando…";await accCheck();return}
+  if(a==="reclamar"){b.disabled=true;try{const {data,error}=await sb.rpc("act_reclamar_admin");if(error||!data)ACC.hayAdmin=true}catch{}await accCheck();return}
+  if("devload" in b.dataset){ACC.devs=null;renderList();accLoadDevs();return}
+  if(b.dataset.devrol){b.disabled=true;const {error}=await sb.from("act_dispositivos").update({rol:b.dataset.devrol}).eq("user_id",b.dataset.id);if(error)ACC.devErr=accMsg(error);ACC.delConf=null;accLoadDevs();return}
+  if(b.dataset.devdel){if(ACC.delConf!==b.dataset.devdel){ACC.delConf=b.dataset.devdel;renderList();return}
+    const {error}=await sb.from("act_dispositivos").delete().eq("user_id",b.dataset.devdel);if(error)ACC.devErr=accMsg(error);ACC.delConf=null;accLoadDevs();return}
+  if(b.dataset.sol){const v=b.dataset.sol==="1";const {error}=await sb.from("act_ajustes").update({solicitudes_abiertas:v}).eq("id",1);if(error)ACC.devErr=accMsg(error);else ACC.abiertas=v;renderList();return}
+});
+window.addEventListener("online",()=>{if(Date.now()-(accCheck.last||0)>5000)accCheck()});
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&Date.now()-(accCheck.last||0)>15000)accCheck()});
+setInterval(()=>{if(document.visibilityState==="visible")accCheck()},5*60*1000);
+function accBoot(){
+  try{const C=window.ACT_CONFIG;if(window.supabase&&C&&C.url)sb=window.supabase.createClient(C.url,C.anonKey,{auth:{persistSession:true,autoRefreshToken:true,storageKey:"act-auth"}})}catch{sb=null}
+  ACC.rol=accGet("act-rol");ACC.disp=accGet("act-disp");
+  if(accAprob(ACC.rol)){accStart();accCheck();return}
+  if(accLegacy()&&!accGet("act-gated")&&!navigator.onLine){accStart();return}
+  accGate(`<section class="sec"><p class="muted" style="margin:0">Comprobando acceso…</p></section>`);accCheck()}
 /* --- arranque --- */
 try{acts=JSON.parse(localStorage.getItem(LS)||"[]")}catch{acts=[]}
-renderList();
+accBoot();
 if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{});
 if("serviceWorker" in navigator){
   navigator.serviceWorker.ready.then(()=>{offReady=true;const o=$("offState");if(o)o.innerHTML='<span class="offok">✓ Lista para usar sin internet</span>'});

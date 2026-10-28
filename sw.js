@@ -1,8 +1,8 @@
 // Cambia VERSION cada vez que subas cambios, para que el teléfono descargue la nueva versión.
-const VERSION = "v44";
+const VERSION = "v45";
 const CACHE = "actividades-" + VERSION;
 const FILES = [
-  "./", "index.html", "manifest.webmanifest",
+  "./", "index.html", "manifest.webmanifest", "config.js", "vendor/supabase.js", "vendor/591.supabase.js",
   "icons/icon-192.png", "icons/icon-512.png", "icons/icon-maskable-512.png", "icons/apple-touch-icon.png",
   "fonts/sora-latin-600-normal.woff2", "fonts/sora-latin-700-normal.woff2",
   "fonts/manrope-latin-400-normal.woff2", "fonts/manrope-latin-500-normal.woff2", "fonts/manrope-latin-600-normal.woff2", "fonts/manrope-latin-700-normal.woff2",
@@ -25,7 +25,8 @@ self.addEventListener("message", e => { if (e.data === "skip") self.skipWaiting(
 
 // Primero la copia guardada (funciona sin internet); si no está, la red.
 self.addEventListener("fetch", e => {
-  if (e.request.method !== "GET") return;
+  // Supabase y todo lo de otros dominios va directo a la red.
+  if (e.request.method !== "GET" || new URL(e.request.url).origin !== location.origin) return;
   e.respondWith(
     caches.match(e.request, { ignoreSearch: true }).then(hit => {
       if (hit) return hit;
