@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Actividades de Campo</title>
+<title>Equipo Guido · Actividades</title>
 <meta name="description" content="Registro personal de actividades técnicas: foco rojo, instalación alámbrica y app de TV.">
 <meta name="theme-color" content="#0c0716">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Actividades">
+<meta name="apple-mobile-web-app-title" content="Equipo Guido">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -121,6 +121,7 @@ details.year>.mdays>details.month{background:rgba(0,0,0,.2)}
 .ipgo{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;margin-top:8px;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,90,120,.5);background:rgba(255,60,100,.12);color:var(--fg);text-align:left;font:inherit;cursor:pointer}.ipgo small{color:var(--muted)}
 .syncpill{position:fixed;top:calc(env(safe-area-inset-top) + 8px);right:12px;z-index:30;padding:5px 10px;border-radius:999px;border:1px solid rgba(52,211,153,.45);background:rgba(10,8,20,.85);color:var(--green);font:600 11px var(--sans);backdrop-filter:blur(8px);cursor:pointer}
 .syncpill.bad{border-color:rgba(251,191,36,.5);color:var(--amber)}.por{color:var(--cyan)}
+.brand{display:flex;align-items:center;gap:10px;margin:2px 0 -6px}.brand img{width:40px;height:40px;border-radius:12px;box-shadow:0 0 14px rgba(34,211,238,.35)}.brand span{font:700 15px var(--display);letter-spacing:.06em;text-transform:uppercase;background:linear-gradient(90deg,#22d3ee,#e879f9);-webkit-background-clip:text;background-clip:text;color:transparent}
 .gate{display:grid;gap:14px;padding-top:24px}.gate .sec{gap:12px}.gbtn{width:100%;flex:none}.ghostb{padding:13px;border-radius:16px;border:1.5px solid var(--line);background:transparent;color:var(--fg);font:600 15px var(--sans);cursor:pointer}
 .code{font:600 42px var(--mono);letter-spacing:.25em;text-align:center;padding:14px;border:1.5px dashed var(--cyan);border-radius:14px;color:var(--cyan)}
 .devrow{display:grid;gap:8px;padding:10px 12px;border:1px solid var(--line);border-radius:12px}.devrow.pendiente{border-color:var(--amber)}.devrow.bloqueado{opacity:.6}
@@ -615,7 +616,7 @@ function renderList(){if(!ACC.ok)return;document.body.classList.remove("ausente"
   if(tab==="inicio"){
     const hoy=acts.filter(a=>dayKey(a.creado)===hoyK).sort((a,b)=>b.creado-a.creado);
     const ok=hoy.filter(a=>a.estado==="terminada").length;
-    h=`<div class="top"><div class="hello"><small>${esc(fecha)}</small><h1>Actividades</h1></div></div>
+    h=`<div class="brand"><img src="icons/icon-192.png" alt="" width="40" height="40"><span>Equipo Guido</span></div><div class="top"><div class="hello"><small>${esc(fecha)}</small><h1>Actividades</h1></div></div>
     <div class="stats"><div class="stat"><b>${hoy.length}</b><span>Hoy</span></div><div class="stat g"><b>${ok}</b><span>${ok===1?"Terminada":"Terminadas"}</span></div><div class="stat a"><b>${hoy.length-ok}</b><span>${hoy.length-ok===1?"Pendiente":"Pendientes"}</span></div></div>
     <div class="tiles"><button class="tile red" data-new="foco_rojo"><i>${ICON.foco_rojo}</i>Foco rojo</button><button class="tile" data-new="instalacion"><i>${ICON.instalacion}</i>Instalación alámbrica</button><button class="tile tv" data-new="tv"><i>${ICON.tv}</i>App de TV</button><button class="tile pot" data-new="potencia"><i>${ICON.potencia}</i>Potencias elevadas</button><button class="tile ret" data-new="retiro"><i>${ICON.retiro}</i>Retiro de equipos</button></div>`;
     h+=`<label class="searchbox">${ICON.search}<input class="search mono" id="qip" type="search" inputmode="decimal" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="Buscar cliente por IP o cédula" value="${esc(qip)}"></label>
@@ -647,7 +648,7 @@ function renderList(){if(!ACC.ok)return;document.body.classList.remove("ausente"
     <p class="muted" style="margin:0">${(lb=>lb?`Última copia: ${fDay(dayKey(lb))}, ${hhmm(lb)}`:"Todavía no has exportado ninguna copia.")(+(lsGet("actividades.lastBackup")||0))}</p></section>
     ${syncSecHTML()}
     ${devsHTML()}
-    <p class="muted" style="margin:0">Versión de la app: <b>47</b></p>
+    <p class="muted" style="margin:0">Versión de la app: <b>48</b></p>
     <p class="muted" id="offState" style="margin:0">${offReady?'<span class="offok">✓ Lista para usar sin internet</span>':"Preparando uso sin internet… mantén la app abierta con internet unos segundos."}</p>`;
   }
   $("app").innerHTML=h;updateClock();
@@ -1416,7 +1417,7 @@ const accMsg=e=>{const m=(e&&(e.message||e.error_description))||String(e);return
 const accLegacy=()=>acts.length>0||marks.length>0;
 const ROLTXT={admin:"Administrador",tecnico:"Aprobado",pendiente:"Pendiente",bloqueado:"Bloqueado"};
 function accGate(html){ACC.ok=false;cur=null;$("dock").hidden=true;$("bar").hidden=true;document.body.classList.remove("ausente");
-  $("app").innerHTML=`<div class="gate"><div class="hello"><small>Meganet</small><h1>Actividades</h1></div>${html}</div>`}
+  $("app").innerHTML=`<div class="gate"><div class="brand"><img src="icons/icon-192.png" alt="" width="40" height="40"><span>Equipo Guido</span></div><div class="hello"><small>Meganet</small><h1>Actividades</h1></div>${html}</div>`}
 function accRender(kind,err){
   if(kind==="nuevo"&&ACC.abiertas===false)accGate(`<section class="sec"><h2>Acceso cerrado</h2><p class="muted" style="margin:0">Esta app no acepta nuevos dispositivos.</p></section>`);
   else if(kind==="nuevo")accGate(`<section class="sec"><h2>Este dispositivo no tiene acceso</h2><p class="muted" style="margin:0">Cada celular se autoriza una sola vez. Ponle un nombre y pide acceso; el administrador te aprueba con el código que te sale.</p>
@@ -1462,7 +1463,7 @@ function devsHTML(){
     <p class="muted" style="margin:0">Este dispositivo: <b>${esc(ACC.disp?.nombre||"")}</b> · Administrador · código <span class="mono">${esc(ACC.disp?.codigo||"")}</span></p>
     ${ACC.devErr?`<p class="muted" style="margin:0;color:var(--pink)">${esc(ACC.devErr)}</p>`:""}
     ${d===null?`<p class="muted" style="margin:0">${navigator.onLine?"Cargando…":"Necesitas internet para ver los dispositivos."}</p>`:d.map(x=>{const me=x.user_id===yo;return `<div class="devrow ${x.rol}"><div><b>${esc(x.nombre)}</b> <span class="mono muted">${esc(x.codigo)}</span>${me?' <span class="tagme">Este</span>':""}<br><small class="muted">${ROLTXT[x.rol]||x.rol} · ${fDay(dayKey(new Date(x.creado).getTime()))}</small></div>
-      ${me?"":`<div class="chips">${x.rol!=="tecnico"?btn(x.user_id,"tecnico","✅ Aprobar"):""}${x.rol!=="bloqueado"?btn(x.user_id,"bloqueado","⛔ Bloquear","no"):""}<button class="chip sm no" data-devdel="${x.user_id}">${ACC.delConf===x.user_id?"Toca otra vez para quitar":"🗑 Quitar"}</button></div>`}</div>`}).join("")}
+      ${me?"":`<div class="chips">${x.rol!=="tecnico"?btn(x.user_id,"tecnico",x.rol==="admin"?"Quitar admin":"✅ Aprobar"):""}${x.rol!=="admin"&&x.rol!=="bloqueado"?btn(x.user_id,"admin","👑 Hacer admin"):""}${x.rol!=="bloqueado"?btn(x.user_id,"bloqueado","⛔ Bloquear","no"):""}<button class="chip sm no" data-devdel="${x.user_id}">${ACC.delConf===x.user_id?"Toca otra vez para quitar":"🗑 Quitar"}</button></div>`}</div>`}).join("")}
     ${ACC.abiertas===null?"":`<div class="devrow"><div><b>Solicitudes de acceso</b><br><small class="muted">${ACC.abiertas?"Abiertas: cualquiera con el enlace puede pedir acceso (tú decides si lo apruebas).":"Cerradas: nadie más puede pedir acceso."}</small></div><button class="chip sm ${ACC.abiertas?"":"no"}" data-sol="${ACC.abiertas?0:1}">${ACC.abiertas?"🔒 Cerrar solicitudes":"🔓 Abrir solicitudes"}</button></div>`}
   </section>`}
 document.addEventListener("click",async e=>{const b=e.target.closest("button");if(!b)return;
