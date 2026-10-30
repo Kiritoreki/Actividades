@@ -11,8 +11,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Finanzas">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" href="icons/icon-192.png" type="image/png">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" href="icons/icon-192.png?v=2" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=2">
 <style>
 @font-face{font-family:"Sora";font-weight:600;font-display:swap;src:url(fonts/sora-latin-600-normal.woff2) format("woff2")}
 @font-face{font-family:"Sora";font-weight:700;font-display:swap;src:url(fonts/sora-latin-700-normal.woff2) format("woff2")}
@@ -129,7 +129,7 @@ details.month>summary .l{font:700 18px var(--display)}
 .cbox{width:28px;height:28px;padding:0;border-radius:50%;border:2px solid rgba(168,85,247,.7);background:rgba(0,0,0,.3);display:grid;place-items:center}
 .cbox.on{background:var(--green);border-color:var(--green);box-shadow:0 0 10px rgba(46,232,138,.6)}
 .cbox.on::after{content:"";width:6px;height:11px;border:solid #04140a;border-width:0 3px 3px 0;transform:translateY(-1px) rotate(45deg)}
-.confirm{grid-column:1/-1;display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:end;padding-top:4px}
+.confirm .muted{grid-column:1/-1}.confirm{grid-column:1/-1;display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:end;padding-top:4px}
 .go{border-radius:14px;padding:11px 14px;font-weight:700;color:#04140a;border:0;background:var(--green);box-shadow:0 0 14px rgba(46,232,138,.5)}
 /* formularios */
 .back{justify-self:start;display:inline-flex;align-items:center;gap:4px;padding:8px 12px 8px 8px;border-radius:99px;font-weight:700;font-size:14px}
@@ -165,6 +165,7 @@ textarea{resize:vertical;min-height:70px}
 .dock button{flex:1;display:grid;justify-items:center;gap:2px;font-size:10.5px;font-weight:700;color:var(--muted);padding:7px 0;border-radius:16px;background:transparent;border:0;min-width:0}
 .dock button[aria-current="page"]{color:#fff;background:rgba(168,85,247,.22);box-shadow:inset 0 0 0 1px rgba(192,132,252,.5),0 0 14px rgba(168,85,247,.35)}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(92px + env(safe-area-inset-bottom,0px));z-index:9;background:rgba(20,12,36,.92);border:1px solid rgba(46,232,138,.6);color:#fff;border-radius:14px;padding:10px 14px;font-weight:600;font-size:14px;box-shadow:0 0 18px rgba(46,232,138,.35);max-width:calc(100% - 32px);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.toast{display:flex;gap:12px;align-items:center;width:max-content}.undo{padding:5px 12px;border-radius:10px;border:0;font-weight:700;color:#04140a;background:var(--green)}
 .update{position:fixed;left:50%;transform:translateX(-50%);top:calc(10px + env(safe-area-inset-top,0px));z-index:9;background:rgba(20,12,36,.9);border:1px solid rgba(232,121,249,.6);color:#fff;border-radius:16px;padding:10px 14px;display:flex;gap:12px;align-items:center;box-shadow:0 0 20px rgba(232,121,249,.45);max-width:calc(100% - 32px)}
 .update button{background:linear-gradient(135deg,var(--purple-d),var(--fuchsia));border:0;color:#fff;font-weight:700;padding:6px 12px;border-radius:10px}
 @media (max-width:400px){.grid{grid-template-columns:1fr}.hero b{font-size:34px}}
@@ -341,10 +342,10 @@ function vCompras(){
   h+=`<div class="grp">Pendientes</div>`;
   h+=pend.length?pend.map(c=>editCompra===c.id?compraEdit(c):`<div class="citem"><button class="cbox" data-act="marcar" data-id="${c.id}" aria-label="Marcar comprado"></button>
       <button class="t" data-act="editCompra" data-id="${c.id}"><b>${esc(c.nombre)}</b><small>${esc(c.cat)} · tocar para editar</small></button><span class="num">${c.estimado?money(c.estimado):"—"}</span>
-      ${confirmC===c.id?`<div class="confirm"><label class="f">Precio real<input id="cReal" class="money" inputmode="decimal" value="${toInput(c.estimado)}"></label><button class="go" data-act="confirmar" data-id="${c.id}">Comprado</button><button class="ghost" data-act="cancelC">✕</button></div>`:""}</div>`).join("")
+      ${confirmC===c.id?`<div class="confirm"><p class="muted">Confirma solo cuando ya lo compraste. Se restará del saldo.</p><label class="f">Precio real<input id="cReal" class="money" inputmode="decimal" value="${toInput(c.estimado)}"></label><button class="go" data-act="confirmar" data-id="${c.id}">Ya lo compré</button><button class="ghost" data-act="cancelC">Cancelar</button></div>`:""}</div>`).join("")
     :`<div class="empty">Tu lista está vacía. Agrega lo que piensas comprar.</div>`;
   if(done.length)h+=`<div class="grp">Comprado</div>`+done.slice(0,30).map(c=>`<div class="citem done"><button class="cbox on" data-act="desmarcar" data-id="${c.id}" aria-label="Desmarcar"></button>
-      <div class="t"><b>${esc(c.nombre)}</b><small>${c.fecha?fmtD(c.fecha)+" · ":""}estimado ${c.estimado?money(c.estimado):"—"} · real ${money(c.real||0)}</small></div><span class="num out">${signed(c.real||0,-1)}</span></div>`).join("")+
+      <div class="t"><b>${esc(c.nombre)}</b><small>${c.fecha?fmtD(c.fecha)+" · ":""}estimado ${c.estimado?money(c.estimado):"—"} · real ${money(c.real||0)}</small></div><span class="num out">${signed(c.real||0,-1)}</span><div class="macts"><button class="mini" data-act="desmarcar" data-id="${c.id}">↩ Desmarcar</button></div></div>`).join("")+
     `<button class="ghost${armed==="cdone"?" danger":""}" data-act="limpiar">${armed==="cdone"?"¿Quitar lista de comprados? (los gastos se quedan)":"Limpiar comprados"}</button>`;
   return h;
 }
@@ -410,7 +411,8 @@ function err(t){const e=$("fErr");e.textContent=t;e.hidden=false}
 function closeForm(){form=null;armed=null;render();scrollTo(0,0)}
 
 /* ---------- acciones ---------- */
-function toast(t){const e=$("toast");e.textContent=t;e.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>e.hidden=true,2600)}
+function toast(t,undo){const e=$("toast");e.textContent=t;if(undo){const b=document.createElement("button");b.className="undo";b.textContent=undo.t;b.onclick=ev=>{ev.stopPropagation();e.hidden=true;undo.f()};e.append(" ",b)}
+  e.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>e.hidden=true,undo?6000:2600)}
 function arm(k){if(armed===k){armed=null;return true}armed=k;clearTimeout(armT);armT=setTimeout(()=>{armed=null;render()},3500);render();return false}
 const A={
   saldoIni(){const c=parseMoney($("iniMonto").value);if(!(c>=0)){toast("Escribe un monto, por ejemplo 250.00");return}
@@ -456,7 +458,7 @@ const A={
   cancelC(){confirmC=null;render()},
   confirmar(b){const c=D.compras.find(x=>x.id===b.dataset.id),r=parseMoney($("cReal").value);if(!(r>0)){toast("Escribe el precio real");return}
     const m={id:uid(),ts:Date.now(),tipo:"gasto",monto:r,desc:c.nombre,cat:c.cat,compraId:c.id};D.movs.push(m);
-    Object.assign(c,{hecho:true,real:r,fecha:m.ts,movId:m.id});confirmC=null;save();render();toast("Comprado · se restó "+money(r))},
+    Object.assign(c,{hecho:true,real:r,fecha:m.ts,movId:m.id});confirmC=null;save();render();toast("Comprado · se restó "+money(r),{t:"Deshacer",f:()=>A.desmarcar({dataset:{id:c.id}})})},
   desmarcar(b){const c=D.compras.find(x=>x.id===b.dataset.id);D.movs=D.movs.filter(m=>m.compraId!==c.id);c.hecho=false;delete c.real;delete c.fecha;delete c.movId;save();render();toast("Vuelve a pendientes · gasto anulado")},
   editCompra(b){editCompra=b.dataset.id;confirmC=null;render()},
   cancelE(){editCompra=null;render()},
