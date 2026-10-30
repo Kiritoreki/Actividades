@@ -105,6 +105,7 @@ details.year>.mdays>details.month{background:rgba(0,0,0,.2)}
 .punch i{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;background:var(--c);color:#06110b;box-shadow:0 0 12px var(--c)}.punch b{font:700 16px var(--display)}.punch small{font-size:12px;color:#d7cfea}
 .lunchbtn{width:100%;border-radius:18px;padding:13px;font-weight:700;font-size:15px;border:1.5px solid var(--amber);background:rgba(251,191,36,.12);box-shadow:0 0 14px rgba(251,191,36,.35)}.lunchbtn small{font-weight:500;color:#fde68a}
 .multi{border-radius:18px;padding:14px;display:grid;gap:10px;border:1.5px solid var(--cyan);background:rgba(34,211,238,.08);box-shadow:0 0 16px rgba(34,211,238,.25)}
+.mlist{display:grid;gap:6px}.mrow{display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border-radius:12px;background:rgba(0,0,0,.25);font-size:14px}.mrow input{margin-top:3px;width:18px;height:18px;flex:none;accent-color:#22d3ee}.mrow small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
 .multi h3{margin:0;font:700 15px var(--display)}.multi ol{margin:0;padding-left:20px;display:grid;gap:4px;font-size:14px}
 .multi-a,.lotenav{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.lotenav{justify-content:space-between}
 .mgo{font-weight:700;border:0;color:#03151a;background:var(--cyan);box-shadow:0 0 14px rgba(34,211,238,.5);border-radius:14px;padding:11px 14px}
@@ -341,7 +342,7 @@ function blank(tipo="foco_rojo"){const inst=tipo==="instalacion";return{tipo,cre
  tvFmt:"formal",cedula:"",correo:"",hilo:"",hilosLibres:"",mac:"",gpon:"",pot:"",plan:"",notas:"",pruebas:true,fecha:"",accFusion:false,accOrdenar:false,accRoseta:false,accHilo:false,hiloNuevo:"",accOtra:"",...(inst?{router:true,onu:true,fibra:true}:{}),...(tipo==="potencia"?{tests:false}:{})}}
 
 /* --- leer el mensaje que llega --- */
-function parse(txt){
+function parse(txt){txt=waClean(txt);
   const out={tecnico:"",soporte:"",cliente:"",direccion:"",tel:"",ip:"",cedula:"",correo:"",plan:"",nap:"",hilo:"",potAntes:"",coords:"",extra:[]};
   const MAPRE=/(https?:\/\/)?(maps\.app\.goo\.gl|goo\.gl\/maps|(www\.)?google\.[a-z.]+\/maps|maps\.google\.[a-z.]+|g\.co\/kgs)\S*/gi;
   out.mapa="";
@@ -648,7 +649,7 @@ function renderList(){if(!ACC.ok)return;document.body.classList.remove("ausente"
     <p class="muted" style="margin:0">${(lb=>lb?`Última copia: ${fDay(dayKey(lb))}, ${hhmm(lb)}`:"Todavía no has exportado ninguna copia.")(+(lsGet("actividades.lastBackup")||0))}</p></section>
     ${syncSecHTML()}
     ${devsHTML()}
-    <p class="muted" style="margin:0">Versión de la app: <b>48</b></p>
+    <p class="muted" style="margin:0">Versión de la app: <b>49</b></p>
     <p class="muted" id="offState" style="margin:0">${offReady?'<span class="offok">✓ Lista para usar sin internet</span>':"Preparando uso sin internet… mantén la app abierta con internet unos segundos."}</p>`;
   }
   $("app").innerHTML=h;updateClock();
@@ -1101,31 +1102,53 @@ async function remove(id){acts=acts.filter(a=>a.id!==id);saveLocal()}
 const PKEYS=["tecnico","soporte","cliente","direccion","tel","ip","extra","cedula","correo","plan","nap","hilo","potAntes","coords"];
 function applyParsed(o,p,ui){o.mapa=p.mapa;for(const k of PKEYS){if(o.tipo==="instalacion"&&k==="extra")continue;if(!p[k]&&["cedula","correo","plan","nap","hilo","potAntes","coords"].includes(k))continue;o[k]=p[k];if(ui){const el=$("f-"+k);if(el)el.value=p[k]}}}
 const isCli=l=>/^\s*cliente\s*[,.:]/i.test(l);
+const isSop=l=>/^\s*soporte\s*[,.:]/i.test(l);
+const isTec=l=>/^\s*t[eé]cnicos?\s*[,.:]/i.test(l);
+/* quita "[10:19 a. m., 28/10/2026] +593 98…: " de los mensajes copiados de WhatsApp; cada uno empieza bloque nuevo */
+const WA=/^\s*\[\d{1,2}:\d{2}[^\]]{0,40}\]\s*[^:\n]{1,40}:\s*/;
+function waClean(txt){return String(txt||"").split(/\r?\n/).map(l=>WA.test(l)?"\n"+l.replace(WA,""):l).join("\n")}
 function splitBlocks(txt){
-  const lines=txt.split(/\r?\n/);if(lines.filter(isCli).length<2)return null;
-  const paras=txt.split(/\r?\n\s*\r?\n/).map(x=>x.trim()).filter(Boolean);
-  let blocks=paras.filter(x=>x.split(/\r?\n/).some(isCli));
-  if(blocks.length<2){blocks=[];let curB=[];for(const l of lines){if(isCli(l)&&curB.some(isCli)){blocks.push(curB.join("\n"));curB=[]}curB.push(l)}if(curB.length)blocks.push(curB.join("\n"))}
-  return blocks.length>=2?blocks:null}
+  const lines=waClean(txt).split(/\r?\n/);if(lines.filter(isCli).length<2)return null;
+  const blocks=[];let curB=[];
+  const push=()=>{if(curB.some(l=>l.trim()))blocks.push(curB.join("\n").trim());curB=[]};
+  for(const l of lines){
+    if(!l.trim()){if(curB.some(isCli))push();continue}
+    if(curB.some(isCli)&&(isCli(l)||isSop(l)||isTec(l)))push();
+    else if(curB.some(isSop)&&isSop(l))push();   /* "soporte, colo…" sin cliente seguido de otro soporte */
+    curB.push(l)}
+  push();
+  const ok=blocks.filter(b=>b.split("\n").some(isCli)),bad=blocks.filter(b=>!b.split("\n").some(isCli));
+  return ok.length>=2?{ok,bad}:null}
+const tipoDe=s=>/retir/i.test(s)?"retiro":/instalaci[oó]n/i.test(s)?"instalacion":/potencia/i.test(s)?"potencia":/\b(app|iptv|canales)\b/i.test(s)?"tv":"";
 let multi=null;
 function multiCheck(txt){
   const box=$("multiBox");if(box)box.remove();multi=null;
-  if(cur.lote)return;const blocks=splitBlocks(txt);if(!blocks)return;
-  const ps=blocks.map(parse);const tec=parse(txt).tecnico||ps.find(p=>p.tecnico)?.tecnico||"";
-  multi={blocks,ps,tec};
+  if(cur.lote)return;const sb=splitBlocks(txt);if(!sb)return;
+  const blocks=sb.ok,ps=blocks.map(parse);
+  /* técnicos: cada bloque sin "Técnico" toma el del bloque anterior; los primeros, el primero que aparezca */
+  const first=ps.find(p=>p.tecnico)?.tecnico||"";let last=first;
+  const tecs=ps.map(p=>{if(p.tecnico)last=p.tecnico;return p.tecnico||last});
+  const tipos=ps.map(p=>tipoDe(p.soporte||"")||cur.tipo);
+  multi={blocks,ps,tecs,tipos};
+  const NOM={foco_rojo:"Foco rojo",instalacion:"Instalación",tv:"App de TV",potencia:"Potencias",retiro:"Retiro"};
   const ta=$("f-pegado");const el=document.createElement("div");el.id="multiBox";el.className="multi";
   el.innerHTML=`<h3>📋 Detecté ${blocks.length} clientes en este mensaje</h3>
-    <ol>${ps.map(p=>`<li><b>${esc(p.cliente||"Sin nombre")}</b>${p.nap?` · ${esc(p.nap)}`:""}${p.hilo?` H${esc(p.hilo)}`:""}${p.potAntes?` · <span class="pv ${potCls(p.potAntes)}">${esc(p.potAntes)}</span>`:""}</li>`).join("")}</ol>
-    ${tec?`<label class="chk"><input type="checkbox" id="multiTec" checked><span>¿Mismos técnicos para todas?<small>${esc(tec)}</small></span></label>`:""}
-    <div class="multi-a"><button class="mgo" data-multi="crear">Crear ${blocks.length} actividades</button><button data-multi="no">No, es una sola</button></div>`;
-  ta.closest("label").after(el)}
+    <p class="muted" style="margin:0;font-size:13px">Desmarca los que no son tuyos. Revisa el técnico de cada uno.</p>
+    <div class="mlist">${ps.map((p,i)=>`<label class="mrow"><input type="checkbox" data-mi="${i}" checked><span><b>${esc(p.cliente||"Sin nombre")}</b>
+      <small>${esc(NOM[tipos[i]]||"")}${tecs[i]?" · "+esc(tecs[i]):" · sin técnico"}${p.ip?" · "+esc(p.ip):""}${p.nap?" · "+esc(p.nap):""}</small></span></label>`).join("")}</div>
+    ${sb.bad.length?`<p class="muted" style="margin:0;font-size:13px">⚠️ Se ignora ${sb.bad.length===1?"un bloque incompleto (sin cliente)":sb.bad.length+" bloques incompletos (sin cliente)"}: <i>${esc(sb.bad.map(x=>x.split("\n")[0]).join(" · ").slice(0,120))}</i></p>`:""}
+    <div class="multi-a"><button class="mgo" data-multi="crear">Crear las marcadas</button><button data-multi="no">No, es una sola</button></div>`;
+  ta.closest("label").after(el);
+  const upd=()=>{const n=el.querySelectorAll("[data-mi]:checked").length;const bt=el.querySelector('[data-multi="crear"]');bt.textContent=n?`Crear ${n} ${n===1?"actividad":"actividades"}`:"Marca al menos una";bt.disabled=!n};
+  el.addEventListener("change",upd);upd()}
 async function multiCreate(){
-  if(!multi)return;const sameTec=$("multiTec")?.checked;const lote="L"+Date.now();const N=multi.blocks.length;const t0=Date.now();
-  multi.blocks.forEach((bt,i)=>{const p=multi.ps[i];if(sameTec&&multi.tec&&!p.tecnico)p.tecnico=multi.tec;
-    let o;if(i===0){o=cur;o.pegado=bt;applyParsed(o,p,false)}else{o={id:"l"+(t0+i)+Math.random().toString(36).slice(2,6),...blank(cur.tipo),creado:t0+i,pegado:bt};applyParsed(o,p,false);acts.push(o)}
-    o.lote=lote;o.loteIdx=i+1;o.loteN=N;if(i>0){o.actualizado=Date.now()}});
-  const i0=acts.findIndex(a=>a.id===cur.id);if(i0>=0)acts[i0]={...cur};
-  try{saveLocal()}catch{}multi=null;renderEditor();window.scrollTo(0,0);await saveNow()}
+  if(!multi)return;const sel=[...document.querySelectorAll("#multiBox [data-mi]:checked")].map(x=>+x.dataset.mi);if(!sel.length)return;
+  const lote="L"+Date.now();const N=sel.length;const t0=Date.now();const made=[];
+  sel.forEach((bi,k)=>{const p={...multi.ps[bi],tecnico:multi.tecs[bi]};const tipo=multi.tipos[bi];
+    const o={id:"l"+(t0+k)+Math.random().toString(36).slice(2,6),...blank(tipo),creado:t0+k,pegado:multi.blocks[bi]};applyParsed(o,p,false);
+    o.lote=lote;o.loteIdx=k+1;o.loteN=N;o.actualizado=Date.now();made.push(o)});
+  acts=acts.filter(a=>a.id!==cur.id);acts.push(...made);
+  try{saveLocal()}catch{}multi=null;cur=JSON.parse(JSON.stringify(made[0]));renderEditor();window.scrollTo(0,0);await saveNow()}
 let lastMot=-1;
 function motivoAusenteTxt(a){
   const n=(a.cliente||"").replace(/\s*\(.*?\)\s*/g," ").replace(/_/g," ").trim()||"el cliente";
