@@ -263,6 +263,7 @@ a{color:var(--fuchsia)}
 <script src="config.js"></script>
 <script>
 const $=id=>document.getElementById(id);
+const APP_VER="v52";const UPD={txt:"",reg:null};
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const pad=n=>String(n).padStart(2,"0");
 const dayKey=t=>{const d=new Date(t);return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())};
@@ -662,7 +663,10 @@ function renderList(){if(!ACC.ok)return;document.body.classList.remove("ausente"
     ${syncSecHTML()}
     <section class="sec"><div class="sec-h"><h2>Plan de potencias</h2><button class="chip sm" data-tab="plan">Abrir ›</button></div><p class="muted" style="margin:0">${plan.length?`${plan.length} clientes en la lista.`:"Importa el Excel de potencias elevadas para llevar el avance cliente por cliente."}</p></section>
     ${devsHTML()}
-    <p class="muted" style="margin:0">Versión de la app: <b>51</b></p>
+    <section class="sec"><div class="sec-h"><h2>Actualización</h2></div>
+    <p style="margin:0">Versión de la app: <b>${APP_VER.slice(1)}</b></p>
+    <button class="chip" id="updCheck" style="justify-self:start">🔄 Buscar actualización</button>
+    <p class="muted" id="updMsg" style="margin:0" role="status">${UPD.txt||""}</p></section>
     <p class="muted" id="offState" style="margin:0">${offReady?'<span class="offok">✓ Lista para usar sin internet</span>':"Preparando uso sin internet… mantén la app abierta con internet unos segundos."}</p>`;
   }
   $("app").innerHTML=h;updateClock();
@@ -1624,9 +1628,32 @@ function accBoot(){
 try{acts=JSON.parse(localStorage.getItem(LS)||"[]")}catch{acts=[]}
 accBoot();
 if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{});
+const verNum=v=>parseInt(String(v||"").replace(/\D/g,""),10)||0;
+async function remoteVer(){const r=await fetch("sw.js?ts="+Date.now(),{cache:"no-store"});if(!r.ok)throw new Error("HTTP "+r.status);const m=(await r.text()).match(/VERSION\s*=\s*"([^"]+)"/);return m?m[1]:""}
+async function forzarActualizacion(){
+  try{if(cur)await saveNow()}catch{}
+  try{const ks=await caches.keys();await Promise.all(ks.filter(k=>k.startsWith("actividades-")).map(k=>caches.delete(k)))}catch{}
+  try{const rs=await navigator.serviceWorker.getRegistrations();await Promise.all(rs.map(r=>r.unregister()))}catch{}
+  location.reload()}
+async function buscarActualizacion(manual){const say=t=>{UPD.txt=t;const m=$("updMsg");if(m)m.textContent=t};
+  if(!navigator.onLine){if(manual)say("Sin internet: conéctate para buscar actualizaciones.");return}
+  if(manual)say("Buscando…");
+  let rv;try{rv=await remoteVer()}catch{if(manual)say("No se pudo revisar ahora. Intenta de nuevo en un momento.");return}
+  if(verNum(rv)<=verNum(APP_VER)){if(manual)say(`✓ Ya tienes la última versión (${APP_VER.slice(1)}).`);return}
+  if(!manual){if(cur||lsGet("upd.forced")===rv){const u=$("upd");if(u){u.hidden=false;$("updBtn").onclick=()=>buscarActualizacion(true)}return}lsSet("upd.forced",rv)}
+  say(`Hay una versión nueva (${rv.slice(1)}). Instalando…`);
+  const reg=UPD.reg||(navigator.serviceWorker&&await navigator.serviceWorker.getRegistration());
+  if(reg){try{await reg.update()}catch{}
+    const w=reg.waiting||await new Promise(res=>{const t=setTimeout(()=>res(null),8000);const chk=()=>{if(reg.waiting){clearTimeout(t);res(reg.waiting)}};reg.addEventListener("updatefound",()=>{const i=reg.installing;i&&i.addEventListener("statechange",chk)});chk()});
+    if(w){w.postMessage("skip");setTimeout(forzarActualizacion,4000);return}}
+  forzarActualizacion()}
+document.addEventListener("click",e=>{if(e.target.closest("#updCheck"))buscarActualizacion(true)});
 if("serviceWorker" in navigator){
+  /* al abrir: si hay versión nueva publicada y el teléfono no la tomó solo, la instala */
+  setTimeout(()=>buscarActualizacion(false).catch(()=>{}),6000);
+  document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")setTimeout(()=>buscarActualizacion(false).catch(()=>{}),4000)});
   navigator.serviceWorker.ready.then(()=>{offReady=true;const o=$("offState");if(o)o.innerHTML='<span class="offok">✓ Lista para usar sin internet</span>'});
-  navigator.serviceWorker.register("sw.js").then(reg=>{
+  navigator.serviceWorker.register("sw.js").then(reg=>{UPD.reg=reg;
     const show=w=>{$("upd").hidden=false;$("updBtn").onclick=()=>w.postMessage("skip")};
     if(reg.waiting&&navigator.serviceWorker.controller)show(reg.waiting);
     reg.addEventListener("updatefound",()=>{const w=reg.installing;w&&w.addEventListener("statechange",()=>{if(w.state==="installed"&&navigator.serviceWorker.controller)show(w)})});

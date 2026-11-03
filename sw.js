@@ -1,5 +1,5 @@
 // Cambia VERSION cada vez que subas cambios, para que el teléfono descargue la nueva versión.
-const VERSION = "v51";
+const VERSION = "v52";
 const CACHE = "actividades-" + VERSION;
 const FILES = [
   "./", "index.html", "manifest.webmanifest", "config.js", "vendor/supabase.js", "vendor/591.supabase.js",
@@ -10,7 +10,8 @@ const FILES = [
 ];
 
 self.addEventListener("install", e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)));
+  // cache: "reload" = baja cada archivo de nuevo desde internet (no una copia vieja del navegador)
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES.map(f => new Request(f, { cache: "reload" })))));
 });
 
 self.addEventListener("activate", e => {
@@ -27,6 +28,8 @@ self.addEventListener("message", e => { if (e.data === "skip") self.skipWaiting(
 self.addEventListener("fetch", e => {
   // Supabase y todo lo de otros dominios va directo a la red.
   if (e.request.method !== "GET" || new URL(e.request.url).origin !== location.origin) return;
+  // La revisión de versión siempre va a la red, nunca a la copia guardada.
+  if (new URL(e.request.url).pathname.endsWith("/sw.js")) return;
   e.respondWith(
     caches.match(e.request, { ignoreSearch: true }).then(hit => {
       if (hit) return hit;
