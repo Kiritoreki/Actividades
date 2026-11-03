@@ -175,7 +175,7 @@ body.ausente .sec.wk{opacity:.28;pointer-events:none;filter:grayscale(1)}
   background:var(--card);border:1px solid color-mix(in srgb,var(--c) 42%,transparent);box-shadow:0 0 12px color-mix(in srgb,var(--c) 16%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
 .item.t-foco_rojo{--c:var(--pink)}.item.t-tv{--c:var(--cyan)}.item.t-potencia{--c:var(--orange)}
 .tiles{grid-template-columns:repeat(2,1fr)}.tile{grid-template-columns:auto 1fr;justify-items:start;text-align:left;align-items:center;padding:12px}
-.tile.pot{--c:var(--orange)}.tile.ret{--c:var(--blue);grid-column:1/-1}.tile.ret i{color:#06121f}.item.t-retiro,.ult.t-retiro{--c:var(--blue)}.tile.pot i{color:#1a0c00}
+.tile.pot{--c:var(--orange)}.tile.ret{--c:var(--blue)}.tile.sop{--c:var(--green)}.tile.sop i{color:#04170e}.item.t-soporte,.ult.t-soporte{--c:var(--green)}.tile.ret i{color:#06121f}.item.t-retiro,.ult.t-retiro{--c:var(--blue)}.tile.pot i{color:#1a0c00}
 .pv{font:700 12.5px var(--mono);padding:2px 8px;border-radius:99px;white-space:nowrap}
 .pv.r{color:#ffc2d6;background:rgba(255,46,122,.18);border:1px solid var(--pink)}
 .pv.a{color:#fde68a;background:rgba(251,191,36,.16);border:1px solid var(--amber)}
@@ -263,7 +263,7 @@ a{color:var(--fuchsia)}
 <script src="config.js"></script>
 <script>
 const $=id=>document.getElementById(id);
-const APP_VER="v52";const UPD={txt:"",reg:null};
+const APP_VER="v53";const UPD={txt:"",reg:null};
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const pad=n=>String(n).padStart(2,"0");
 const dayKey=t=>{const d=new Date(t);return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())};
@@ -294,14 +294,15 @@ const EVID_I=[
  ["inst","Instalación final (ONU y router)"],
  ["speed","Speed test"],
  ["stRoseta","Sticker en la roseta"],["stRouter","Sticker en el router"],["stBridge","Sticker en el bridge"]];
-const TIPOS={foco_rojo:["Foco rojo","b-red"],instalacion:["Inst. alámbrica","b-inst"],tv:["App de TV","b-tv"],potencia:["Potencias elevadas","b-pot"],retiro:["Retiro de equipos","b-ret"]};
+const TIPOS={foco_rojo:["Foco rojo","b-red"],instalacion:["Inst. alámbrica","b-inst"],tv:["App de TV","b-tv"],potencia:["Potencias elevadas","b-pot"],retiro:["Retiro de equipos","b-ret"],soporte:["Soporte","b-sop"]};
 const EVID_P=[["potA","Captura potencia antes (ONU/OLT)"],["potD","Captura potencia después (ONU/OLT)"],["napOrd","Caja NAP ordenada"],["equipo","Equipo nuevo: caja con S/N y MAC","eq"],
  ["stRoseta","Sticker en la roseta"],["stRouter","Sticker en el router"],["stBridge","Sticker en el bridge"]];
 const EVID_R=[["fotoA","Foto del lugar antes"],["fotoD","Foto del lugar después"],["etiq","Equipos desconectados y etiquetados"],["bodega","Equipos entregados en bodega"]];
 const RET=[["ap","AP / Access Point",["Modelo","MAC"]],["router","Router",["Modelo","MAC","SN"]],["onu","ONU (bridge)",["Modelo","MAC","SN GPON"]],["antena","Antena",["Modelo","MAC"]],["poe","Fuente / POE",[]],["otro","Otro",["Equipo"]]];
 const RETF={"Modelo":"modelo","MAC":"mac","SN":"sn","SN GPON":"gpon","Equipo":"nombre"};
 const RETEST={ok:"funciona",dan:"dañado",np:"sin probar"};
-const evidFor=a=>a.tipo==="instalacion"?EVID_I:a.tipo==="potencia"?EVID_P:a.tipo==="retiro"?EVID_R:EVID;
+const EVID_S=[["fotoA","Foto antes del trabajo"],["fotoD","Foto del trabajo terminado"],["equipo","Equipo nuevo: caja con S/N y MAC","eq"]];
+const evidFor=a=>a.tipo==="instalacion"?EVID_I:a.tipo==="potencia"?EVID_P:a.tipo==="retiro"?EVID_R:a.tipo==="soporte"?EVID_S:EVID;
 const potNum=v=>{const n=parseFloat(String(v||"").replace(",","."));return isNaN(n)?null:(n>0?-n:n)};
 const potCls=v=>{const n=potNum(v);return n===null?"":n>-25?"g":n>=-27?"a":"r"};
 const potLbl={g:"buena",a:"aceptable",r:"crítica"};
@@ -465,6 +466,7 @@ function reportRet(a){
 function reportBase(a){
   if(a.tipo==="potencia")return reportPot(a);
   if(a.tipo==="retiro")return reportRet(a);
+  if(a.tipo==="soporte")return reportSop(a);
   if(a.tipo==="instalacion")return reportInst(a);
   if(a.tipo==="tv")return reportTV(a);
   const L=[];const tec=[a.tecnico,a.tecnico2].filter(Boolean).join(" y ");
@@ -512,7 +514,8 @@ const ICON={
  home:'<svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/></svg>',
  cal:'<svg viewBox="0 0 24 24"><path d="M8 2v4M16 2v4"/><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18"/></svg>',
  save:'<svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>',
- back:'<svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg>'};
+ back:'<svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg>',
+ soporte:'<svg viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.4-.6-.6-2.4z"/></svg>'};
 let tab="inicio";const openSet=new Set();
 const fMes=m=>{const t=new Date(m+"-15T12:00").toLocaleDateString("es-EC",{month:"long",year:"numeric"});return t[0].toUpperCase()+t.slice(1)};
 document.addEventListener("toggle",e=>{const k=e.target.dataset?.k;if(!k)return;
@@ -630,7 +633,7 @@ function renderList(){if(!ACC.ok)return;document.body.classList.remove("ausente"
     const ok=hoy.filter(a=>a.estado==="terminada").length;
     h=`<div class="brand"><img src="icons/icon-192.png" alt="" width="40" height="40"><span>Equipo Guido</span></div><div class="top"><div class="hello"><small>${esc(fecha)}</small><h1>Actividades</h1></div></div>
     <div class="stats"><div class="stat"><b>${hoy.length}</b><span>Hoy</span></div><div class="stat g"><b>${ok}</b><span>${ok===1?"Terminada":"Terminadas"}</span></div><div class="stat a"><b>${hoy.length-ok}</b><span>${hoy.length-ok===1?"Pendiente":"Pendientes"}</span></div></div>
-    <div class="tiles"><button class="tile red" data-new="foco_rojo"><i>${ICON.foco_rojo}</i>Foco rojo</button><button class="tile" data-new="instalacion"><i>${ICON.instalacion}</i>Instalación alámbrica</button><button class="tile tv" data-new="tv"><i>${ICON.tv}</i>App de TV</button><button class="tile pot" data-new="potencia"><i>${ICON.potencia}</i>Potencias elevadas</button><button class="tile ret" data-new="retiro"><i>${ICON.retiro}</i>Retiro de equipos</button></div>`;
+    <div class="tiles"><button class="tile red" data-new="foco_rojo"><i>${ICON.foco_rojo}</i>Foco rojo</button><button class="tile" data-new="instalacion"><i>${ICON.instalacion}</i>Instalación alámbrica</button><button class="tile tv" data-new="tv"><i>${ICON.tv}</i>App de TV</button><button class="tile pot" data-new="potencia"><i>${ICON.potencia}</i>Potencias elevadas</button><button class="tile ret" data-new="retiro"><i>${ICON.retiro}</i>Retiro de equipos</button><button class="tile sop" data-new="soporte"><i>${ICON.soporte}</i>Soporte</button></div>`;
     h+=`<label class="searchbox">${ICON.search}<input class="search" id="qip" type="search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Buscar cliente: nombre, IP o cédula" value="${esc(qip)}"></label>
     <div id="ipRes" class="ipres">${qip.trim()?ipResults():""}</div>${planCard()}`;
     const viejas=acts.filter(a=>dayKey(a.creado)<hoyK&&a.estado!=="terminada").sort((a,b)=>a.creado-b.creado);
@@ -649,7 +652,7 @@ function renderList(){if(!ACC.ok)return;document.body.classList.remove("ausente"
     else if(!list.length)h+=`<div class="empty">Nada coincide con “${esc(q)}”.</div>`;
     h+=treeHTML(list,!!f,"h");
   }else if(tab==="plan"){
-    h=planHTML();
+    h=planHTML();setTimeout(()=>sheetSync(false),300);
   }else if(tab==="jornada"){
     h=jornadaHTML();
   }else{
@@ -686,6 +689,7 @@ function renderEditor(){if(!ACC.ok)return;{const sp=$("syncPill");if(sp)sp.hidde
   if(cur.tipo==="instalacion")return renderInst();
   if(cur.tipo==="potencia")return renderPot();
   if(cur.tipo==="retiro")return renderRet();
+  if(cur.tipo==="soporte")return renderSop();
   $("app").innerHTML=`
   <div class="top"><button class="back" data-back>${ICON.back}Actividades</button><span class="saved" id="saved"></span></div>
   <div class="top"><h1>Foco rojo</h1><div class="chips">${chip("estado","pendiente","Pendiente","no")}${chip("estado","terminada","Terminada")}</div></div>
@@ -935,6 +939,87 @@ const DMS=/(\d{1,3})\s*°\s*(\d{1,2})\s*['’′]\s*(\d{1,2}(?:[.,]\d+)?)\s*(?:"
 function coordsDec(t){t=String(t||"");const m=t.match(DMS);
   if(m){const f=(d,mi,se)=>+d+ +mi/60+ +String(se).replace(",",".")/3600;let la=f(m[1],m[2],m[3]),lo=f(m[5],m[6],m[7]);if(/s/i.test(m[4]))la=-la;if(/[wo]/i.test(m[8]))lo=-lo;return [la,lo]}
   const d=t.match(/(-?\d{1,2}\.\d+)\s*[,;\s]\s*(-?\d{1,3}\.\d+)/);return d?[+d[1],+d[2]]:null}
+function renderSop(){
+  const tog=(k,l)=>`<button class="chip" data-tog="${k}" aria-pressed="${!!cur[k]}">${l}</button>`;
+  const M='class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false"';
+  $("app").innerHTML=`
+  <div class="top"><button class="back" data-back>${ICON.back}Actividades</button><span class="saved" id="saved"></span></div>
+  <div class="top"><h1>Soporte</h1><div class="chips">${chip("estado","pendiente","Pendiente","no")}${chip("estado","terminada","Terminada")}</div></div>
+  ${realizHTML()}
+  <section class="sec"><div class="sec-h"><h2>Datos de la actividad</h2><span class="step">01</span></div>
+    <label class="f">Pega aquí el mensaje que te llega<textarea id="f-pegado" data-k="pegado" placeholder="Tecnico, …&#10;soporte, cambio de clave / instalar cámara…&#10;cliente, …&#10;dirección, …&#10;tel. …&#10;ip, …">${esc(cur.pegado)}</textarea></label>
+    <button class="pastebtn" id="pasteBtn">Pegar del portapapeles</button>
+    <div class="grid">
+      ${inp("tecnico","Técnico")}${inp("tecnico2","Segundo técnico (cuadrilla)",{attrs:'placeholder="Opcional"'})}
+      ${inp("soporte","Soporte",{cls:"full"})}
+      ${inp("cliente","Cliente",{cls:"full",attrs:'autocapitalize="characters"'})}
+      ${inp("direccion","Dirección",{cls:"full"})}
+      ${coordInp()}
+      ${inp("tel","Teléfono",{attrs:'inputmode="tel" class="mono"'})}${inp("ip","IP",{attrs:'inputmode="decimal" class="mono" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="10.10.45.8"'})}
+      <div class="chips full" id="telChips"></div>
+    </div></section>
+  <section class="sec wk"><div class="sec-h"><h2>Qué se hizo</h2><span class="step">02</span></div>
+    <p class="muted" style="margin:0">Marca todo lo que hiciste; puedes combinar.</p>
+    <div class="chips">${tog("sWifi","Cambio de clave Wi-Fi")}${tog("onu","Cambio de bridge")}${tog("router","Cambio de router")}${tog("sCamInst","Instalación de cámara")}${tog("sCamConf","Configuración de cámara")}${tog("sCable","Cableado")}</div>
+    <div class="box" id="boxWifi" ${cur.sWifi?"":"hidden"}><h3>Cambio de clave Wi-Fi</h3><div class="grid">
+      ${inp("wifiSsid","Nombre de la red (SSID)",{cls:"full",attrs:'autocapitalize="off" autocorrect="off" spellcheck="false"'})}
+      ${inp("wifiClave","Clave nueva",{cls:"full",attrs:'class="mono" autocapitalize="off" autocorrect="off" spellcheck="false"'})}</div>
+      <div class="list-chk">${chk("wifiEnRep","Poner la clave en el reporte","Por seguridad, normalmente solo sale “se cambió la clave”")}</div></div>
+    <div class="box" id="boxOnu" ${cur.onu?"":"hidden"}><h3>Cambio de bridge (ONU)</h3>
+      <div class="pair"><h4>Bridge anterior</h4>${bq("onuAnt","onuSnAnt")}<div class="grid">${inp("onuAnt","MAC",{attrs:M+' placeholder="Opcional"'})}${inp("onuSnAnt","SN GPON",{attrs:M+' placeholder="Opcional"'})}</div></div>
+      <div class="pair"><h4>Bridge nueva</h4>${bq("onuNueva","onuSnNueva")}<div class="grid">${inp("onuNueva","MAC",{attrs:M})}${inp("onuSnNueva","SN GPON",{attrs:M})}</div></div></div>
+    <div class="box" id="boxRouter" ${cur.router?"":"hidden"}><div class="sec-h"><h3>Cambio de router</h3><span class="progress" id="rprog"></span></div>
+      <div class="pair"><h4>Router anterior</h4>${bq("routerAnt","routerSnAnt")}<div class="grid">${inp("routerAnt","MAC",{attrs:M+' placeholder="Opcional"'})}${inp("routerSnAnt","SN",{attrs:M+' placeholder="Opcional"'})}</div></div>
+      <div class="pair"><h4>Router nuevo</h4>${bq("routerNueva","routerSnNueva")}<div class="grid">${inp("routerNueva","MAC",{attrs:M})}${inp("routerSnNueva","SN",{attrs:M})}</div></div>
+      <div class="list-chk">${ROUTER.map(([k,l])=>chk(k,l,"","rchk")).join("")}</div></div>
+    <div class="box" id="boxCam" ${cur.sCamInst?"":"hidden"}><h3>Instalación de cámara</h3><div class="grid">
+      ${inp("camN","Cantidad",{attrs:'inputmode="numeric" class="mono" placeholder="1"'})}${inp("camMarca","Marca / modelo",{attrs:'placeholder="Ej. EZVIZ C6N"'})}
+      ${inp("camUbic","Dónde quedó",{cls:"full",attrs:'placeholder="Ej. entrada principal y patio"'})}</div></div>
+    <div class="box" id="boxCamConf" ${cur.sCamConf?"":"hidden"}><h3>Configuración de cámara</h3><div class="grid">
+      ${inp("camApp","App o acceso",{cls:"full",attrs:'placeholder="Ej. EZVIZ, iCSee, Hik-Connect"'})}</div>
+      <div class="list-chk">${chk("camRemoto","Acceso remoto en el celular del cliente")}${chk("camGrab","Grabación configurada (memoria / nube)")}${chk("camWifi","Conectada a la red Wi-Fi del cliente")}</div></div>
+    <div class="box" id="boxCable" ${cur.sCable?"":"hidden"}><h3>Cableado</h3><div class="grid">
+      ${inp("cabMetros","Cable UTP",{unit:"m",attrs:'inputmode="numeric" class="mono" placeholder="0"'})}${inp("cabPuntos","Puntos de red",{attrs:'inputmode="numeric" class="mono" placeholder="1"'})}
+      ${inp("cabDetalle","Detalle",{cls:"full",attrs:'placeholder="Ej. del router a la sala, con canaleta"'})}</div></div>
+    <label class="f">Otro trabajo (opcional, una línea por cada punto)<textarea id="f-accOtra" data-k="accOtra" style="min-height:60px" placeholder="Ej. se reubicó el router">${esc(cur.accOtra)}</textarea></label>
+    <div class="list-chk">${chk("tests","Realización de los distintos test")}${chk("clienteOk","Cliente comprueba y todo Ok")}${chk("cumplida","✅ Se cumplió con la actividad")}</div>
+  </section>
+  ${notifHTML()}
+  <section class="sec wk"><div class="sec-h"><h2>Checklist y evidencias</h2><span class="progress" id="eprog"></span></div>
+    <p class="muted" style="margin:0">Solo para acordarte; las fotos van al WhatsApp.</p>
+    <div class="list-chk">${EVID_S.map(([k,l,c])=>`<div data-eq="${c||""}" ${c==="eq"&&!(cur.onu||cur.router)?"hidden":""}>${chk(k,l,"","evid")}</div>`).join("")}</div>
+  </section>
+  <section class="sec"><div class="sec-h"><h2>Reporte</h2><span class="step">03</span></div><pre class="report" id="rep"></pre></section>
+  <div class="top"><span class="muted">Creada ${fDay(dayKey(cur.creado))}, ${hhmm(cur.creado)}${quienTxt(cur)}</span><button class="danger" id="del">Borrar actividad</button></div>
+  ${loteNav()}`;
+  $("bar").hidden=false;refresh();
+}
+function reportSop(a){
+  const L=[];const tec=[a.tecnico,a.tecnico2].filter(Boolean).join(" y ");
+  if(tec)L.push("Tecnico, "+tec);
+  L.push("soporte, "+(a.soporte||"soporte técnico"));
+  if(a.cliente)L.push("cliente, "+a.cliente);
+  if(a.direccion)L.push("dirección, "+a.direccion);
+  if(a.coords&&a.coords.trim())L.push("coordenadas, "+a.coords.trim());
+  if(a.tel)L.push("tel. "+a.tel);
+  if(a.ip)L.push("ip, "+a.ip);
+  if(a.extra)L.push(...a.extra.split("\n"));
+  const S=[];const t=v=>String(v||"").trim();
+  if(a.sWifi){const ss=t(a.wifiSsid),cl=t(a.wifiClave);S.push("⚪️se cambió la clave de la red Wi-Fi"+(ss?" “"+ss+"”":"")+(a.wifiEnRep&&cl?", clave nueva: "+cl:""))}
+  if(a.onu){S.push("⚪️Cambio de nueva bridge");{const x=eqLine(a.onuAnt,a.onuSnAnt,"SN GPON");if(x)S.push("⚪️bridge anterior: "+x)}{const x=eqLine(a.onuNueva,a.onuSnNueva,"SN GPON");if(x)S.push("⚪️bridge nueva: "+x)}}
+  if(a.router){S.push("⚪️Cambio de router");{const x=eqLine(a.routerAnt,a.routerSnAnt,"SN");if(x)S.push("⚪️router anterior: "+x)}{const x=eqLine(a.routerNueva,a.routerSnNueva,"SN");if(x)S.push("⚪️router nuevo: "+x)}}
+  if(a.sCamInst){const n=parseInt(a.camN,10)||1;S.push(`⚪️instalación de ${n} ${n===1?"cámara":"cámaras"}`+(t(a.camMarca)?" "+t(a.camMarca):"")+(t(a.camUbic)?", ubicada"+(n===1?"":"s")+" en "+t(a.camUbic):""))}
+  if(a.sCamConf){const P=[];if(t(a.camApp))P.push("app "+t(a.camApp));if(a.camWifi)P.push("conectada a la red Wi-Fi del cliente");if(a.camRemoto)P.push("acceso remoto en el celular del cliente");if(a.camGrab)P.push("grabación configurada");
+    S.push("⚪️configuración de cámara"+(P.length?": "+P.join(", "):""))}
+  if(a.sCable){const P=[];if(t(a.cabMetros))P.push(t(a.cabMetros)+" m de cable UTP");if(t(a.cabPuntos))P.push(t(a.cabPuntos)+" "+(t(a.cabPuntos)==="1"?"punto":"puntos")+" de red");if(t(a.cabDetalle))P.push(t(a.cabDetalle));
+    S.push("⚪️cableado"+(P.length?": "+P.join(", "):""))}
+  for(const x of (a.accOtra||"").split(/\r?\n/)){const y=x.replace(/^[\s⚪️•\-*]+/u,"").trim();if(y)S.push("⚪️"+y)}
+  if(a.tests)S.push("⚪️Realización de los distintos test");
+  if(a.clienteOk)S.push("⚪️Cliente comprueba y todo Ok");
+  {const n=notifLines(a);if(n.length){S.push("⚪️Notificación al cliente: "+n[0]);for(const x of n.slice(1))S.push("⚪️"+x)}}
+  if(a.cumplida)S.push("✅se cumplió con la actividad");
+  return L.join("\n")+(S.length?"\n\n"+S.join("\n"):"");
+}
 function renderPot(){
   const tog=(k,l)=>`<button class="chip" data-tog="${k}" aria-pressed="${!!cur[k]}">${l}</button>`;
   $("app").innerHTML=`
@@ -1073,13 +1158,13 @@ function fraseAus(a){
   a._fi=idx;a._motGen=fraseTxt(a,idx);return a._motGen}
 function fraseTxt(a,idx){
   const n=(a.cliente||"").replace(/\s*\(.*?\)\s*/g," ").replace(/_/g," ").replace(/\s+/g," ").trim()||"el cliente";
-  const act={foco_rojo:"atender el soporte",instalacion:"realizar la instalación",potencia:"revisar y mejorar la potencia",retiro:"realizar el retiro de equipos"}[a.tipo]||"realizar la actividad";
+  const act={soporte:"realizar el soporte",foco_rojo:"atender el soporte",instalacion:"realizar la instalación",potencia:"revisar y mejorar la potencia",retiro:"realizar el retiro de equipos"}[a.tipo]||"realizar la actividad";
   return FRASES[idx%FRASES.length].replace(/\{n\}/g,n).replace(/\{act2?\}/g,act).replace(/\b(del|al|el) cliente el cliente\b/g,"$1 cliente").replace(/\bde el cliente\b/g,"del cliente");
 }
 /* copia del registro solo con los datos del encabezado (para el reporte de "Cliente no está") */
 function soloEncabezado(a){const h={...a,trabajo:"",fibra:false,metros:"",napInterv:"",potAntes:"",potDespues:"",potAntesOlt:"",potDespuesOlt:"",antesOffline:false,
   tests:false,clienteOk:false,cumplida:false,onu:false,router:false,accFusion:false,accOrdenar:false,accRoseta:false,accHilo:false,hiloNuevo:"",accOtra:"",
-  pruebas:false,notas:"",mac:"",gpon:"",pot:"",hilosLibres:"",notif:"",notifTxt:"",evid:{}};
+  pruebas:false,notas:"",mac:"",gpon:"",pot:"",hilosLibres:"",notif:"",notifTxt:"",evid:{},sWifi:false,sCamInst:false,sCamConf:false,sCable:false};
   for(const [k] of RET)h["ret_"+k]=false;return h}
 function posponeTxt(a){const p=(a.pospone||"").trim().replace(/^(para\s+)?(el\s+)?d[ií]a\s+/i,"");return "Se pospone la visita para el día "+(p||"____ a las ____")}
 function refresh(){
@@ -1106,6 +1191,7 @@ function refresh(){
   const hb=(id,v)=>{const e=$(id);if(e)e.hidden=v};hb("boxFibra",!cur.fibra);hb("boxOnu",!cur.onu);hb("boxRouter",!cur.router);
   document.querySelectorAll('[data-eq="eq"]').forEach(e=>e.hidden=!(cur.onu||cur.router));
   if(cur.tipo==="retiro"){for(const [k] of RET)hb("rbox_"+k,!cur["ret_"+k])}
+  if(cur.tipo==="soporte"){hb("boxWifi",!cur.sWifi);hb("boxCam",!cur.sCamInst);hb("boxCamConf",!cur.sCamConf);hb("boxCable",!cur.sCable)}
   if(cur.tipo==="potencia"){hb("boxHilo",!cur.accHilo);hb("antesGrid",!!cur.antesOffline);const g=$("gain");if(g)g.innerHTML=potBox();
     for(const k of ["potAntes","potDespues","potAntesOlt","potDespuesOlt"]){const el=$("f-"+k);if(el){el.classList.remove("pin-r","pin-a","pin-g");const c=potCls(cur[k]);if(c)el.classList.add("pin-"+c)}}}
 }
@@ -1173,7 +1259,7 @@ let lastMot=-1;
 function motivoAusenteTxt(a){
   const n=(a.cliente||"").replace(/\s*\(.*?\)\s*/g," ").replace(/_/g," ").trim()||"el cliente";
   const tel=(a.tel||"").split("/")[0].trim();
-  const act={foco_rojo:"atender el soporte",instalacion:"realizar la instalación",tv:"instalar la app de TV",potencia:"revisar y mejorar la potencia",retiro:"realizar el retiro de equipos"}[a.tipo]||"realizar la actividad";
+  const act={soporte:"realizar el soporte",foco_rojo:"atender el soporte",instalacion:"realizar la instalación",tv:"instalar la app de TV",potencia:"revisar y mejorar la potencia",retiro:"realizar el retiro de equipos"}[a.tipo]||"realizar la actividad";
   const T=[
    `Se acudió al domicilio del cliente ${n} para ${act}; los vecinos aledaños nos comentan que no se encuentra en casa en este momento.`,
    `Al llegar al domicilio de ${n} no hubo respuesta. Los vecinos del sector indican que el cliente salió y no saben a qué hora regresa, por lo que no fue posible ${act}.`,
@@ -1320,10 +1406,10 @@ document.addEventListener("click",async e=>{
   if(b.id==="del"){if(!confirmDel){confirmDel=true;b.textContent="Toca otra vez para borrar";return}
     const id=cur.id;cur=null;try{await remove(id)}catch{}renderList();return}
 });
-const TIPO_TXT={foco_rojo:"Foco rojo",instalacion:"Instalación alámbrica",tv:"App de TV",potencia:"Potencias elevadas",retiro:"Retiro de equipos"};
+const TIPO_TXT={foco_rojo:"Foco rojo",instalacion:"Instalación alámbrica",tv:"App de TV",potencia:"Potencias elevadas",retiro:"Retiro de equipos",soporte:"Soporte"};
 function actividadTxt(a){
   if(a.soporte&&a.soporte.trim())return a.soporte.trim();
-  return a.tipo==="instalacion"?"instalación nueva":a.tipo==="tv"?"colocar app de TV":a.tipo==="potencia"?"mejorar potencia":a.tipo==="retiro"?"retiro de equipos":"foco rojo";
+  return a.tipo==="instalacion"?"instalación nueva":a.tipo==="tv"?"colocar app de TV":a.tipo==="potencia"?"mejorar potencia":a.tipo==="retiro"?"retiro de equipos":a.tipo==="soporte"?"soporte técnico":"foco rojo";
 }
 function resumenDia(k){
   const list=acts.filter(a=>dayKey(a.creado)===k).sort((a,b)=>a.creado-b.creado);
@@ -1390,6 +1476,8 @@ document.addEventListener("submit",e=>{const f=e.target.closest("[data-mform]");
   if(m){m.ts=ts;m.tipo=$("me-k").value}mEdit=null;try{saveMarks()}catch{}renderList()});
 /* ============ Plan de potencias (lista de clientes desde Excel) ============ */
 const LSP="plan.v1";let plan=[];try{plan=JSON.parse(localStorage.getItem(LSP)||"[]")}catch{plan=[]}
+const LSC="cfg.v1";let cfgs=[];try{cfgs=JSON.parse(localStorage.getItem(LSC)||"[]")}catch{cfgs=[]}
+function saveCfg(quiet){try{localStorage.setItem(LSC,JSON.stringify(cfgs))}catch{}if(!quiet&&typeof syncSoon==="function")syncSoon()}
 let planF="todos",planQ="";
 function savePlan(quiet){try{localStorage.setItem(LSP,JSON.stringify(plan))}catch{}if(!quiet&&typeof syncSoon==="function")syncSoon()}
 const napNorm=n=>{n=String(n||"").trim().toUpperCase().replace(/\s+/g,"");if(/^NINGUN/.test(n))return "";const m=n.match(/^([A-Z]+)0*(\d+)-(\d+)$/);return m?m[1]+String(+m[2]).padStart(2,"0")+"-"+m[3]:n};
@@ -1417,10 +1505,10 @@ function planHTML(){
   let h=`<div class="top"><button class="back" data-tab="inicio">${ICON.back}Inicio</button></div>
   <div class="top"><div class="hello"><small>${tot?esc(plan[0].lista||"Lista importada"):"Potencias elevadas"}</small><h1>Plan de potencias</h1></div></div>`;
   const tools=`<div class="backup"><button data-plan="xls" ${tot?"":"disabled"}>⬇️ Descargar Excel</button><label class="filebtn">📥 ${tot?"Actualizar lista":"Importar Excel"}<input type="file" id="planFile" accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden></label></div><p class="muted" id="planMsg" style="margin:0" role="status"></p>`;
-  if(!tot)return h+`<section class="sec"><p class="muted" style="margin:0">Importa el Excel de clientes con potencias elevadas (columnas Nombre, Dirección, NAP, # Hilo, Potencia ONU/OLT). Cada cliente queda como pendiente; al terminar su actividad de Potencias elevadas se llena solo cómo quedó y cuánto mejoró.</p>${tools}</section>`;
+  if(!tot)return h+sheetHTML()+`<section class="sec"><p class="muted" style="margin:0">Importa el Excel de clientes con potencias elevadas (columnas Nombre, Dirección, NAP, # Hilo, Potencia ONU/OLT). Cada cliente queda como pendiente; al terminar su actividad de Potencias elevadas se llena solo cómo quedó y cuánto mejoró.</p>${tools}</section>`;
   const mej=R.filter(r=>r.mOlt!=null||r.mOnu!=null);const avg=k=>{const v=mej.map(r=>r[k]).filter(x=>x!=null);return v.length?v.reduce((a,b)=>a+b,0)/v.length:null};
   h+=`<section class="sec"><div class="pprog"><b>${done}</b><span>de ${tot} realizados</span></div><div class="pbar"><i style="width:${Math.round(done/tot*100)}%"></i></div>
-    <div class="pstats"><span class="pst cur">En curso ${cnt("En curso")}</span><span class="pst pen">Pendientes ${cnt("Pendiente")}</span><span class="pst no">No realizados ${cnt("No realizado")}</span>${avg("mOlt")!=null?`<span class="pst ok">Mejora prom. OLT ${dBtxt(avg("mOlt"))}</span>`:""}${avg("mOnu")!=null?`<span class="pst ok">ONU ${dBtxt(avg("mOnu"))}</span>`:""}</div>${tools}</section>`;
+    <div class="pstats"><span class="pst cur">En curso ${cnt("En curso")}</span><span class="pst pen">Pendientes ${cnt("Pendiente")}</span><span class="pst no">No realizados ${cnt("No realizado")}</span>${avg("mOlt")!=null?`<span class="pst ok">Mejora prom. OLT ${dBtxt(avg("mOlt"))}</span>`:""}${avg("mOnu")!=null?`<span class="pst ok">ONU ${dBtxt(avg("mOnu"))}</span>`:""}</div>${tools}</section>${sheetHTML()}`;
   const fl=[["todos","Todos"],["Pendiente","Pendientes"],["En curso","En curso"],["Realizado","Realizados"],["No realizado","No realizados"]];
   h+=`<div class="chips">${fl.map(([k,l])=>`<button class="chip sm" data-planf="${k}" aria-pressed="${planF===k}">${l}</button>`).join("")}</div>
     <label class="searchbox">${ICON.search}<input class="search" id="planQ" type="search" autocomplete="off" placeholder="Buscar en el plan: nombre o NAP" value="${esc(planQ)}"></label><div id="planList">${planListHTML(R)}</div>`;
@@ -1482,6 +1570,55 @@ document.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)r
   if(b.dataset.planf){planF=b.dataset.planf;const y=window.scrollY;renderList();window.scrollTo(0,y);return}});
 document.addEventListener("change",e=>{if(e.target.id==="planFile"&&e.target.files[0]){planImport(e.target.files[0]);e.target.value=""}});
 document.addEventListener("input",e=>{if(e.target.id==="planQ"){planQ=e.target.value;const l=$("planList");if(l)l.innerHTML=planListHTML(plan.map(planRow))}});
+/* ---------- Plan ↔ Google Sheets (la secretaria trabaja en la hoja) ---------- */
+const SH={busy:false,last:0,state:"",msg:""};
+const sheetCfg=()=>cfgs.find(c=>c.id==="cfg_sheets"&&c.url);
+function sheetInfoTxt(){const c=sheetCfg();if(!c)return "";if(SH.state==="sync")return "⟳ Sincronizando con la hoja…";if(SH.state==="err")return "⚠️ "+SH.msg;
+  if(SH.state==="ok")return `✓ Hoja al día ${hhmm(SH.last)}${SH.msg?" · "+SH.msg:""}`;return navigator.onLine?"Pendiente de sincronizar":"Sin internet"}
+function sheetUI(){const e=$("sheetInfo");if(e)e.textContent=sheetInfoTxt()}
+function sheetHTML(){const c=sheetCfg();
+  if(c)return `<section class="sec"><div class="sec-h"><h2>Google Sheets</h2><button class="chip sm" data-sheet="sync">Sincronizar ahora</button></div>
+    <p class="muted" style="margin:0">La secretaria agrega clientes en la hoja y aparecen aquí; el avance de cada cliente se escribe solo en la hoja.</p>
+    <p style="margin:0" id="sheetInfo">${esc(sheetInfoTxt())}</p>
+    <div class="backup"><a class="chip sm" href="${esc(c.hoja||"")}" target="_blank" rel="noopener" ${c.hoja?"":"hidden"}>Abrir la hoja</a><button class="chip sm no" data-sheet="off">${SH.offConf?"Toca otra vez para desconectar":"Desconectar"}</button></div></section>`;
+  return `<section class="sec"><div class="sec-h"><h2>Google Sheets</h2></div>
+    <p class="muted" style="margin:0">Conecta una hoja de Google para que la secretaria agregue clientes y vea el avance sin entrar a la app.</p>
+    <label class="f">Enlace del script (termina en /exec)<input id="shUrl" class="mono" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="https://script.google.com/macros/s/…/exec"></label>
+    <label class="f">Clave<input id="shKey" class="mono" autocapitalize="off" autocorrect="off" spellcheck="false"></label>
+    <label class="f">Enlace de la hoja (opcional, para abrirla desde aquí)<input id="shHoja" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="https://docs.google.com/spreadsheets/…"></label>
+    <button class="chip" data-sheet="save" style="justify-self:start">Conectar</button><p class="muted" id="sheetInfo" style="margin:0"></p></section>`}
+function rowVal(cols,d){const H=cols.map(c=>String(c).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,""));const f=re=>H.findIndex(c=>re.test(c));
+  const i={n:f(/nombre|cliente/),d:f(/direcc/),nap:f(/^nap|nap/),h:f(/hilo/),aon:f(/antes.*onu/),aol:f(/antes.*olt/),pot:H.findIndex(c=>/potencia/.test(c)&&!/despu|antes/.test(c)),id:f(/id app/)};
+  return d=>{const g=k=>i[k]>=0?String(d[i[k]]??"").trim():"";let onu=pwPair(g("aon"))[0],olt=pwPair(g("aol"))[0];if(onu==null&&olt==null&&i.pot>=0){[onu,olt]=pwPair(g("pot"))}
+    const dir=g("d");return {nombre:g("n"),direccion:/^ningun/i.test(dir)?"":dir,nap:napNorm(g("nap")),hilo:g("h")||null,onu:onu??null,olt:olt??null,id:g("id")}}}
+async function sheetSync(manual){const c=sheetCfg();if(!c||!syOn())return;if(!navigator.onLine){if(manual){SH.state="err";SH.msg="Sin internet";sheetUI()}return}
+  if(SH.busy||(!manual&&Date.now()-SH.last<60000))return;SH.busy=true;SH.state="sync";sheetUI();let nuevos=0,quitados=0;
+  try{const r=await fetch(c.url+(c.url.includes("?")?"&":"?")+"k="+encodeURIComponent(c.k||"")+"&ts="+Date.now());const j=await r.json();if(j.error)throw new Error(j.error==="clave incorrecta"?"La clave no coincide con la del script.":j.error);
+    const rv=rowVal(j.cols);const F=accGet("sheet-fila")||{};const seen=new Set();let ch=false;
+    for(const row of j.rows){const x=rv(row.datos);if(!x.nombre)continue;const id=x.id||"plan_"+fnv(normName(x.nombre)+"|"+x.nap);seen.add(id);F[id]=row.fila;
+      let p=plan.find(q=>q.id===id);
+      if(!p){plan.push({id,kind:"plan",importado:Date.now(),lista:(plan[0]&&plan[0].lista)||"Google Sheets",nombre:x.nombre,direccion:x.direccion,nap:x.nap,hilo:x.hilo,onu:x.onu,olt:x.olt,estadoXls:"",despXls:""});nuevos++;ch=true}
+      else for(const k of ["nombre","direccion","nap","hilo","onu","olt"])if(x[k]!=null&&x[k]!==""&&String(x[k])!==String(p[k]??"")){p[k]=x[k];ch=true}}
+    const HS=accGet("sheet-h")||{};
+    /* lo que la secretaria borró de la hoja (y ya estaba sincronizado) se quita del plan */
+    for(const p of [...plan])if(HS[p.id]&&!seen.has(p.id)&&!planLink(p)){plan=plan.filter(q=>q!==p);delete HS[p.id];quitados++;ch=true}
+    if(ch)savePlan();accSet("sheet-fila",F);
+    const items=[],hs=[];for(const p of plan){const R=planRow(p);const it={id:p.id,nombre:p.nombre,direccion:p.direccion||"",nap:p.nap||"",hilo:p.hilo??"",onu:p.onu,olt:p.olt,
+      estado:R.estado,fecha:R.fecha?fDay(R.fecha):"",tecnico:R.tec,dOnu:R.dOnu,dOlt:R.dOlt,mOnu:R.mOnu,mOlt:R.mOlt,nota:R.nota};const h=fnv(JSON.stringify(it));
+      if(HS[p.id]!==h||!seen.has(p.id)){items.push({...it,fila:F[p.id]||null});hs.push([p.id,h])}}
+    for(let i=0;i<items.length;i+=60){const r2=await fetch(c.url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({k:c.k,items:items.slice(i,i+60)})});const j2=await r2.json();if(j2.error)throw new Error(j2.error);
+      for(const [id,h] of hs.slice(i,i+60))HS[id]=h;accSet("sheet-h",HS)}
+    SH.state="ok";SH.last=Date.now();SH.msg=[nuevos?`${nuevos} ${nuevos===1?"cliente nuevo":"clientes nuevos"}`:"",quitados?`${quitados} quitados`:"",items.length?`${items.length} actualizados en la hoja`:""].filter(Boolean).join(" · ")}
+  catch(e){SH.state="err";SH.msg=/failed to fetch|load failed|networkerror|json/i.test(String(e&&e.message))?"No se pudo conectar con la hoja. Revisa el enlace y que el script esté implementado para “Cualquier usuario”.":String(e&&e.message||e)}
+  SH.busy=false;sheetUI();if((nuevos||quitados)&&tab==="plan"&&!cur&&ACC.ok){const y=window.scrollY;renderList();window.scrollTo(0,y)}}
+document.addEventListener("click",async e=>{const b=e.target.closest("[data-sheet]");if(!b)return;const a=b.dataset.sheet;
+  if(a==="sync"){sheetSync(true);return}
+  if(a==="off"){if(!SH.offConf){SH.offConf=true;renderList();return}SH.offConf=false;cfgs=cfgs.filter(c=>c.id!=="cfg_sheets");saveCfg();accSet("sheet-h",{});accSet("sheet-fila",{});SH.state="";renderList();return}
+  if(a==="save"){const url=($("shUrl")?.value||"").trim(),k=($("shKey")?.value||"").trim(),hoja=($("shHoja")?.value||"").trim();const info=$("sheetInfo");
+    if(!/^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(url)){if(info)info.textContent="⚠️ El enlace debe ser el del script y terminar en /exec.";return}
+    if(!k){if(info)info.textContent="⚠️ Escribe la clave.";return}
+    if(hoja&&!/^https:\/\/docs\.google\.com\//.test(hoja)){if(info)info.textContent="⚠️ El enlace de la hoja debe empezar con https://docs.google.com/";return}
+    cfgs=cfgs.filter(c=>c.id!=="cfg_sheets");cfgs.push({id:"cfg_sheets",kind:"cfg",url,k,hoja});saveCfg();renderList();await sheetSync(true)}});
 /* ============ actividades compartidas (Supabase) ============ */
 const SY={busy:false,again:false,state:"",last:0,err:"",pend:0};let syT=null;
 const porNom=n=>String(n||"").replace(/^(mi\s+)?(iphone|celular|cel|tel[eé]fono|android|samsung|xiaomi|motorola|huawei|redmi)\s+(de|del)\s+/i,"").trim();
@@ -1492,21 +1629,21 @@ function stableStr(v){if(Array.isArray(v))return "["+v.map(stableStr).join(",")+
 function syHash(a){const {_upd,_edit,_por,...r}=a;const t=stableStr(r);let h=2166136261;for(let i=0;i<t.length;i++){h^=t.charCodeAt(i);h=Math.imul(h,16777619)}return (h>>>0).toString(36)+t.length.toString(36)}
 const syOn=()=>!!sb&&ACC.ok&&accAprob(ACC.rol);
 function syncSoon(ms=1500){if(!syOn())return;clearTimeout(syT);syT=setTimeout(syncNow,ms)}
-function syncPend(){const H=accGet("act-sync-h")||{};const all=[...acts,...plan];const ids=new Set(all.map(a=>a.id));let n=0;for(const a of all)if(H[a.id]!==syHash(a))n++;for(const id in H)if(!ids.has(id))n++;return n}
+function syncPend(){const H=accGet("act-sync-h")||{};const all=[...acts,...plan,...cfgs];const ids=new Set(all.map(a=>a.id));let n=0;for(const a of all)if(H[a.id]!==syHash(a))n++;for(const id in H)if(!ids.has(id))n++;return n}
 async function syncNow(){
   if(!syOn())return;if(SY.busy){SY.again=true;return}
   if(!navigator.onLine){SY.state="off";SY.pend=syncPend();syncUI();return}
   SY.busy=true;SY.state="sync";syncUI();
   try{
     const H=accGet("act-sync-h")||{};const me=yoNom()||"Yo";const now=Date.now();const rows=[],hs=[];const ids=new Set();
-    for(const a of [...acts,...plan]){ids.add(a.id);const h=syHash(a);if(H[a.id]!==h){if(!a._por)a._por=me;a._upd=Math.max(now,(a._upd||0)+1);a._edit=me;
+    for(const a of [...acts,...plan,...cfgs]){ids.add(a.id);const h=syHash(a);if(H[a.id]!==h){if(!a._por)a._por=me;a._upd=Math.max(now,(a._upd||0)+1);a._edit=me;
       rows.push({id:a.id,data:a,upd:a._upd,borrado:false,creado_por:a._por,editado_por:me});hs.push([a.id,h])}}
     for(const id of Object.keys(H))if(!ids.has(id)){rows.push({id,data:{},upd:now,borrado:true,editado_por:me});hs.push([id,null])}
-    if(rows.length){saveLocal(true);savePlan(true);
+    if(rows.length){saveLocal(true);savePlan(true);saveCfg(true);
       for(let i=0;i<rows.length;i+=100){const part=rows.slice(i,i+100);const {error}=await sb.rpc("act_guardar",{p:JSON.parse(JSON.stringify(part))});if(error)throw error;
         for(const [id,h] of hs.slice(i,i+100)){if(h===null)delete H[id];else H[id]=h}accSet("act-sync-h",H)}}
     let ts=accGet("act-sync-ts")||"1970-01-01T00:00:00Z",changed=false;const redo=new Set(accGet("act-sync-redo")||[]);
-    const apply=r=>{const arr=String(r.id).startsWith("plan_")?plan:acts;const i=arr.findIndex(x=>x.id===r.id);const loc=i>=0?arr[i]:null;const dirty=loc&&H[r.id]!==syHash(loc);
+    const apply=r=>{const arr=String(r.id).startsWith("plan_")?plan:String(r.id).startsWith("cfg_")?cfgs:acts;const i=arr.findIndex(x=>x.id===r.id);const loc=i>=0?arr[i]:null;const dirty=loc&&H[r.id]!==syHash(loc);
       if(cur&&cur.id===r.id){redo.add(r.id);return}   /* la tienes abierta: se aplica al salir */
       redo.delete(r.id);
       if(r.borrado){if(loc&&(!dirty||(loc._upd||0)<=r.upd)){arr.splice(i,1);delete H[r.id];changed=true}else if(!loc)delete H[r.id];return}
@@ -1522,8 +1659,8 @@ async function syncNow(){
       if(data.length<500)break}
     accSet("act-sync-redo",[...redo]);
     accSet("act-sync-ts",ts);accSet("act-sync-h",H);
-    if(changed){saveLocal(true);savePlan(true);if(!cur&&ACC.ok){const y=window.scrollY;renderList();window.scrollTo(0,y)}}
-    SY.state="ok";SY.err="";SY.last=Date.now()}
+    if(changed){saveLocal(true);savePlan(true);saveCfg(true);if(!cur&&ACC.ok){const y=window.scrollY;renderList();window.scrollTo(0,y)}}
+    SY.state="ok";SY.err="";SY.last=Date.now();setTimeout(()=>sheetSync(false),50)}
   catch(e){SY.state="err";SY.err=accMsg(e)}
   SY.busy=false;SY.pend=syncPend();syncUI();if(SY.again){SY.again=false;syncSoon(300)}}
 function syncLabel(){if(!syOn())return "";const p=SY.pend;
