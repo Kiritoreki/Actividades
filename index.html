@@ -263,7 +263,7 @@ a{color:var(--fuchsia)}
 <script src="config.js"></script>
 <script>
 const $=id=>document.getElementById(id);
-const APP_VER="v54";const UPD={txt:"",reg:null};
+const APP_VER="v55";const UPD={txt:"",reg:null};
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const pad=n=>String(n).padStart(2,"0");
 const dayKey=t=>{const d=new Date(t);return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())};
@@ -1582,7 +1582,7 @@ async function planXls(){const msg=t=>{const m=$("planMsg");if(m)m.textContent=t
     const u=URL.createObjectURL(file);const a=document.createElement("a");a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);msg("Excel descargado: "+name)}
   catch(e){msg("⚠️ "+(e&&e.message||"No se pudo crear el Excel."))}}
 document.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;
-  if(b.dataset.plan==="start"){planStart(b.dataset.id);return}
+  if(b.dataset.plan==="start"){if(b.dataset.conf!=="1"){document.querySelectorAll('[data-plan="start"][data-conf="1"]').forEach(x=>{x.dataset.conf="";x.textContent="▶ Iniciar"});b.dataset.conf="1";b.textContent="Toca otra vez para crear la actividad de hoy";return}planStart(b.dataset.id);return}
   if(b.dataset.plan==="xls"){planXls();return}
   if(b.dataset.planf){planF=b.dataset.planf;const y=window.scrollY;renderList();window.scrollTo(0,y);return}});
 document.addEventListener("change",e=>{if(e.target.id==="planFile"&&e.target.files[0]){planImport(e.target.files[0]);e.target.value=""}});
