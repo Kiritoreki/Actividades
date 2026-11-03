@@ -263,7 +263,7 @@ a{color:var(--fuchsia)}
 <script src="config.js"></script>
 <script>
 const $=id=>document.getElementById(id);
-const APP_VER="v53";const UPD={txt:"",reg:null};
+const APP_VER="v54";const UPD={txt:"",reg:null};
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const pad=n=>String(n).padStart(2,"0");
 const dayKey=t=>{const d=new Date(t);return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())};
@@ -368,6 +368,9 @@ function parse(txt){txt=waClean(txt);
       const hm=l.match(/^hilo\s*[,.:#]?\s*(\d+)\s*$/i);if(hm){out.hilo=hm[1];continue}
       const pm=l.match(/^potencia(?:\s+actual)?\s*[,.:]?\s*(-?\s*\d+(?:[.,]\d+)?)\s*(?:dbm)?\s*$/i);
       if(pm){out.potAntes=pm[1].replace(/\s/g,"").replace(",",".");continue}}
+    if(/^cambio\s+de\s+domicilio\b[\s.:,]*$/i.test(l)){out.sDom=true;if(!out.soporte)out.soporte="cambio de domicilio";continue}
+    {const da=l.match(/^direcci[oó]n\s+anterior\s*[,.:]+\s*(.*)$/i);if(da){out.dirAnt=da[1].trim();out.sDom=true;continue}
+     const dn=l.match(/^(?:direcci[oó]n\s+(?:actual|nueva)|actual|nueva\s+direcci[oó]n)\s*[,.:]+\s*(.*)$/i);if(dn){out.direccion=dn[1].trim();continue}}
     const m=l.match(/^(t[eé]cnicos?|soporte|cliente|direcci[oó]n|tel[eé]fono|tel[eé]f|tel|celular|cel|ip|c[eé]dula|correo(?: electr[oó]nico)?|plan|nap)\s*[,.:]+\s*(.*)$/i);
     if(!m){if(!/^instalaci[oó]n\.?$/i.test(l))out.extra.push(l);continue}
     const k=m[1].toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
@@ -960,7 +963,14 @@ function renderSop(){
     </div></section>
   <section class="sec wk"><div class="sec-h"><h2>Qué se hizo</h2><span class="step">02</span></div>
     <p class="muted" style="margin:0">Marca todo lo que hiciste; puedes combinar.</p>
-    <div class="chips">${tog("sWifi","Cambio de clave Wi-Fi")}${tog("onu","Cambio de bridge")}${tog("router","Cambio de router")}${tog("sCamInst","Instalación de cámara")}${tog("sCamConf","Configuración de cámara")}${tog("sCable","Cableado")}</div>
+    <div class="chips">${tog("sDom","Cambio de domicilio")}${tog("sWifi","Cambio de clave Wi-Fi")}${tog("onu","Cambio de bridge")}${tog("router","Cambio de router")}${tog("sCamInst","Instalación de cámara")}${tog("sCamConf","Configuración de cámara")}${tog("sCable","Cableado")}</div>
+    <div class="box" id="boxDom" ${cur.sDom?"":"hidden"}><h3>Cambio de domicilio</h3><div class="grid">
+      ${inp("dirAnt","Dirección anterior",{cls:"full"})}
+      <p class="muted full" style="margin:0">La dirección nueva va arriba, en “Dirección”.</p>
+      ${inp("domNap","NAP nueva",{attrs:'class="mono" autocapitalize="characters" placeholder="PA10-3"'})}${inp("domHilo","Hilo",{attrs:'inputmode="numeric" class="mono"'})}
+      ${inp("domMetros","Drop nuevo",{unit:"m",attrs:'inputmode="numeric" class="mono" placeholder="0"'})}${inp("domPotOnu","Potencia final ONU",{unit:"dBm",attrs:'inputmode="decimal" class="mono" placeholder="-19.50"'})}
+      ${inp("domPotOlt","Potencia final OLT",{unit:"dBm",attrs:'inputmode="decimal" class="mono" placeholder="-24.10"'})}</div>
+      <div class="list-chk">${chk("domEquipos","Se trasladaron los equipos (bridge y router)")}${chk("domRetiroAnt","Se retiró el drop de la dirección anterior")}</div></div>
     <div class="box" id="boxWifi" ${cur.sWifi?"":"hidden"}><h3>Cambio de clave Wi-Fi</h3><div class="grid">
       ${inp("wifiSsid","Nombre de la red (SSID)",{cls:"full",attrs:'autocapitalize="off" autocorrect="off" spellcheck="false"'})}
       ${inp("wifiClave","Clave nueva",{cls:"full",attrs:'class="mono" autocapitalize="off" autocorrect="off" spellcheck="false"'})}</div>
@@ -999,12 +1009,19 @@ function reportSop(a){
   if(tec)L.push("Tecnico, "+tec);
   L.push("soporte, "+(a.soporte||"soporte técnico"));
   if(a.cliente)L.push("cliente, "+a.cliente);
-  if(a.direccion)L.push("dirección, "+a.direccion);
+  if(String(a.dirAnt||"").trim()){L.push("dirección anterior, "+a.dirAnt.trim());if(a.direccion)L.push("dirección actual, "+a.direccion)}
+  else if(a.direccion)L.push("dirección, "+a.direccion);
   if(a.coords&&a.coords.trim())L.push("coordenadas, "+a.coords.trim());
   if(a.tel)L.push("tel. "+a.tel);
   if(a.ip)L.push("ip, "+a.ip);
   if(a.extra)L.push(...a.extra.split("\n"));
   const S=[];const t=v=>String(v||"").trim();
+  if(a.sDom){S.push("⚪️cambio de domicilio del servicio");
+    if(t(a.domNap)||t(a.domHilo))S.push("⚪️nueva NAP"+(t(a.domNap)?" "+t(a.domNap).toUpperCase():"")+(t(a.domHilo)?", hilo "+t(a.domHilo):""));
+    if(t(a.domMetros))S.push(`⚪️se pasaron ${t(a.domMetros)} m de drop`);
+    if(a.domEquipos)S.push("⚪️se trasladaron los equipos (bridge y router)");
+    if(a.domRetiroAnt)S.push("⚪️se retiró el drop de la dirección anterior");
+    {const o=t(a.domPotOnu)?neg(a.domPotOnu):"",l=t(a.domPotOlt)?neg(a.domPotOlt):"";if(o||l)S.push("⚪️potencia final: "+[o&&"ONU "+o,l&&"OLT "+l].filter(Boolean).join(" / ")+" dBm")}}
   if(a.sWifi){const ss=t(a.wifiSsid),cl=t(a.wifiClave);S.push("⚪️se cambió la clave de la red Wi-Fi"+(ss?" “"+ss+"”":"")+(a.wifiEnRep&&cl?", clave nueva: "+cl:""))}
   if(a.onu){S.push("⚪️Cambio de nueva bridge");{const x=eqLine(a.onuAnt,a.onuSnAnt,"SN GPON");if(x)S.push("⚪️bridge anterior: "+x)}{const x=eqLine(a.onuNueva,a.onuSnNueva,"SN GPON");if(x)S.push("⚪️bridge nueva: "+x)}}
   if(a.router){S.push("⚪️Cambio de router");{const x=eqLine(a.routerAnt,a.routerSnAnt,"SN");if(x)S.push("⚪️router anterior: "+x)}{const x=eqLine(a.routerNueva,a.routerSnNueva,"SN");if(x)S.push("⚪️router nuevo: "+x)}}
@@ -1164,7 +1181,7 @@ function fraseTxt(a,idx){
 /* copia del registro solo con los datos del encabezado (para el reporte de "Cliente no está") */
 function soloEncabezado(a){const h={...a,trabajo:"",fibra:false,metros:"",napInterv:"",potAntes:"",potDespues:"",potAntesOlt:"",potDespuesOlt:"",antesOffline:false,
   tests:false,clienteOk:false,cumplida:false,onu:false,router:false,accFusion:false,accOrdenar:false,accRoseta:false,accHilo:false,hiloNuevo:"",accOtra:"",
-  pruebas:false,notas:"",mac:"",gpon:"",pot:"",hilosLibres:"",notif:"",notifTxt:"",evid:{},sWifi:false,sCamInst:false,sCamConf:false,sCable:false};
+  pruebas:false,notas:"",mac:"",gpon:"",pot:"",hilosLibres:"",notif:"",notifTxt:"",evid:{},sWifi:false,sCamInst:false,sCamConf:false,sCable:false,sDom:false};
   for(const [k] of RET)h["ret_"+k]=false;return h}
 function posponeTxt(a){const p=(a.pospone||"").trim().replace(/^(para\s+)?(el\s+)?d[ií]a\s+/i,"");return "Se pospone la visita para el día "+(p||"____ a las ____")}
 function refresh(){
@@ -1191,7 +1208,7 @@ function refresh(){
   const hb=(id,v)=>{const e=$(id);if(e)e.hidden=v};hb("boxFibra",!cur.fibra);hb("boxOnu",!cur.onu);hb("boxRouter",!cur.router);
   document.querySelectorAll('[data-eq="eq"]').forEach(e=>e.hidden=!(cur.onu||cur.router));
   if(cur.tipo==="retiro"){for(const [k] of RET)hb("rbox_"+k,!cur["ret_"+k])}
-  if(cur.tipo==="soporte"){hb("boxWifi",!cur.sWifi);hb("boxCam",!cur.sCamInst);hb("boxCamConf",!cur.sCamConf);hb("boxCable",!cur.sCable)}
+  if(cur.tipo==="soporte"){hb("boxDom",!cur.sDom);hb("boxWifi",!cur.sWifi);hb("boxCam",!cur.sCamInst);hb("boxCamConf",!cur.sCamConf);hb("boxCable",!cur.sCable)}
   if(cur.tipo==="potencia"){hb("boxHilo",!cur.accHilo);hb("antesGrid",!!cur.antesOffline);const g=$("gain");if(g)g.innerHTML=potBox();
     for(const k of ["potAntes","potDespues","potAntesOlt","potDespuesOlt"]){const el=$("f-"+k);if(el){el.classList.remove("pin-r","pin-a","pin-g");const c=potCls(cur[k]);if(c)el.classList.add("pin-"+c)}}}
 }
@@ -1205,8 +1222,8 @@ async function saveNow(){clearTimeout(saveT);if(!cur)return;const {id,...data}=c
   catch{const s=$("saved");if(s)s.textContent="No se pudo guardar: el teléfono no tiene espacio."}}
 async function remove(id){acts=acts.filter(a=>a.id!==id);saveLocal()}
 
-const PKEYS=["tecnico","soporte","cliente","direccion","tel","ip","extra","cedula","correo","plan","nap","hilo","potAntes","coords"];
-function applyParsed(o,p,ui){o.mapa=p.mapa;for(const k of PKEYS){if(o.tipo==="instalacion"&&k==="extra")continue;if(!p[k]&&["cedula","correo","plan","nap","hilo","potAntes","coords"].includes(k))continue;o[k]=p[k];if(ui){const el=$("f-"+k);if(el)el.value=p[k]}}}
+const PKEYS=["tecnico","soporte","cliente","direccion","tel","ip","extra","cedula","correo","plan","nap","hilo","potAntes","coords","dirAnt","sDom"];
+function applyParsed(o,p,ui){o.mapa=p.mapa;for(const k of PKEYS){if(o.tipo==="instalacion"&&k==="extra")continue;if(!p[k]&&["cedula","correo","plan","nap","hilo","potAntes","coords","dirAnt","sDom"].includes(k))continue;o[k]=p[k];if(ui){const el=$("f-"+k);if(el)el.value=p[k]}}}
 const isCli=l=>/^\s*cliente\s*[,.:]/i.test(l);
 const isSop=l=>/^\s*soporte\s*[,.:]/i.test(l);
 const isTec=l=>/^\s*t[eé]cnicos?\s*[,.:]/i.test(l);
@@ -1225,7 +1242,7 @@ function splitBlocks(txt){
   push();
   const ok=blocks.filter(b=>b.split("\n").some(isCli)),bad=blocks.filter(b=>!b.split("\n").some(isCli));
   return ok.length>=2?{ok,bad}:null}
-const tipoDe=s=>/retir/i.test(s)?"retiro":/instalaci[oó]n/i.test(s)?"instalacion":/potencia/i.test(s)?"potencia":/\b(app|iptv|canales)\b/i.test(s)?"tv":"";
+const tipoDe=s=>/retir/i.test(s)?"retiro":/domicilio/i.test(s)?"soporte":/instalaci[oó]n/i.test(s)?"instalacion":/potencia/i.test(s)?"potencia":/\b(app|iptv|canales)\b/i.test(s)?"tv":"";
 let multi=null;
 function multiCheck(txt){
   const box=$("multiBox");if(box)box.remove();multi=null;
