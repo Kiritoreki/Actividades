@@ -132,6 +132,15 @@ details.year>.mdays>details.month{background:rgba(0,0,0,.2)}
 .prow{display:grid;gap:6px;padding:12px;border-radius:14px;background:rgba(0,0,0,.22);border:1px solid var(--line)}.prow.ok{border-color:rgba(52,211,153,.4)}.prow.cur{border-color:rgba(34,211,238,.4)}.prow.no{border-color:rgba(255,46,122,.4)}
 .prow-h{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}.prow-h b{font-size:15px}.pvals{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.pl{font-size:12px;color:var(--muted);min-width:54px}
 .pmej{font:700 12.5px var(--mono);color:var(--green)}.pnota{font-size:12.5px;color:#fde68a}.prow-a{display:flex;justify-content:flex-end}.pgo{border-color:var(--orange)!important;color:#fed7aa}
+.jvbtn{margin-left:auto;padding:7px 12px;border-radius:99px;border:1.5px solid rgba(34,211,238,.55);background:rgba(34,211,238,.1);color:#a5f3fc;font:700 13px var(--sans);cursor:pointer;min-height:36px}.jvbtn.sm{margin-left:8px;padding:6px 10px}
+.jvov{position:fixed;inset:0;z-index:100;background:#000;color:#e5e7eb;display:flex;flex-direction:column;padding:calc(env(safe-area-inset-top) + 14px) 18px calc(env(safe-area-inset-bottom) + 16px);gap:14px;font-family:var(--sans)}
+.jv-top{display:flex;justify-content:space-between;align-items:center;gap:10px}.jv-st{font-size:13px;color:#67e8f9}.jv-off{padding:9px 14px;border-radius:99px;border:1px solid #444;background:#111;color:#f87171;font:600 14px var(--sans);min-height:44px}
+.jv-mid{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:14px;text-align:center}
+.jv-orb{width:110px;height:110px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#67e8f9,#0e7490 55%,#020617 75%);box-shadow:0 0 40px rgba(34,211,238,.45);animation:jvp 2.4s ease-in-out infinite}
+.jv-orb.talk{background:radial-gradient(circle at 40% 35%,#f0abfc,#a21caf 55%,#020617 75%);box-shadow:0 0 50px rgba(232,121,249,.55);animation-duration:.8s}.jv-orb.warn{background:radial-gradient(circle at 40% 35%,#fde68a,#b45309 55%,#020617 75%);box-shadow:0 0 30px rgba(251,191,36,.35)}
+@keyframes jvp{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}
+.jv-act{margin:0;font:700 17px var(--display);color:#f4f2ff}.jv-heard{margin:0;font-size:14px;color:#9ca3af;font-style:italic;min-height:1em}.jv-ans{margin:0;font-size:18px;line-height:1.45;color:#e5e7eb;max-width:520px}
+.jv-ask{display:flex;gap:8px}.jv-ask input{flex:1;min-width:0;padding:13px 14px;border-radius:14px;border:1px solid #333;background:#0b0b0f;color:#fff;font:16px var(--sans)}.jv-send{padding:0 14px;border-radius:14px;border:1px solid #155e75;background:#083344;color:#a5f3fc;font:600 14px var(--sans)}
 .brand{display:flex;align-items:center;gap:10px;margin:2px 0 -6px}.brand img{width:40px;height:40px;border-radius:12px;box-shadow:0 0 14px rgba(34,211,238,.35)}.brand span{font:700 15px var(--display);letter-spacing:.06em;text-transform:uppercase;background:linear-gradient(90deg,#22d3ee,#e879f9);-webkit-background-clip:text;background-clip:text;color:transparent}
 .gate{display:grid;gap:14px;padding-top:24px}.gate .sec{gap:12px}.gbtn{width:100%;flex:none}.ghostb{padding:13px;border-radius:16px;border:1.5px solid var(--line);background:transparent;color:var(--fg);font:600 15px var(--sans);cursor:pointer}
 .code{font:600 42px var(--mono);letter-spacing:.25em;text-align:center;padding:14px;border:1.5px dashed var(--cyan);border-radius:14px;color:var(--cyan)}
@@ -263,7 +272,7 @@ a{color:var(--fuchsia)}
 <script src="config.js"></script>
 <script>
 const $=id=>document.getElementById(id);
-const APP_VER="v55";const UPD={txt:"",reg:null};
+const APP_VER="v56";const UPD={txt:"",reg:null};
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const pad=n=>String(n).padStart(2,"0");
 const dayKey=t=>{const d=new Date(t);return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())};
@@ -634,7 +643,7 @@ function renderList(){if(!ACC.ok)return;document.body.classList.remove("ausente"
   if(tab==="inicio"){
     const hoy=acts.filter(a=>dayKey(a.creado)===hoyK).sort((a,b)=>b.creado-a.creado);
     const ok=hoy.filter(a=>a.estado==="terminada").length;
-    h=`<div class="brand"><img src="icons/icon-192.png" alt="" width="40" height="40"><span>Equipo Guido</span></div><div class="top"><div class="hello"><small>${esc(fecha)}</small><h1>Actividades</h1></div></div>
+    h=`<div class="brand"><img src="icons/icon-192.png" alt="" width="40" height="40"><span>Equipo Guido</span><button class="jvbtn" data-jv="on" aria-label="Activar Jarvis">🎙️ Jarvis</button></div><div class="top"><div class="hello"><small>${esc(fecha)}</small><h1>Actividades</h1></div></div>
     <div class="stats"><div class="stat"><b>${hoy.length}</b><span>Hoy</span></div><div class="stat g"><b>${ok}</b><span>${ok===1?"Terminada":"Terminadas"}</span></div><div class="stat a"><b>${hoy.length-ok}</b><span>${hoy.length-ok===1?"Pendiente":"Pendientes"}</span></div></div>
     <div class="tiles"><button class="tile red" data-new="foco_rojo"><i>${ICON.foco_rojo}</i>Foco rojo</button><button class="tile" data-new="instalacion"><i>${ICON.instalacion}</i>Instalación alámbrica</button><button class="tile tv" data-new="tv"><i>${ICON.tv}</i>App de TV</button><button class="tile pot" data-new="potencia"><i>${ICON.potencia}</i>Potencias elevadas</button><button class="tile ret" data-new="retiro"><i>${ICON.retiro}</i>Retiro de equipos</button><button class="tile sop" data-new="soporte"><i>${ICON.soporte}</i>Soporte</button></div>`;
     h+=`<label class="searchbox">${ICON.search}<input class="search" id="qip" type="search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Buscar cliente: nombre, IP o cédula" value="${esc(qip)}"></label>
@@ -694,7 +703,7 @@ function renderEditor(){if(!ACC.ok)return;{const sp=$("syncPill");if(sp)sp.hidde
   if(cur.tipo==="retiro")return renderRet();
   if(cur.tipo==="soporte")return renderSop();
   $("app").innerHTML=`
-  <div class="top"><button class="back" data-back>${ICON.back}Actividades</button><span class="saved" id="saved"></span></div>
+  <div class="top"><button class="back" data-back>${ICON.back}Actividades</button><span class="saved" id="saved"></span><button class="jvbtn sm" data-jv="on" aria-label="Activar Jarvis">🎙️</button></div>
   <div class="top"><h1>Foco rojo</h1><div class="chips">${chip("estado","pendiente","Pendiente","no")}${chip("estado","terminada","Terminada")}</div></div>
   ${realizHTML()}
 
@@ -761,7 +770,7 @@ function renderTV(){
   const done=TVSTEPS.filter(([k])=>cur.tvchk?.[k]).length;
   const appChip=v=>`<button class="chip" data-tvapp="${esc(v)}" aria-pressed="${cur.tvApp===v}">${esc(v)}</button>`;
   $("app").innerHTML=`
-  <div class="top"><button class="back" data-back>${ICON.back}Actividades</button><span class="saved" id="saved"></span></div>
+  <div class="top"><button class="back" data-back>${ICON.back}Actividades</button><span class="saved" id="saved"></span><button class="jvbtn sm" data-jv="on" aria-label="Activar Jarvis">🎙️</button></div>
   <div class="top"><h1>App de TV</h1><div class="chips">${chip("estado","pendiente","Pendiente","no")}${chip("estado","terminada","Terminada")}</div></div>
   ${realizHTML()}
   <section class="sec"><div class="sec-h"><h2>Datos de la actividad</h2></div>
@@ -807,7 +816,7 @@ function renderTV(){
 function renderInst(){
   if(!cur.fecha)cur.fecha=dayKey(cur.creado);
   $("app").innerHTML=`
-  <div class="top"><button class="back" data-back>${ICON.back}Actividades</button><span class="saved" id="saved"></span></div>
+  <div class="top"><button class="back" data-back>${ICON.back}Actividades</button><span class="saved" id="saved"></span><button class="jvbtn sm" data-jv="on" aria-label="Activar Jarvis">🎙️</button></div>
   <div class="top"><h1>Instalación alámbrica</h1><div class="chips">${chip("estado","pendiente","Pendiente","no")}${chip("estado","terminada","Terminada")}</div></div>
   ${realizHTML()}
 
@@ -946,7 +955,7 @@ function renderSop(){
   const tog=(k,l)=>`<button class="chip" data-tog="${k}" aria-pressed="${!!cur[k]}">${l}</button>`;
   const M='class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false"';
   $("app").innerHTML=`
-  <div class="top"><button class="back" data-back>${ICON.back}Actividades</button><span class="saved" id="saved"></span></div>
+  <div class="top"><button class="back" data-back>${ICON.back}Actividades</button><span class="saved" id="saved"></span><button class="jvbtn sm" data-jv="on" aria-label="Activar Jarvis">🎙️</button></div>
   <div class="top"><h1>Soporte</h1><div class="chips">${chip("estado","pendiente","Pendiente","no")}${chip("estado","terminada","Terminada")}</div></div>
   ${realizHTML()}
   <section class="sec"><div class="sec-h"><h2>Datos de la actividad</h2><span class="step">01</span></div>
@@ -1040,7 +1049,7 @@ function reportSop(a){
 function renderPot(){
   const tog=(k,l)=>`<button class="chip" data-tog="${k}" aria-pressed="${!!cur[k]}">${l}</button>`;
   $("app").innerHTML=`
-  <div class="top"><button class="back" data-back>${ICON.back}Actividades</button><span class="saved" id="saved"></span></div>
+  <div class="top"><button class="back" data-back>${ICON.back}Actividades</button><span class="saved" id="saved"></span><button class="jvbtn sm" data-jv="on" aria-label="Activar Jarvis">🎙️</button></div>
   <div class="top"><h1>Potencias elevadas</h1><div class="chips">${chip("estado","pendiente","Pendiente","no")}${chip("estado","terminada","Terminada")}</div></div>
   ${realizHTML()}
   <section class="sec"><div class="sec-h"><h2>Datos de la actividad</h2><span class="step">01</span></div>
@@ -1094,7 +1103,7 @@ function renderRet(){
     ${fs.length?`<div class="grid">${fs.map(f=>inp(`r_${k}_${RETF[f]}`,f,{attrs:f==="Modelo"||f==="Equipo"?'':'class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="Opcional"'})).join("")}</div>`:""}
     <div class="chips">${chip(`r_${k}_estado`,"ok","✅ Funciona")}${chip(`r_${k}_estado`,"dan","⚠️ Dañado","no")}${chip(`r_${k}_estado`,"np","❓ Sin probar")}</div></div>`).join("");
   $("app").innerHTML=`
-  <div class="top"><button class="back" data-back>${ICON.back}Actividades</button><span class="saved" id="saved"></span></div>
+  <div class="top"><button class="back" data-back>${ICON.back}Actividades</button><span class="saved" id="saved"></span><button class="jvbtn sm" data-jv="on" aria-label="Activar Jarvis">🎙️</button></div>
   <div class="top"><h1>Retiro de equipos</h1><div class="chips">${chip("estado","pendiente","Pendiente","no")}${chip("estado","terminada","Terminada")}</div></div>
   ${realizHTML()}
   <section class="sec"><div class="sec-h"><h2>Datos de la actividad</h2><span class="step">01</span></div>
@@ -1636,6 +1645,136 @@ document.addEventListener("click",async e=>{const b=e.target.closest("[data-shee
     if(!k){if(info)info.textContent="⚠️ Escribe la clave.";return}
     if(hoja&&!/^https:\/\/docs\.google\.com\//.test(hoja)){if(info)info.textContent="⚠️ El enlace de la hoja debe empezar con https://docs.google.com/";return}
     cfgs=cfgs.filter(c=>c.id!=="cfg_sheets");cfgs.push({id:"cfg_sheets",kind:"cfg",url,k,hoja});saveCfg();renderList();await sheetSync(true)}});
+/* ============ Jarvis (piloto): responde por voz sobre la última actividad ============ */
+const JV={on:false,rec:null,focus:null,client:null,pend:"",last:"",heard:"",ans:"",state:"",lock:null,vid:null,speaking:false,restartT:null};
+const jvNorm=t=>String(t||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[¿?¡!,;:"“”]/g," ").replace(/\s+/g," ").trim();
+const WAKE=/\b(jarvis|jarvi|yarvis|jarbis|yarbis|harvis|jervis|garvis|jarvez|jarviz|yervis|charvis)\b/;
+/* "diez punto diez punto cuarenta y cinco" → "10.10.45" */
+const NUMW={cero:0,uno:1,una:1,un:1,dos:2,tres:3,cuatro:4,cinco:5,seis:6,siete:7,ocho:8,nueve:9,diez:10,once:11,doce:12,trece:13,catorce:14,quince:15,dieciseis:16,diecisiete:17,dieciocho:18,diecinueve:19,veinte:20,veintiuno:21,veintiun:21,veintidos:22,veintitres:23,veinticuatro:24,veinticinco:25,veintiseis:26,veintisiete:27,veintiocho:28,veintinueve:29,treinta:30,cuarenta:40,cincuenta:50,sesenta:60,setenta:70,ochenta:80,noventa:90,cien:100,ciento:100,doscientos:200,trescientos:300,cuatrocientos:400,quinientos:500,seiscientos:600,setecientos:700,ochocientos:800,novecientos:900};
+function jvNums(t){const w=t.split(" ");const out=[];let acc=null;
+  const flush=()=>{if(acc!==null){out.push(String(acc));acc=null}};
+  for(let i=0;i<w.length;i++){const x=w[i];
+    if(x in NUMW){const v=NUMW[x];if(acc===null)acc=v;else if(acc>=100&&v<100)acc+=v;else if(acc%100>=20&&acc%10===0&&v<10)acc+=v;else{flush();acc=v}continue}
+    if(x==="y"&&acc!==null&&i+1<w.length&&w[i+1] in NUMW)continue;
+    flush();out.push(x)}
+  flush();return out.join(" ").replace(/(\d)\s*(?:punto|\.)\s*(?=\d)/g,"$1.")}
+const jvDate=k=>{const d=new Date(k+"T12:00");return d.toLocaleDateString("es-EC",{weekday:"long",day:"numeric",month:"long"})};
+const jvIP=ip=>String(ip||"").split(".").join(" punto ");
+const jvTel=t=>String(t||"").split("/")[0].replace(/\D/g,"").replace(/(\d)(?=\d)/g,"$1 ");
+const jvTipo=a=>(TIPO_TXT[a.tipo]||"actividad").toLowerCase();
+const jvEstado=a=>a.noRealizada?"no realizada":a.estado==="terminada"?"terminada":"pendiente";
+const jvName=a=>String(a&&a.cliente||"sin nombre").replace(/_/g," ").replace(/\s*\(.*?\)\s*/g," ").trim();
+const jvPot=v=>{const n=potNum(v);return n===null?"":"menos "+String(Math.abs(n)).replace(".",",")};
+function jvOrdered(){return [...acts].sort((a,b)=>(a.creado||0)-(b.creado||0))}
+function jvTarget(){if(JV.focus){const a=acts.find(x=>x.id===JV.focus);if(a)return a}if(cur)return acts.find(x=>x.id===cur.id)||cur;
+  const hoy=dayKey(Date.now());const t=acts.filter(a=>dayKey(a.creado)===hoy);const L=(t.length?t:acts);return [...L].sort((a,b)=>Math.max(b.actualizado||0,b.creado||0)-Math.max(a.actualizado||0,a.creado||0))[0]||null}
+function jvVisits(a){return acts.filter(x=>x.cliente&&sameClient({cliente:x.cliente},{cliente:a.cliente})).sort((x,y)=>x.creado-y.creado)}
+function jvVisitLine(a){const parts=[jvDate(dayKey(a.creado)),jvTipo(a),jvEstado(a)];return parts.join(", ")}
+function jvDetail(a){const t=String(visitTxt(a)||"").replace(/[❌✅⏳⚪️]/gu,"").replace(/→/g," a ").replace(/dBm/g,"").replace(/-(\d)/g,"menos $1").trim();
+  const t2=t.replace(/\s+/g," ").replace(/(\d)\.(\d)/g,"$1,$2").replace(/,(\d)0\b/g,",$1");const sop=a.soporte&&!t2.toLowerCase().includes(a.soporte.toLowerCase())?", "+a.soporte:"";
+  return `El ${jvDate(dayKey(a.creado))}, ${jvTipo(a)}${sop}: ${t2||jvEstado(a)}.`}
+function jvClientSummary(list,intro){const a0=list[list.length-1];const ip=list.map(x=>x.ip).filter(Boolean).pop();
+  JV.client={ids:list.map(x=>x.id)};JV.pend="detalle";
+  return `${intro||""}${jvName(a0)}${ip?", con IP "+jvIP(ip):""}. Tiene ${list.length} ${list.length===1?"visita":"visitas"}: ${list.map(jvVisitLine).join("; ")}. ¿Quieres saber qué se hizo?`}
+function jvFind(q){const t=jvNums(q);const ip=t.match(/\b\d{1,3}(?:\.\d{1,3}){1,3}\b/);const ced=t.replace(/\s/g,"").match(/\d{8,13}/);
+  let hits=[];if(ip)hits=acts.filter(a=>ipNorm(a.ip).includes(ip[0]));
+  else if(ced)hits=acts.filter(a=>String(a.cedula||"").includes(ced[0]));
+  else{const words=normName(t.replace(/\b(al|a|la|el|cliente|clienta|senor|senora|don|dona|busca|buscar|buscame|ip|cedula|de)\b/g," ")).split(" ").filter(w=>w.length>2);
+    if(words.length)hits=acts.filter(a=>{const n=normName(a.cliente);return n&&words.every(w=>n.includes(w))})}
+  if(!hits.length)return `No encontré ningún cliente con ${ip?"la IP "+jvIP(ip[0]):ced?"esa cédula":"ese nombre"}.`;
+  const g={};for(const a of hits){const k=normName(a.cliente)||a.id;(g[k]??=[]).push(a)}
+  const keys=Object.keys(g);const base=g[keys[0]][0];JV.focus=[...g[keys[0]]].sort((x,y)=>y.creado-x.creado)[0].id;
+  return jvClientSummary(jvVisits(base),keys.length>1?`Hay ${keys.length} clientes; te digo el primero: `:"Es ")}
+const pl=(n,w)=>n+" "+w+(n===1?"":"s");
+function jvDay(t){const now=new Date();let d=null;
+  if(/\bhoy\b/.test(t))d=new Date(now);else if(/\bantier|anteayer\b/.test(t)){d=new Date(now);d.setDate(d.getDate()-2)}else if(/\bayer\b/.test(t)){d=new Date(now);d.setDate(d.getDate()-1)}
+  else{const W=["domingo","lunes","martes","miercoles","jueves","viernes","sabado"];const i=W.findIndex(w=>t.includes(w));if(i>=0){d=new Date(now);const back=(d.getDay()-i+7)%7||7;d.setDate(d.getDate()-back)}}
+  if(!d)return null;const k=dayKey(d.getTime());const L=acts.filter(a=>dayKey(a.creado)===k).sort((a,b)=>a.creado-b.creado);
+  const cuando=k===dayKey(Date.now())?"Hoy":"El "+jvDate(k);
+  if(!L.length)return `${cuando} no hay actividades.`;
+  const ok=L.filter(a=>a.estado==="terminada"&&!a.noRealizada).length,no=L.filter(a=>a.noRealizada).length;
+  JV.client={ids:L.map(a=>a.id)};JV.pend="detalle";
+  return `${cuando} ${L.length===1?"hay 1 actividad":"hay "+L.length+" actividades"}: ${pl(ok,"terminada")}, ${pl(L.length-ok-no,"pendiente")}${no?" y "+pl(no,"no realizada"):""}. ${L.map(a=>`${jvTipo(a)} a ${jvName(a)}, ${jvEstado(a)}`).join("; ")}. ¿Quieres saber qué se hizo?`}
+function jvAnswer(raw){
+  let t=jvNorm(raw);const w=t.match(WAKE);if(w)t=t.slice(t.indexOf(w[0])+w[0].length).trim();t=jvNums(t);
+  if(!t)return "Dime.";
+  if(/\b(desactiva|desactivate|apagate|apaga|duerme|descansa|adios|chao)\b/.test(t)){setTimeout(()=>jvOff(true),2200);return "Me desactivo. Hasta luego."}
+  if(/\b(repite|otra vez|de nuevo|que dijiste)\b/.test(t))return JV.last||"Todavía no te he dicho nada.";
+  if(/\b(que te puedo decir|comandos|ayuda|que puedes hacer)\b/.test(t))return "Puedes preguntarme por el cliente, la IP, la dirección, el teléfono, la NAP, el hilo, la potencia anterior o actual, cuánto mejoró, las visitas anteriores, buscar por IP o nombre, qué se hizo hoy o ayer, la anterior, la siguiente, repite o desactívate.";
+  if(JV.pend==="detalle"&&/^(si|si por favor|dale|ok|claro|cuentame|dime)$/.test(t)||/\b(que se hizo|que se le hizo|detalle|detalles|que hicieron|que trabajo)\b/.test(t)&&!/\b(hoy|ayer|antier|anteayer|lunes|martes|miercoles|jueves|viernes|sabado|domingo)\b/.test(t)){
+    const ids=JV.client?.ids;if(ids&&ids.length){JV.pend="";const L=ids.map(id=>acts.find(a=>a.id===id)).filter(Boolean);return L.map(jvDetail).join(" ")}
+    const a=jvTarget();return a?jvDetail(a):"No hay actividades."}
+  if(/^(no|no gracias|nada|listo)$/.test(t)){JV.pend="";return "Listo."}
+  if(/\b(busca|buscar|buscame|encuentra)\b/.test(t))return jvFind(t);
+  {const r=/\b(que se hizo|resumen|actividades|que hicimos|cuantas)\b/.test(t)&&jvDay(t);if(r)return r}
+  const L=jvOrdered();
+  if(/\b(anterior|la de antes|atras)\b/.test(t)&&!/\bpotencia\b/.test(t)){const a=jvTarget();const i=L.findIndex(x=>x.id===a?.id);if(i>0){JV.focus=L[i-1].id;const b=L[i-1];return `Anterior: ${jvTipo(b)} a ${jvName(b)}, del ${jvDate(dayKey(b.creado))}, ${jvEstado(b)}.`}return "No hay una actividad anterior."}
+  if(/\b(siguiente|la que sigue|despues de esta)\b/.test(t)){const a=jvTarget();const i=L.findIndex(x=>x.id===a?.id);if(i>=0&&i<L.length-1){JV.focus=L[i+1].id;const b=L[i+1];return `Siguiente: ${jvTipo(b)} a ${jvName(b)}, del ${jvDate(dayKey(b.creado))}, ${jvEstado(b)}.`}return "No hay una actividad siguiente."}
+  if(/\b(vuelve|regresa|actual|ultima)\b/.test(t)&&/\b(actividad|a la actual|a la ultima)\b/.test(t)||/^(vuelve|regresa)/.test(t)){JV.focus=null;const a=jvTarget();return a?`Volvemos a ${jvTipo(a)} de ${jvName(a)}.`:"No hay actividades."}
+  const a0=jvTarget();if(!a0)return "Todavía no hay actividades.";
+  /* si la actividad no tiene el dato, lo toma de otra visita del mismo cliente */
+  const fb=k=>{if(a0[k])return a0;return jvVisits(a0).reverse().find(x=>x[k])||a0};
+  const K=/\bip\b/.test(t)?"ip":/\bcedula\b/.test(t)?"cedula":/\b(telefono|celular|numero|contacto)\b/.test(t)?"tel":/\b(direccion|donde|ubicacion|vive)\b/.test(t)?"direccion":/\b(nap|caja)\b/.test(t)?"nap":/\b(hilo|puerto)\b/.test(t)?"hilo":/\b(coordenadas|gps)\b/.test(t)?"coords":"";
+  const a=K&&!/\b(potencia|senal|mejoro|mejora)\b/.test(t)?fb(K):a0;const de=a!==a0?` (de la visita del ${jvDate(dayKey(a.creado))})`:"";
+  if(/\b(visitas|historial|veces|antes vino|ha tenido|anteriores)\b/.test(t))return jvClientSummary(jvVisits(a),"");
+  if(/\b(mejoro|mejora|subio|cuanto gano|ganancia)\b/.test(t)){const g=(x,y)=>{const p=potNum(x),q=potNum(y);return p!==null&&q!==null?q-p:null};const o=g(a.potAntes,a.potDespues),l=g(a.potAntesOlt,a.potDespuesOlt);
+    if(o===null&&l===null)return "Todavía no hay potencia de antes y de después para calcular la mejora.";
+    const f=v=>(v>=0?"mejoró ":"empeoró ")+String(Math.abs(v).toFixed(2)).replace(".",",")+" decibeles";return [o!==null?"En la ONU "+f(o):"",l!==null?"en la OLT "+f(l):""].filter(Boolean).join(", ")+"."}
+  if(/\bpotencia|senal|dbm\b/.test(t)){const despues=/\b(actual|despues|final|ahora|nueva|quedo)\b/.test(t),antes=/\b(anterior|antes|inicial|vieja|tenia)\b/.test(t);
+    const say=(o,l,lbl)=>o||l?`${lbl}: ${o?"ONU "+jvPot(o):""}${o&&l?", ":""}${l?"OLT "+jvPot(l):""}.`:"";
+    const A=a.antesOffline?"Potencia anterior: sin señal.":say(a.potAntes,a.potAntesOlt,"Potencia anterior"),D=say(a.potDespues,a.potDespuesOlt,"Potencia actual")||(a.pot?`Potencia: ${jvPot(a.pot)}.`:"");
+    if(despues)return D||"Todavía no hay potencia de después.";if(antes)return A||"No hay potencia anterior.";return [A,D].filter(Boolean).join(" ")||"No hay potencias registradas."}
+  if(/\b(ip)\b/.test(t))return a.ip?`La IP es ${jvIP(a.ip)}${de}.`:"Esta actividad no tiene IP.";
+  if(/\b(cedula)\b/.test(t))return a.cedula?`La cédula es ${jvTel(a.cedula)}${de}.`:"No tiene cédula registrada.";
+  if(/\b(telefono|celular|numero|contacto)\b/.test(t))return a.tel?`El teléfono es ${jvTel(a.tel)}${de}.`:"No tiene teléfono.";
+  if(/\b(direccion|donde|ubicacion|vive)\b/.test(t))return a.direccion?`La dirección es ${a.direccion}${de}${a.dirAnt?". La anterior era "+a.dirAnt:""}.`:"No tiene dirección.";
+  if(/\b(nap|caja)\b/.test(t))return a.nap?`La NAP es ${String(a.nap).split("").join(" ")}${a.hilo?", hilo "+a.hilo:""}${de}.`:"No tiene NAP registrada.";
+  if(/\b(hilo|puerto)\b/.test(t))return a.hilo?`El hilo es ${a.hilo}${de}.`:"No tiene hilo registrado.";
+  if(/\b(mac)\b/.test(t)){const m=a.onuNueva||a.routerNueva||a.mac||a.onuAnt||a.routerAnt;return m?`La MAC es ${String(m).split("").join(" ").replace(/-/g,"guion")}.`:"No hay MAC registrada."}
+  if(/\b(serie|sn|ese ene|gpon)\b/.test(t)){const m=a.onuSnNueva||a.gpon||a.routerSnNueva||a.onuSnAnt||a.routerSnAnt;return m?`El número de serie es ${String(m).split("").join(" ")}.`:"No hay número de serie registrado."}
+  if(/\b(tecnico|tecnicos|quien)\b/.test(t)){const x=[a.tecnico,a.tecnico2].filter(Boolean).join(" y ");return x?`Técnicos: ${x}.`:"No hay técnico registrado."}
+  if(/\b(problema|soporte|falla|que tiene|reclamo|que pasa)\b/.test(t))return a.soporte?`El soporte dice: ${a.soporte}.`:`Es ${jvTipo(a)}, sin detalle del problema.`;
+  if(/\b(estado|como va|termin)\b/.test(t))return `La actividad está ${jvEstado(a)}.`;
+  if(/\b(que actividad|tipo|cual es|en que estamos)\b/.test(t))return `Es ${jvTipo(a)} de ${jvName(a)}, ${jvEstado(a)}.`;
+  if(/\b(coordenadas|gps)\b/.test(t))return a.coords?`Las coordenadas son ${a.coords}${de}.`:"No tiene coordenadas.";
+  if(/\b(cliente|nombre|como se llama|quien es)\b/.test(t))return `El cliente es ${jvName(a)}.`;
+  return "No te entendí. Pregúntame por el cliente, la IP, la potencia, cuánto mejoró o di: busca la IP, y el número."}
+function jvVoice(){const vs=speechSynthesis.getVoices();return vs.find(v=>/^es[-_](EC|MX|US|419|CO|PE|CL|AR)/i.test(v.lang))||vs.find(v=>/^es/i.test(v.lang))||null}
+function jvSay(text){JV.last=text;JV.ans=text;jvUI();if(!("speechSynthesis" in window))return;
+  try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);const v=jvVoice();if(v)u.voice=v;u.lang=v?v.lang:"es-MX";u.rate=1.02;
+    JV.speaking=true;jvStopRec();u.onend=u.onerror=()=>{JV.speaking=false;jvUI();if(JV.on)jvStartRec(250)};speechSynthesis.speak(u)}catch{JV.speaking=false}}
+function jvHandle(text,fromVoice){JV.heard=text;if(fromVoice&&!WAKE.test(jvNorm(text))){jvUI();return}jvSay(jvAnswer(text))}
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+function jvStopRec(){clearTimeout(JV.restartT);try{JV.rec&&JV.rec.abort()}catch{}JV.rec=null}
+function jvStartRec(ms){clearTimeout(JV.restartT);if(!JV.on||JV.speaking||!SR)return;JV.restartT=setTimeout(()=>{if(!JV.on||JV.speaking||JV.rec)return;
+  try{const r=new SR();r.lang="es-MX";r.continuous=true;r.interimResults=false;r.maxAlternatives=1;
+    r.onresult=e=>{for(let i=e.resultIndex;i<e.results.length;i++)if(e.results[i].isFinal)jvHandle(e.results[i][0].transcript,true)};
+    r.onerror=e=>{if(e.error==="not-allowed"||e.error==="service-not-allowed"){JV.state="perm"}else if(e.error==="network"){JV.state="net"}jvUI()};
+    r.onend=()=>{JV.rec=null;if(JV.on&&!JV.speaking&&JV.state!=="perm")jvStartRec(JV.state==="net"?4000:300)};
+    r.onstart=()=>{if(JV.state!=="perm")JV.state="";jvUI()};
+    JV.rec=r;r.start()}catch{JV.rec=null}},ms||0)}
+async function jvKeepAwake(){try{if("wakeLock" in navigator){JV.lock=await navigator.wakeLock.request("screen");return}}catch{}
+  try{if(!JV.vid){const v=document.createElement("video");v.src="vendor/nosleep.mp4";v.muted=true;v.loop=true;v.playsInline=true;v.setAttribute("playsinline","");v.style.cssText="position:fixed;width:1px;height:1px;opacity:0;pointer-events:none";document.body.appendChild(v);JV.vid=v}await JV.vid.play()}catch{}}
+function jvOn(){JV.on=true;JV.focus=null;JV.pend="";JV.state=SR?"":"nosr";JV.heard="";const a=jvTarget();
+  jvUI(true);jvKeepAwake();
+  try{const u=new SpeechSynthesisUtterance("");speechSynthesis.speak(u)}catch{}
+  jvSay(a?`Jarvis activo. Estamos en ${jvTipo(a)} de ${jvName(a)}.`:"Jarvis activo. Todavía no hay actividades.")}
+function jvOff(silent){JV.on=false;jvStopRec();try{speechSynthesis.cancel()}catch{}try{JV.lock&&JV.lock.release()}catch{}JV.lock=null;try{JV.vid&&JV.vid.pause()}catch{}
+  const o=$("jvOv");if(o)o.remove();if(!silent){}}
+function jvUI(build){let o=$("jvOv");if(!JV.on){if(o)o.remove();return}
+  if(!o||build){if(o)o.remove();o=document.createElement("div");o.id="jvOv";o.className="jvov";o.setAttribute("role","dialog");o.setAttribute("aria-label","Jarvis");
+    o.innerHTML=`<div class="jv-top"><span class="jv-st" id="jvSt"></span><button class="jv-off" data-jv="off">Desactivar</button></div>
+      <div class="jv-mid"><div class="jv-orb" id="jvOrb" aria-hidden="true"></div><p class="jv-act" id="jvAct"></p><p class="jv-heard" id="jvHeard"></p><p class="jv-ans" id="jvAns" aria-live="polite"></p></div>
+      <form class="jv-ask" id="jvAsk"><input id="jvIn" type="text" autocomplete="off" autocorrect="off" placeholder="Escribe o dicta aquí 🎤"><button type="submit" class="jv-send">Preguntar</button></form>`;
+    document.body.appendChild(o)}
+  const a=jvTarget();
+  const st=JV.speaking?"🔊 Hablando…":JV.state==="perm"?"⚠️ Sin permiso del micrófono":JV.state==="net"?"📶 Sin internet: usa la casilla de abajo":JV.state==="nosr"?"Este navegador no escucha: usa la casilla de abajo":"🎙️ Escuchando… di «Jarvis, …»";
+  $("jvSt").textContent=st;$("jvOrb").className="jv-orb"+(JV.speaking?" talk":JV.state?" warn":"");
+  $("jvAct").textContent=a?`${TIPO_TXT[a.tipo]||"Actividad"} · ${jvName(a)}`:"Sin actividades";
+  $("jvHeard").textContent=JV.heard?"«"+JV.heard+"»":"";$("jvAns").textContent=JV.ans||""}
+document.addEventListener("click",e=>{const b=e.target.closest("[data-jv]");if(!b)return;e.preventDefault();if(b.dataset.jv==="on")jvOn();else jvOff()});
+document.addEventListener("submit",e=>{if(e.target.id!=="jvAsk")return;e.preventDefault();const i=$("jvIn");const v=(i.value||"").trim();if(!v)return;i.value="";jvHandle(v,false)});
+document.addEventListener("visibilitychange",()=>{if(!JV.on)return;if(document.visibilityState==="visible"){jvKeepAwake();jvStartRec(400)}else jvStopRec()});
 /* ============ actividades compartidas (Supabase) ============ */
 const SY={busy:false,again:false,state:"",last:0,err:"",pend:0};let syT=null;
 const porNom=n=>String(n||"").replace(/^(mi\s+)?(iphone|celular|cel|tel[eé]fono|android|samsung|xiaomi|motorola|huawei|redmi)\s+(de|del)\s+/i,"").trim();

@@ -1,8 +1,8 @@
 // Cambia VERSION cada vez que subas cambios, para que el teléfono descargue la nueva versión.
-const VERSION = "v55";
+const VERSION = "v56";
 const CACHE = "actividades-" + VERSION;
 const FILES = [
-  "./", "index.html", "manifest.webmanifest", "config.js", "vendor/supabase.js", "vendor/591.supabase.js",
+  "./", "index.html", "manifest.webmanifest", "config.js", "vendor/supabase.js", "vendor/591.supabase.js", "vendor/nosleep.mp4",
   "icons/icon-192.png", "icons/icon-512.png", "icons/icon-maskable-512.png", "icons/apple-touch-icon.png",
   "fonts/sora-latin-600-normal.woff2", "fonts/sora-latin-700-normal.woff2",
   "fonts/manrope-latin-400-normal.woff2", "fonts/manrope-latin-500-normal.woff2", "fonts/manrope-latin-600-normal.woff2", "fonts/manrope-latin-700-normal.woff2",
