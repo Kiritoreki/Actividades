@@ -1,5 +1,5 @@
 // Cambia VERSION cada vez que subas cambios, para que el teléfono descargue la nueva versión.
-const VERSION = "v56";
+const VERSION = "v57";
 const CACHE = "actividades-" + VERSION;
 const FILES = [
   "./", "index.html", "manifest.webmanifest", "config.js", "vendor/supabase.js", "vendor/591.supabase.js", "vendor/nosleep.mp4",

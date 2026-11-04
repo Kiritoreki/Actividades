@@ -137,6 +137,7 @@ details.year>.mdays>details.month{background:rgba(0,0,0,.2)}
 .jv-top{display:flex;justify-content:space-between;align-items:center;gap:10px}.jv-st{font-size:13px;color:#67e8f9}.jv-off{padding:9px 14px;border-radius:99px;border:1px solid #444;background:#111;color:#f87171;font:600 14px var(--sans);min-height:44px}
 .jv-mid{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:14px;text-align:center}
 .jv-orb{width:110px;height:110px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#67e8f9,#0e7490 55%,#020617 75%);box-shadow:0 0 40px rgba(34,211,238,.45);animation:jvp 2.4s ease-in-out infinite}
+.jv-orb{border:0;padding:0;cursor:pointer;-webkit-tap-highlight-color:transparent;width:150px;height:150px}.jv-orb.idle{animation:none;opacity:.75}.jv-orb.live{box-shadow:0 0 70px rgba(34,211,238,.8);animation-duration:1s}
 .jv-orb.talk{background:radial-gradient(circle at 40% 35%,#f0abfc,#a21caf 55%,#020617 75%);box-shadow:0 0 50px rgba(232,121,249,.55);animation-duration:.8s}.jv-orb.warn{background:radial-gradient(circle at 40% 35%,#fde68a,#b45309 55%,#020617 75%);box-shadow:0 0 30px rgba(251,191,36,.35)}
 @keyframes jvp{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}
 .jv-act{margin:0;font:700 17px var(--display);color:#f4f2ff}.jv-heard{margin:0;font-size:14px;color:#9ca3af;font-style:italic;min-height:1em}.jv-ans{margin:0;font-size:18px;line-height:1.45;color:#e5e7eb;max-width:520px}
@@ -272,7 +273,7 @@ a{color:var(--fuchsia)}
 <script src="config.js"></script>
 <script>
 const $=id=>document.getElementById(id);
-const APP_VER="v56";const UPD={txt:"",reg:null};
+const APP_VER="v57";const UPD={txt:"",reg:null};
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const pad=n=>String(n).padStart(2,"0");
 const dayKey=t=>{const d=new Date(t);return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())};
@@ -1646,7 +1647,7 @@ document.addEventListener("click",async e=>{const b=e.target.closest("[data-shee
     if(hoja&&!/^https:\/\/docs\.google\.com\//.test(hoja)){if(info)info.textContent="⚠️ El enlace de la hoja debe empezar con https://docs.google.com/";return}
     cfgs=cfgs.filter(c=>c.id!=="cfg_sheets");cfgs.push({id:"cfg_sheets",kind:"cfg",url,k,hoja});saveCfg();renderList();await sheetSync(true)}});
 /* ============ Jarvis (piloto): responde por voz sobre la última actividad ============ */
-const JV={on:false,rec:null,focus:null,client:null,pend:"",last:"",heard:"",ans:"",state:"",lock:null,vid:null,speaking:false,restartT:null};
+const JV={mode:"auto",listening:false,err:"",silT:null,dogT:null,on:false,rec:null,focus:null,client:null,pend:"",last:"",heard:"",ans:"",state:"",lock:null,vid:null,speaking:false,restartT:null};
 const jvNorm=t=>String(t||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[¿?¡!,;:"“”]/g," ").replace(/\s+/g," ").trim();
 const WAKE=/\b(jarvis|jarvi|yarvis|jarbis|yarbis|harvis|jervis|garvis|jarvez|jarviz|yervis|charvis)\b/;
 /* "diez punto diez punto cuarenta y cinco" → "10.10.45" */
@@ -1742,39 +1743,57 @@ function jvAnswer(raw){
 function jvVoice(){const vs=speechSynthesis.getVoices();return vs.find(v=>/^es[-_](EC|MX|US|419|CO|PE|CL|AR)/i.test(v.lang))||vs.find(v=>/^es/i.test(v.lang))||null}
 function jvSay(text){JV.last=text;JV.ans=text;jvUI();if(!("speechSynthesis" in window))return;
   try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);const v=jvVoice();if(v)u.voice=v;u.lang=v?v.lang:"es-MX";u.rate=1.02;
-    JV.speaking=true;jvStopRec();u.onend=u.onerror=()=>{JV.speaking=false;jvUI();if(JV.on)jvStartRec(250)};speechSynthesis.speak(u)}catch{JV.speaking=false}}
+    JV.speaking=true;jvStopRec();u.onend=u.onerror=()=>{JV.speaking=false;jvUI();if(JV.on&&JV.mode==="auto")jvStartRec(250)};speechSynthesis.speak(u)}catch{JV.speaking=false}}
 function jvHandle(text,fromVoice){JV.heard=text;if(fromVoice&&!WAKE.test(jvNorm(text))){jvUI();return}jvSay(jvAnswer(text))}
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-function jvStopRec(){clearTimeout(JV.restartT);try{JV.rec&&JV.rec.abort()}catch{}JV.rec=null}
-function jvStartRec(ms){clearTimeout(JV.restartT);if(!JV.on||JV.speaking||!SR)return;JV.restartT=setTimeout(()=>{if(!JV.on||JV.speaking||JV.rec)return;
-  try{const r=new SR();r.lang="es-MX";r.continuous=true;r.interimResults=false;r.maxAlternatives=1;
-    r.onresult=e=>{for(let i=e.resultIndex;i<e.results.length;i++)if(e.results[i].isFinal)jvHandle(e.results[i][0].transcript,true)};
-    r.onerror=e=>{if(e.error==="not-allowed"||e.error==="service-not-allowed"){JV.state="perm"}else if(e.error==="network"){JV.state="net"}jvUI()};
-    r.onend=()=>{JV.rec=null;if(JV.on&&!JV.speaking&&JV.state!=="perm")jvStartRec(JV.state==="net"?4000:300)};
-    r.onstart=()=>{if(JV.state!=="perm")JV.state="";jvUI()};
-    JV.rec=r;r.start()}catch{JV.rec=null}},ms||0)}
+const IOS=/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+/* Dos modos: "auto" escucha siempre y espera «Jarvis» (Android); "tap" toca la esfera y habla (iPhone, o si el auto falla) */
+function jvStopRec(){clearTimeout(JV.restartT);clearTimeout(JV.silT);clearTimeout(JV.dogT);const r=JV.rec;JV.rec=null;JV.listening=false;try{r&&r.abort()}catch{}}
+function jvMakeRec(oneShot){const r=new SR();r.lang="es-ES";r.continuous=!oneShot;r.interimResults=true;r.maxAlternatives=1;
+  let done=0;/* cuántos resultados ya se usaron */
+  const take=()=>{clearTimeout(JV.silT);if(JV.rec!==r)return;let t="";for(let i=done;i<r._res.length;i++)t+=r._res[i][0].transcript;done=r._res.length;t=t.trim();
+    if(!t)return;if(oneShot){jvStopRec();jvHandle(t,false)}else jvHandle(t,true)};
+  r._res=[];
+  r.onresult=e=>{r._res=e.results;if(e.results.length<=done)done=Math.min(e.resultIndex||0,e.results.length-1);{let h="";for(let i=done;i<e.results.length;i++)h+=e.results[i][0].transcript;JV.heard=h.trim()}jvUI();
+    const last=e.results[e.results.length-1];clearTimeout(JV.silT);if(last&&last.isFinal)take();else JV.silT=setTimeout(take,1300)};
+  r.onerror=e=>{JV.err=e.error;if(e.error==="no-speech"||e.error==="aborted")return;
+    if(e.error==="not-allowed"||e.error==="service-not-allowed"){JV.state="perm";JV.mode="tap"}else if(e.error==="network")JV.state="net";else if(e.error==="audio-capture")JV.state="mic";jvUI()};
+  r.onstart=()=>{clearTimeout(JV.dogT);JV.listening=true;if(JV.state!=="perm")JV.state="";jvUI()};
+  r.onend=()=>{const had=JV.rec===r;if(had){take();JV.rec=null}JV.listening=false;jvUI();
+    if(had&&JV.on&&!oneShot&&JV.mode==="auto"&&!JV.speaking&&JV.state!=="perm")jvStartRec(JV.state==="net"?4000:300)};
+  return r}
+function jvStartRec(ms){clearTimeout(JV.restartT);if(!JV.on||JV.speaking||!SR||JV.mode!=="auto")return;JV.restartT=setTimeout(()=>{if(!JV.on||JV.speaking||JV.rec||JV.mode!=="auto")return;
+  try{const r=jvMakeRec(false);JV.rec=r;r.start();
+    /* si no arranca solo (pasa en iPhone), cambia a "toca para hablar" */
+    JV.dogT=setTimeout(()=>{if(JV.rec===r&&!JV.listening){jvStopRec();JV.mode="tap";jvUI()}},3000)}catch(e){JV.rec=null;JV.mode="tap";jvUI()}},ms||0)}
+/* tocar la esfera: escucha una pregunta (sin decir «Jarvis»). Debe arrancar dentro del toque para que iPhone lo permita */
+function jvTap(){if(!SR){$("jvIn")&&$("jvIn").focus();return}
+  if(JV.speaking){try{speechSynthesis.cancel()}catch{}JV.speaking=false}
+  if(JV.rec&&JV.rec._one){jvStopRec();jvUI();return}
+  jvStopRec();JV.heard="";JV.err="";if(JV.state!=="perm")JV.state="";
+  try{const r=jvMakeRec(true);r._one=true;JV.rec=r;r.start();JV.listening=true;jvUI()}catch(e){JV.err=String(e&&e.message||e);JV.rec=null;jvUI()}}
 async function jvKeepAwake(){try{if("wakeLock" in navigator){JV.lock=await navigator.wakeLock.request("screen");return}}catch{}
   try{if(!JV.vid){const v=document.createElement("video");v.src="vendor/nosleep.mp4";v.muted=true;v.loop=true;v.playsInline=true;v.setAttribute("playsinline","");v.style.cssText="position:fixed;width:1px;height:1px;opacity:0;pointer-events:none";document.body.appendChild(v);JV.vid=v}await JV.vid.play()}catch{}}
-function jvOn(){JV.on=true;JV.focus=null;JV.pend="";JV.state=SR?"":"nosr";JV.heard="";const a=jvTarget();
+function jvOn(){JV.on=true;JV.focus=null;JV.pend="";JV.state=SR?"":"nosr";JV.heard="";JV.err="";JV.mode=IOS?"tap":"auto";const a=jvTarget();
   jvUI(true);jvKeepAwake();
   try{const u=new SpeechSynthesisUtterance("");speechSynthesis.speak(u)}catch{}
-  jvSay(a?`Jarvis activo. Estamos en ${jvTipo(a)} de ${jvName(a)}.`:"Jarvis activo. Todavía no hay actividades.")}
+  jvSay((a?`Jarvis activo. Estamos en ${jvTipo(a)} de ${jvName(a)}.`:"Jarvis activo. Todavía no hay actividades.")+(JV.mode==="tap"&&SR?" Toca la esfera y pregúntame.":""))}
 function jvOff(silent){JV.on=false;jvStopRec();try{speechSynthesis.cancel()}catch{}try{JV.lock&&JV.lock.release()}catch{}JV.lock=null;try{JV.vid&&JV.vid.pause()}catch{}
   const o=$("jvOv");if(o)o.remove();if(!silent){}}
 function jvUI(build){let o=$("jvOv");if(!JV.on){if(o)o.remove();return}
   if(!o||build){if(o)o.remove();o=document.createElement("div");o.id="jvOv";o.className="jvov";o.setAttribute("role","dialog");o.setAttribute("aria-label","Jarvis");
     o.innerHTML=`<div class="jv-top"><span class="jv-st" id="jvSt"></span><button class="jv-off" data-jv="off">Desactivar</button></div>
-      <div class="jv-mid"><div class="jv-orb" id="jvOrb" aria-hidden="true"></div><p class="jv-act" id="jvAct"></p><p class="jv-heard" id="jvHeard"></p><p class="jv-ans" id="jvAns" aria-live="polite"></p></div>
+      <div class="jv-mid"><button class="jv-orb" id="jvOrb" data-jvtap aria-label="Tocar y hablar"></button><p class="jv-act" id="jvAct"></p><p class="jv-heard" id="jvHeard"></p><p class="jv-ans" id="jvAns" aria-live="polite"></p></div>
       <form class="jv-ask" id="jvAsk"><input id="jvIn" type="text" autocomplete="off" autocorrect="off" placeholder="Escribe o dicta aquí 🎤"><button type="submit" class="jv-send">Preguntar</button></form>`;
     document.body.appendChild(o)}
   const a=jvTarget();
-  const st=JV.speaking?"🔊 Hablando…":JV.state==="perm"?"⚠️ Sin permiso del micrófono":JV.state==="net"?"📶 Sin internet: usa la casilla de abajo":JV.state==="nosr"?"Este navegador no escucha: usa la casilla de abajo":"🎙️ Escuchando… di «Jarvis, …»";
-  $("jvSt").textContent=st;$("jvOrb").className="jv-orb"+(JV.speaking?" talk":JV.state?" warn":"");
+  const st=JV.speaking?"🔊 Hablando… (toca la esfera para cortar)":JV.state==="perm"?(IOS?"⚠️ Activa el Dictado: Ajustes › General › Teclado › Dictado, y permite el micrófono":"⚠️ Permite el micrófono para esta app"):JV.state==="mic"?"⚠️ No se pudo usar el micrófono":JV.state==="net"?"📶 Sin internet: usa la casilla de abajo":JV.state==="nosr"?"Este navegador no escucha: usa la casilla de abajo":JV.listening?(JV.rec&&JV.rec._one?"🎙️ Te escucho… habla ahora":"🎙️ Escuchando… di «Jarvis, …» o toca la esfera"):"👆 Toca la esfera y habla";
+  $("jvSt").textContent=st;$("jvOrb").className="jv-orb"+(JV.speaking?" talk":JV.state?" warn":JV.listening?" live":" idle");
   $("jvAct").textContent=a?`${TIPO_TXT[a.tipo]||"Actividad"} · ${jvName(a)}`:"Sin actividades";
   $("jvHeard").textContent=JV.heard?"«"+JV.heard+"»":"";$("jvAns").textContent=JV.ans||""}
-document.addEventListener("click",e=>{const b=e.target.closest("[data-jv]");if(!b)return;e.preventDefault();if(b.dataset.jv==="on")jvOn();else jvOff()});
+document.addEventListener("click",e=>{if(e.target.closest("[data-jvtap]")){e.preventDefault();jvTap();return}const b=e.target.closest("[data-jv]");if(!b)return;e.preventDefault();if(b.dataset.jv==="on")jvOn();else jvOff()});
 document.addEventListener("submit",e=>{if(e.target.id!=="jvAsk")return;e.preventDefault();const i=$("jvIn");const v=(i.value||"").trim();if(!v)return;i.value="";jvHandle(v,false)});
-document.addEventListener("visibilitychange",()=>{if(!JV.on)return;if(document.visibilityState==="visible"){jvKeepAwake();jvStartRec(400)}else jvStopRec()});
+document.addEventListener("visibilitychange",()=>{if(!JV.on)return;if(document.visibilityState==="visible"){jvKeepAwake();if(JV.mode==="auto")jvStartRec(400)}else jvStopRec()});
 /* ============ actividades compartidas (Supabase) ============ */
 const SY={busy:false,again:false,state:"",last:0,err:"",pend:0};let syT=null;
 const porNom=n=>String(n||"").replace(/^(mi\s+)?(iphone|celular|cel|tel[eé]fono|android|samsung|xiaomi|motorola|huawei|redmi)\s+(de|del)\s+/i,"").trim();
