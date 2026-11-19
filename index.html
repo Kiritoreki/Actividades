@@ -53,6 +53,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
 .grp{border:1.5px solid var(--line);border-radius:20px;background:rgba(20,14,40,.55);margin:0 0 12px}.grp>summary{list-style:none;display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer;font:700 18px var(--display);min-height:56px}.grp>summary::-webkit-details-marker{display:none}
 .grp .gi{display:grid;place-items:center;width:40px;height:40px;border-radius:12px;background:rgba(232,121,249,.16);color:#e879f9}.grp.wl .gi{background:rgba(34,211,238,.16);color:#22d3ee}.grp .gt{flex:1}.grp .gc{font-size:24px;color:var(--muted,#9aa);transition:transform .2s}.grp[open] .gc{transform:rotate(90deg)}
 .grp[open]{border-color:rgba(232,121,249,.45)}.grp.wl[open]{border-color:rgba(34,211,238,.45)}.grp>.tiles{padding:0 12px 14px}.wl-macw{display:grid;gap:10px}.wl-all>summary{padding:4px 0;font-size:14px}.wl-all>summary::before{display:none}.wl-list{max-height:210px;overflow-y:auto;padding:6px;margin-top:8px;border:1px solid var(--line);border-radius:12px}.wl-mac{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:10px 12px;border:1.5px dashed var(--line);border-radius:12px}.wl-mac .mono{font-weight:700;font-size:17px}.wl-st{font-size:13px;font-weight:600}.wl-st.ok{color:var(--green)}.wl-st.bad{color:var(--red,#f87171)}
+.bq-new{margin-top:8px;padding:10px 12px;border-radius:12px;background:rgba(52,211,153,.12);border:1px solid rgba(52,211,153,.45);color:#6ee7b7;font-size:14px;font-weight:600}.bq-new.old{background:rgba(34,211,238,.1);border-color:rgba(34,211,238,.4);color:#a5f3fc}
 .grp-empty{margin:0;padding:0 16px 16px}.grp>summary::before{display:none!important;content:none}.grp .gt{text-transform:none!important;letter-spacing:-.01em!important;color:#f4f2ff!important;font:700 19px var(--display)!important;-webkit-text-fill-color:#f4f2ff;background:none!important}
 .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 .tile{--c:var(--purple);border-radius:18px;padding:12px 6px 10px;display:grid;justify-items:center;gap:7px;text-align:center;font-weight:700;font-size:13px;line-height:1.15;
@@ -267,7 +268,7 @@ a{color:var(--fuchsia)}
 <script src="config.js"></script>
 <script>
 const $=id=>document.getElementById(id);
-const APP_VER="v62";const UPD={txt:"",reg:null};
+const APP_VER="v63";const UPD={txt:"",reg:null};
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const pad=n=>String(n).padStart(2,"0");
 const dayKey=t=>{const d=new Date(t);return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())};
@@ -1502,7 +1503,9 @@ document.addEventListener("input",e=>{
     const len=part==="both"?4:part==="mac"?(raw.length>6?12:6):M.snLen-M.sn.length;const h=raw.slice(0,len);if(h!==t.value)t.value=h;
     if(h.length===len){
       if(M.g7){cur[mk]=fmtMac("ECB931FF"+h);cur[sk]="54504C4731FF"+h}
-      else if(part==="mac"&&len===12){cur[mk]=fmtMac(h);eqLearn(kind,q,h)}
+      else if(part==="mac"&&len===12){cur[mk]=fmtMac(h);const o=h.slice(0,6),nuevo=!eqOuis(kind,q).includes(o);eqLearn(kind,q,h);cur[mk+"Oui"]=o;
+        setTimeout(()=>{bqRedraw(mk);const w=$("bq-"+mk);if(!w)return;const n=document.createElement("div");n.className="bq-new"+(nuevo?"":" old");n.setAttribute("role","status");
+          n.textContent=nuevo?`✓ Nuevo lote guardado en ${M.n}: ${fmtMac(o)}. La próxima vez solo escribes los últimos 6.`:`✓ Ese inicio (${fmtMac(o)}) ya estaba en ${M.n}; quedó elegido.`;w.appendChild(n);setTimeout(()=>n.remove(),6000)},0)}
       else if(part==="mac"){const o=$("bq-"+mk).querySelector('[data-oui][aria-pressed="true"]');if(o)cur[mk]=fmtMac(o.dataset.oui+h)}
       else cur[sk]=M.sn+h;
       cur[mk+"Mod"]=q;lsSet("bmod."+kind,q);
