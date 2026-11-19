@@ -54,6 +54,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
 .grp .gi{display:grid;place-items:center;width:40px;height:40px;border-radius:12px;background:rgba(232,121,249,.16);color:#e879f9}.grp.wl .gi{background:rgba(34,211,238,.16);color:#22d3ee}.grp .gt{flex:1}.grp .gc{font-size:24px;color:var(--muted,#9aa);transition:transform .2s}.grp[open] .gc{transform:rotate(90deg)}
 .grp[open]{border-color:rgba(232,121,249,.45)}.grp.wl[open]{border-color:rgba(34,211,238,.45)}.grp>.tiles{padding:0 12px 14px}.wl-macw{display:grid;gap:10px}.wl-all>summary{padding:4px 0;font-size:14px}.wl-all>summary::before{display:none}.wl-list{max-height:210px;overflow-y:auto;padding:6px;margin-top:8px;border:1px solid var(--line);border-radius:12px}.wl-mac{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:10px 12px;border:1.5px dashed var(--line);border-radius:12px}.wl-mac .mono{font-weight:700;font-size:17px}.wl-st{font-size:13px;font-weight:600}.wl-st.ok{color:var(--green)}.wl-st.bad{color:var(--red,#f87171)}
 .bq-new{margin-top:8px;padding:10px 12px;border-radius:12px;background:rgba(52,211,153,.12);border:1px solid rgba(52,211,153,.45);color:#6ee7b7;font-size:14px;font-weight:600}.bq-new.old{background:rgba(34,211,238,.1);border-color:rgba(34,211,238,.4);color:#a5f3fc}
+.mgrp{margin:4px 6px 2px 0;min-height:30px;padding:4px 10px;font-size:12px}.mgrp.wl{border-color:#38bdf8;color:#7dd3fc}.mpor{font-size:11px;color:var(--muted,#9aa)}
 .grp-empty{margin:0;padding:0 16px 16px}.grp>summary::before{display:none!important;content:none}.grp .gt{text-transform:none!important;letter-spacing:-.01em!important;color:#f4f2ff!important;font:700 19px var(--display)!important;-webkit-text-fill-color:#f4f2ff;background:none!important}
 .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 .tile{--c:var(--purple);border-radius:18px;padding:12px 6px 10px;display:grid;justify-items:center;gap:7px;text-align:center;font-weight:700;font-size:13px;line-height:1.15;
@@ -268,7 +269,7 @@ a{color:var(--fuchsia)}
 <script src="config.js"></script>
 <script>
 const $=id=>document.getElementById(id);
-const APP_VER="v63";const UPD={txt:"",reg:null};
+const APP_VER="v64";const UPD={txt:"",reg:null};
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const pad=n=>String(n).padStart(2,"0");
 const dayKey=t=>{const d=new Date(t);return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())};
@@ -1405,6 +1406,17 @@ function splitBlocks(txt){
   return ok.length>=2?{ok,bad}:null}
 const tipoDe=s=>/retir/i.test(s)?"retiro":/domicilio/i.test(s)?"soporte":/instalaci[oó]n/i.test(s)?"instalacion":/potencia/i.test(s)?"potencia":/\b(app|iptv|canales)\b/i.test(s)?"tv":"";
 let multi=null;
+/* ¿Actividades (fibra) o Inalámbrica? 1) palabras del mensaje 2) historial del cliente/IP 3) el tipo donde pegaste */
+const WL_KW=/\b(antenas?|lite\s*beam|litebeam|leadbeam|micro\s*tik|mikrotik|airgrid|celdas?|ccq|haz|poe|inal[aá]mbric\w*|enlace|multipunto|repetidor|rp-?\w+)\b/i;
+const FO_KW=/\b(nap|hilos?|onu|ont|bridge|fibra|drop|olt|roseta|gpon)\b/i;
+const FIBRA=["foco_rojo","instalacion","tv","potencia","retiro","soporte"];
+function tipoAuto(p,txt){const fo=t=>tipoDe(p.soporte||"")||(FIBRA.includes(cur.tipo)?cur.tipo:"foco_rojo");
+  const w=WL_KW.test(txt),f=FO_KW.test(txt)||!!p.nap;
+  if(w&&!f)return {t:"inalambrico",por:"palabras"};
+  if(f&&!w)return {t:fo(),por:"palabras"};
+  const ip=ipNorm(p.ip);const prev=acts.filter(a=>a.id!==cur.id&&((p.cliente&&a.cliente&&sameClient({cliente:p.cliente},{cliente:a.cliente}))||(ip&&ipNorm(a.ip)===ip))).sort((a,b)=>b.creado-a.creado)[0];
+  if(prev)return {t:prev.tipo==="inalambrico"?"inalambrico":fo(),por:"historial"};
+  return {t:tipoDe(p.soporte||"")||cur.tipo,por:""}}
 function multiCheck(txt){
   const box=$("multiBox");if(box)box.remove();multi=null;
   if(cur.lote)return;const sb=splitBlocks(txt);if(!sb)return;
@@ -1412,19 +1424,25 @@ function multiCheck(txt){
   /* técnicos: cada bloque sin "Técnico" toma el del bloque anterior; los primeros, el primero que aparezca */
   const first=ps.find(p=>p.tecnico)?.tecnico||"";let last=first;
   const tecs=ps.map(p=>{if(p.tecnico)last=p.tecnico;return p.tecnico||last});
-  const tipos=ps.map(p=>tipoDe(p.soporte||"")||cur.tipo);
-  multi={blocks,ps,tecs,tipos};
-  const NOM={foco_rojo:"Foco rojo",instalacion:"Instalación",tv:"App de TV",potencia:"Potencias",retiro:"Retiro"};
+  const au=ps.map((p,i)=>tipoAuto(p,blocks[i]));const tipos=au.map(x=>x.t);
+  multi={blocks,ps,tecs,tipos,au};
+  const NOM={foco_rojo:"Foco rojo",instalacion:"Instalación",tv:"App de TV",potencia:"Potencias",retiro:"Retiro",soporte:"Soporte",inalambrico:"Soporte inalámbrico"};
   const ta=$("f-pegado");const el=document.createElement("div");el.id="multiBox";el.className="multi";
   el.innerHTML=`<h3>📋 Detecté ${blocks.length} clientes en este mensaje</h3>
-    <p class="muted" style="margin:0;font-size:13px">Desmarca los que no son tuyos. Revisa el técnico de cada uno.</p>
+    <p class="muted" style="margin:0;font-size:13px">Desmarca los que no son tuyos. Revisa el técnico y si va a Actividades o Inalámbrica (toca el chip para cambiarlo).</p>
     <div class="mlist">${ps.map((p,i)=>`<label class="mrow"><input type="checkbox" data-mi="${i}" checked><span><b>${esc(p.cliente||"Sin nombre")}</b>
-      <small>${esc(NOM[tipos[i]]||"")}${tecs[i]?" · "+esc(tecs[i]):" · sin técnico"}${p.ip?" · "+esc(p.ip):""}${p.nap?" · "+esc(p.nap):""}</small></span></label>`).join("")}</div>
+      <button class="chip sm mgrp ${tipos[i]==="inalambrico"?"wl":""}" data-mtipo="${i}" title="Toca para cambiar">${tipos[i]==="inalambrico"?"📡 Inalámbrica":"🔌 Actividades"}</button>${au[i].por==="historial"?'<span class="mpor">por historial</span>':""}
+      <small><span class="mtn">${esc(NOM[tipos[i]]||"")}</span>${tecs[i]?" · "+esc(tecs[i]):" · sin técnico"}${p.ip?" · "+esc(p.ip):""}${p.nap?" · "+esc(p.nap):""}</small></span></label>`).join("")}</div>
     ${sb.bad.length?`<p class="muted" style="margin:0;font-size:13px">⚠️ Se ignora ${sb.bad.length===1?"un bloque incompleto (sin cliente)":sb.bad.length+" bloques incompletos (sin cliente)"}: <i>${esc(sb.bad.map(x=>x.split("\n")[0]).join(" · ").slice(0,120))}</i></p>`:""}
     <div class="multi-a"><button class="mgo" data-multi="crear">Crear las marcadas</button><button data-multi="no">No, es una sola</button></div>`;
   ta.closest("label").after(el);
   const upd=()=>{const n=el.querySelectorAll("[data-mi]:checked").length;const bt=el.querySelector('[data-multi="crear"]');bt.textContent=n?`Crear ${n} ${n===1?"actividad":"actividades"}`:"Marca al menos una";bt.disabled=!n};
   el.addEventListener("change",upd);upd()}
+document.addEventListener("click",e=>{const b=e.target.closest("[data-mtipo]");if(!b||!multi)return;e.preventDefault();e.stopPropagation();
+  const i=+b.dataset.mtipo,p=multi.ps[i];const wl=multi.tipos[i]!=="inalambrico";
+  multi.tipos[i]=wl?"inalambrico":(tipoDe(p.soporte||"")||(FIBRA.includes(cur.tipo)?cur.tipo:"foco_rojo"));
+  b.textContent=wl?"📡 Inalámbrica":"🔌 Actividades";b.classList.toggle("wl",wl);const pr=b.parentElement.querySelector(".mpor");if(pr)pr.remove();
+  const sm=b.parentElement.querySelector(".mtn");if(sm){const NOM={foco_rojo:"Foco rojo",instalacion:"Instalación",tv:"App de TV",potencia:"Potencias",retiro:"Retiro",soporte:"Soporte",inalambrico:"Soporte inalámbrico"};sm.textContent=NOM[multi.tipos[i]]}},true);
 async function multiCreate(){
   if(!multi)return;const sel=[...document.querySelectorAll("#multiBox [data-mi]:checked")].map(x=>+x.dataset.mi);if(!sel.length)return;
   const lote="L"+Date.now();const N=sel.length;const t0=Date.now();const made=[];
