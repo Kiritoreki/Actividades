@@ -50,6 +50,10 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
 .stat span{font-size:12px;color:var(--muted);font-weight:600}
 .stat.g b{color:var(--green);text-shadow:0 0 12px rgba(46,232,138,.5)}.stat.a b{color:var(--amber)}
 /* baldosas de crear */
+.grp{border:1.5px solid var(--line);border-radius:20px;background:rgba(20,14,40,.55);margin:0 0 12px}.grp>summary{list-style:none;display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer;font:700 18px var(--display);min-height:56px}.grp>summary::-webkit-details-marker{display:none}
+.grp .gi{display:grid;place-items:center;width:40px;height:40px;border-radius:12px;background:rgba(232,121,249,.16);color:#e879f9}.grp.wl .gi{background:rgba(34,211,238,.16);color:#22d3ee}.grp .gt{flex:1}.grp .gc{font-size:24px;color:var(--muted,#9aa);transition:transform .2s}.grp[open] .gc{transform:rotate(90deg)}
+.grp[open]{border-color:rgba(232,121,249,.45)}.grp.wl[open]{border-color:rgba(34,211,238,.45)}.grp>.tiles{padding:0 12px 14px}.wl-macw{display:grid;gap:10px}.wl-all>summary{padding:4px 0;font-size:14px}.wl-all>summary::before{display:none}.wl-list{max-height:210px;overflow-y:auto;padding:6px;margin-top:8px;border:1px solid var(--line);border-radius:12px}.wl-mac{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:10px 12px;border:1.5px dashed var(--line);border-radius:12px}.wl-mac .mono{font-weight:700;font-size:17px}.wl-st{font-size:13px;font-weight:600}.wl-st.ok{color:var(--green)}.wl-st.bad{color:var(--red,#f87171)}
+.grp-empty{margin:0;padding:0 16px 16px}.grp>summary::before{display:none!important;content:none}.grp .gt{text-transform:none!important;letter-spacing:-.01em!important;color:#f4f2ff!important;font:700 19px var(--display)!important;-webkit-text-fill-color:#f4f2ff;background:none!important}
 .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 .tile{--c:var(--purple);border-radius:18px;padding:12px 6px 10px;display:grid;justify-items:center;gap:7px;text-align:center;font-weight:700;font-size:13px;line-height:1.15;
   background:linear-gradient(180deg,color-mix(in srgb,var(--c) 22%,transparent),rgba(20,12,36,.6));border:1.5px solid color-mix(in srgb,var(--c) 85%,transparent);
@@ -175,7 +179,7 @@ body.ausente .sec.wk{opacity:.28;pointer-events:none;filter:grayscale(1)}
   background:var(--card);border:1px solid color-mix(in srgb,var(--c) 42%,transparent);box-shadow:0 0 12px color-mix(in srgb,var(--c) 16%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
 .item.t-foco_rojo{--c:var(--pink)}.item.t-tv{--c:var(--cyan)}.item.t-potencia{--c:var(--orange)}
 .tiles{grid-template-columns:repeat(2,1fr)}.tile{grid-template-columns:auto 1fr;justify-items:start;text-align:left;align-items:center;padding:12px}
-.tile.pot{--c:var(--orange)}.tile.ret{--c:var(--blue)}.tile.sop{--c:var(--green)}.tile.sop i{color:#04170e}.item.t-soporte,.ult.t-soporte{--c:var(--green)}.tile.ret i{color:#06121f}.item.t-retiro,.ult.t-retiro{--c:var(--blue)}.tile.pot i{color:#1a0c00}
+.tile.pot{--c:var(--orange)}.tile.ret{--c:var(--blue)}.tile.sop{--c:var(--green)}.tile.sop i{color:#04170e}.item.t-soporte,.ult.t-soporte{--c:var(--green)}.t-inalambrico,.ult.t-inalambrico{--c:#38bdf8}.tile.wl{--c:#38bdf8}.tile.wl i{color:#04121a}.tile.ret i{color:#06121f}.item.t-retiro,.ult.t-retiro{--c:var(--blue)}.tile.pot i{color:#1a0c00}
 .pv{font:700 12.5px var(--mono);padding:2px 8px;border-radius:99px;white-space:nowrap}
 .pv.r{color:#ffc2d6;background:rgba(255,46,122,.18);border:1px solid var(--pink)}
 .pv.a{color:#fde68a;background:rgba(251,191,36,.16);border:1px solid var(--amber)}
@@ -263,7 +267,7 @@ a{color:var(--fuchsia)}
 <script src="config.js"></script>
 <script>
 const $=id=>document.getElementById(id);
-const APP_VER="v58";const UPD={txt:"",reg:null};
+const APP_VER="v60";const UPD={txt:"",reg:null};
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const pad=n=>String(n).padStart(2,"0");
 const dayKey=t=>{const d=new Date(t);return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())};
@@ -294,7 +298,7 @@ const EVID_I=[
  ["inst","Instalación final (ONU y router)"],
  ["speed","Speed test"],
  ["stRoseta","Sticker en la roseta"],["stRouter","Sticker en el router"],["stBridge","Sticker en el bridge"]];
-const TIPOS={foco_rojo:["Foco rojo","b-red"],instalacion:["Inst. alámbrica","b-inst"],tv:["App de TV","b-tv"],potencia:["Potencias elevadas","b-pot"],retiro:["Retiro de equipos","b-ret"],soporte:["Soporte","b-sop"]};
+const TIPOS={foco_rojo:["Foco rojo","b-red"],instalacion:["Inst. alámbrica","b-inst"],tv:["App de TV","b-tv"],potencia:["Potencias elevadas","b-pot"],retiro:["Retiro de equipos","b-ret"],soporte:["Soporte","b-sop"],inalambrico:["Soporte inalámbrico","b-wl"]};
 const EVID_P=[["potA","Captura potencia antes (ONU/OLT)"],["potD","Captura potencia después (ONU/OLT)"],["napOrd","Caja NAP ordenada"],["equipo","Equipo nuevo: caja con S/N y MAC","eq"],
  ["stRoseta","Sticker en la roseta"],["stRouter","Sticker en el router"],["stBridge","Sticker en el bridge"]];
 const EVID_R=[["fotoA","Foto del lugar antes"],["fotoD","Foto del lugar después"],["etiq","Equipos desconectados y etiquetados"],["bodega","Equipos entregados en bodega"]];
@@ -302,7 +306,7 @@ const RET=[["ap","AP / Access Point",["Modelo","MAC"]],["router","Router",["Mode
 const RETF={"Modelo":"modelo","MAC":"mac","SN":"sn","SN GPON":"gpon","Equipo":"nombre"};
 const RETEST={ok:"funciona",dan:"dañado",np:"sin probar"};
 const EVID_S=[["fotoA","Foto antes del trabajo"],["fotoD","Foto del trabajo terminado"],["equipo","Equipo nuevo: caja con S/N y MAC","eq"]];
-const evidFor=a=>a.tipo==="instalacion"?EVID_I:a.tipo==="potencia"?EVID_P:a.tipo==="retiro"?EVID_R:a.tipo==="soporte"?EVID_S:EVID;
+const evidFor=a=>a.tipo==="instalacion"?EVID_I:a.tipo==="potencia"?EVID_P:a.tipo==="retiro"?EVID_R:(a.tipo==="soporte"||a.tipo==="inalambrico")?EVID_S:EVID;
 const potNum=v=>{const n=parseFloat(String(v||"").replace(",","."));return isNaN(n)?null:(n>0?-n:n)};
 const potCls=v=>{const n=potNum(v);return n===null?"":n>-25?"g":n>=-27?"a":"r"};
 const potLbl={g:"buena",a:"aceptable",r:"crítica"};
@@ -371,11 +375,14 @@ function parse(txt){txt=waClean(txt);
     if(/^cambio\s+de\s+domicilio\b[\s.:,]*$/i.test(l)){out.sDom=true;if(!out.soporte)out.soporte="cambio de domicilio";continue}
     {const da=l.match(/^direcci[oó]n\s+anterior\s*[,.:]+\s*(.*)$/i);if(da){out.dirAnt=da[1].trim();out.sDom=true;continue}
      const dn=l.match(/^(?:direcci[oó]n\s+(?:actual|nueva)|actual|nueva\s+direcci[oó]n)\s*[,.:]+\s*(.*)$/i);if(dn){out.direccion=dn[1].trim();continue}}
-    const m=l.match(/^(t[eé]cnicos?|soporte|cliente|direcci[oó]n|tel[eé]fono|tel[eé]f|tel|celular|cel|ip|c[eé]dula|correo(?: electr[oó]nico)?|plan|nap)\s*[,.:]+\s*(.*)$/i);
+    if(/^fecha\s*[,.:]/i.test(l))continue;
+    {const am=l.match(/^actividad\s*[,.:]+\s*(.*)$/i);if(am){const v=am[1].replace(/^soporte(\s+inal[aá]mbrico)?\s*[,.:-]?\s*/i,"").replace(/\.\s*$/,"").trim();if(v&&!out.soporte)out.soporte=v;continue}}
+    const m=l.match(/^(t[eé]cnicos?|soporte|cliente|direcci[oó]n|tel[eé]fono|tel[eé]f|telf|tlf|tel|celular|cel|ip|c[eé]dula|cd|ci|correo(?: electr[oó]nico)?|plan|nap)\s*[,.:]+\s*(.*)$/i);
     if(!m){if(!/^instalaci[oó]n\.?$/i.test(l))out.extra.push(l);continue}
     const k=m[1].toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
-    const key=k.startsWith("tecnico")?"tecnico":k.startsWith("direc")?"direccion":/^(tel|cel)/.test(k)?"tel":k.startsWith("correo")?"correo":k;
-    out[key]=m[2].trim();}
+    const key=k.startsWith("tecnico")?"tecnico":k.startsWith("direc")?"direccion":/^(tel|cel|tlf)/.test(k)?"tel":k.startsWith("correo")?"correo":/^(cd|ci)$/.test(k)?"cedula":k;
+    let v=m[2].trim();if(key==="tecnico")v=v.replace(/\.\s*$/,"").replace(/\s*,\s*/g," y ");if(key==="soporte")v=v.replace(/\.\s*$/,"");
+    out[key]=v;}
   out.extra=out.extra.join("\n");return out;
 }
 
@@ -470,6 +477,7 @@ function reportBase(a){
   if(a.tipo==="potencia")return reportPot(a);
   if(a.tipo==="retiro")return reportRet(a);
   if(a.tipo==="soporte")return reportSop(a);
+  if(a.tipo==="inalambrico")return reportWl(a);
   if(a.tipo==="instalacion")return reportInst(a);
   if(a.tipo==="tv")return reportTV(a);
   const L=[];const tec=[a.tecnico,a.tecnico2].filter(Boolean).join(" y ");
@@ -518,8 +526,13 @@ const ICON={
  cal:'<svg viewBox="0 0 24 24"><path d="M8 2v4M16 2v4"/><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18"/></svg>',
  save:'<svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>',
  back:'<svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg>',
- soporte:'<svg viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.4-.6-.6-2.4z"/></svg>'};
+ soporte:'<svg viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.4-.6-.6-2.4z"/></svg>',
+ inalambrico:'<svg viewBox="0 0 24 24"><path d="M5 12.5a10 10 0 0 1 14 0"/><path d="M8.5 16a5 5 0 0 1 7 0"/><path d="M2 9a15 15 0 0 1 20 0"/><path d="M12 19.5h.01"/></svg>'};
 let tab="inicio";const openSet=new Set();
+/* pestañas de Inicio: se abre una a la vez y se recuerda cuál quedó abierta */
+document.addEventListener("toggle",e=>{const d=e.target;if(!d.matches||!d.matches("details.grp"))return;
+  if(d.open){document.querySelectorAll("details.grp[open]").forEach(o=>{if(o!==d)o.open=false});lsSet("inicio.grp",d.dataset.grp)}
+  else if(lsGet("inicio.grp")===d.dataset.grp&&!document.querySelector("details.grp[open]"))lsSet("inicio.grp","")},true);
 const fMes=m=>{const t=new Date(m+"-15T12:00").toLocaleDateString("es-EC",{month:"long",year:"numeric"});return t[0].toUpperCase()+t.slice(1)};
 document.addEventListener("toggle",e=>{const k=e.target.dataset?.k;if(!k)return;
   if(e.target.open){openSet.add(k);openSet.delete("x"+k)}else{openSet.delete(k);openSet.add("x"+k)}},true);
@@ -636,7 +649,9 @@ function renderList(){if(!ACC.ok)return;document.body.classList.remove("ausente"
     const ok=hoy.filter(a=>a.estado==="terminada").length;
     h=`<div class="brand"><img src="icons/icon-192.png" alt="" width="40" height="40"><span>Equipo Guido</span></div><div class="top"><div class="hello"><small>${esc(fecha)}</small><h1>Actividades</h1></div></div>
     <div class="stats"><div class="stat"><b>${hoy.length}</b><span>Hoy</span></div><div class="stat g"><b>${ok}</b><span>${ok===1?"Terminada":"Terminadas"}</span></div><div class="stat a"><b>${hoy.length-ok}</b><span>${hoy.length-ok===1?"Pendiente":"Pendientes"}</span></div></div>
-    <div class="tiles"><button class="tile red" data-new="foco_rojo"><i>${ICON.foco_rojo}</i>Foco rojo</button><button class="tile" data-new="instalacion"><i>${ICON.instalacion}</i>Instalación alámbrica</button><button class="tile tv" data-new="tv"><i>${ICON.tv}</i>App de TV</button><button class="tile pot" data-new="potencia"><i>${ICON.potencia}</i>Potencias elevadas</button><button class="tile ret" data-new="retiro"><i>${ICON.retiro}</i>Retiro de equipos</button><button class="tile sop" data-new="soporte"><i>${ICON.soporte}</i>Soporte</button></div>`;
+    ${(()=>{const g=lsGet("inicio.grp")||"";const ico=`<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">`;
+      return `<details class="grp" data-grp="act" ${g==="act"?"open":""}><summary><span class="gi">${ico}<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span><span class="gt">Actividades</span><span class="gc">›</span></summary><div class="tiles"><button class="tile red" data-new="foco_rojo"><i>${ICON.foco_rojo}</i>Foco rojo</button><button class="tile" data-new="instalacion"><i>${ICON.instalacion}</i>Instalación alámbrica</button><button class="tile tv" data-new="tv"><i>${ICON.tv}</i>App de TV</button><button class="tile pot" data-new="potencia"><i>${ICON.potencia}</i>Potencias elevadas</button><button class="tile ret" data-new="retiro"><i>${ICON.retiro}</i>Retiro de equipos</button><button class="tile sop" data-new="soporte"><i>${ICON.soporte}</i>Soporte</button></div></details>
+      <details class="grp wl" data-grp="wl" ${g==="wl"?"open":""}><summary><span class="gi">${ico}<path d="M5 12.5a10 10 0 0 1 14 0"/><path d="M8.5 16a5 5 0 0 1 7 0"/><path d="M2 9a15 15 0 0 1 20 0"/><circle cx="12" cy="19.5" r="1"/></svg></span><span class="gt">Inalámbrica</span><span class="gc">›</span></summary><div class="tiles"><button class="tile wl" data-new="inalambrico"><i>${ICON.inalambrico}</i>Soporte inalámbrico</button></div></details>`})()}`;
     h+=`<label class="searchbox">${ICON.search}<input class="search" id="qip" type="search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Buscar cliente: nombre, IP o cédula" value="${esc(qip)}"></label>
     <div id="ipRes" class="ipres">${qip.trim()?ipResults():""}</div>${planCard()}`;
     const viejas=acts.filter(a=>dayKey(a.creado)<hoyK&&a.estado!=="terminada").sort((a,b)=>a.creado-b.creado);
@@ -693,6 +708,7 @@ function renderEditor(){if(!ACC.ok)return;{const sp=$("syncPill");if(sp)sp.hidde
   if(cur.tipo==="potencia")return renderPot();
   if(cur.tipo==="retiro")return renderRet();
   if(cur.tipo==="soporte")return renderSop();
+  if(cur.tipo==="inalambrico")return renderWl();
   $("app").innerHTML=`
   <div class="top"><button class="back" data-back>${ICON.back}Actividades</button><span class="saved" id="saved"></span></div>
   <div class="top"><h1>Foco rojo</h1><div class="chips">${chip("estado","pendiente","Pendiente","no")}${chip("estado","terminada","Terminada")}</div></div>
@@ -1182,7 +1198,7 @@ function fraseTxt(a,idx){
 function soloEncabezado(a){const h={...a,trabajo:"",fibra:false,metros:"",napInterv:"",potAntes:"",potDespues:"",potAntesOlt:"",potDespuesOlt:"",antesOffline:false,
   tests:false,clienteOk:false,cumplida:false,onu:false,router:false,accFusion:false,accOrdenar:false,accRoseta:false,accHilo:false,hiloNuevo:"",accOtra:"",
   pruebas:false,notas:"",mac:"",gpon:"",pot:"",hilosLibres:"",notif:"",notifTxt:"",evid:{},sWifi:false,sCamInst:false,sCamConf:false,sCable:false,sDom:false};
-  for(const [k] of RET)h["ret_"+k]=false;return h}
+  for(const [k] of RET)h["ret_"+k]=false;for(const k in h)if(/^wl/.test(k))h[k]=typeof h[k]==="boolean"?false:"";return h}
 function posponeTxt(a){const p=(a.pospone||"").trim().replace(/^(para\s+)?(el\s+)?d[ií]a\s+/i,"");return "Se pospone la visita para el día "+(p||"____ a las ____")}
 function refresh(){
   if(!cur)return;
@@ -1208,10 +1224,154 @@ function refresh(){
   const hb=(id,v)=>{const e=$(id);if(e)e.hidden=v};hb("boxFibra",!cur.fibra);hb("boxOnu",!cur.onu);hb("boxRouter",!cur.router);
   document.querySelectorAll('[data-eq="eq"]').forEach(e=>e.hidden=!(cur.onu||cur.router));
   if(cur.tipo==="retiro"){for(const [k] of RET)hb("rbox_"+k,!cur["ret_"+k])}
+  if(cur.tipo==="inalambrico"){hb("wbAnt",!cur.wlAntena);hb("wbRouter",!cur.wlRouter);hb("wbCable",!cur.wlCable);hb("wbReub",!cur.wlReub);hb("wbCelda",!cur.wlCelda);hb("wbClave",!cur.wlClave);hb("wbSigA",!!cur.wlSinServ)}
   if(cur.tipo==="soporte"){hb("boxDom",!cur.sDom);hb("boxWifi",!cur.sWifi);hb("boxCam",!cur.sCamInst);hb("boxCamConf",!cur.sCamConf);hb("boxCable",!cur.sCable)}
   if(cur.tipo==="potencia"){hb("boxHilo",!cur.accHilo);hb("antesGrid",!!cur.antesOffline);const g=$("gain");if(g)g.innerHTML=potBox();
     for(const k of ["potAntes","potDespues","potAntesOlt","potDespuesOlt"]){const el=$("f-"+k);if(el){el.classList.remove("pin-r","pin-a","pin-g");const c=potCls(cur[k]);if(c)el.classList.add("pin-"+c)}}}
 }
+
+
+/* ============ Soporte inalámbrico ============ */
+/* inicios de MAC registrados (IEEE) por marca de router */
+const WL_OUI={"ruijie":["0011AD","00749C","105F02","10823D","14144B","28D0F5","300D9E","4881D4","4C4968","541651","5423E3","58696C","58B4BB","7042D3","70856C","7085C4","7408AA","78ECB5","800588","8CDD30","984A6B","9C2BA6","9CCE88","C0A476","C0B8E6","C470AB","C4B25B","C8CD55","D43127","D8332A","E05D54","ECB970","F0748D","FC599F"],"tplink":["000AEB","001478","0019E0","001D0F","002127","0023CD","002586","002719","003192","005F67","040F66","04C845","04F9F8","081F71","085700","0C4B54","0C722C","0C8063","0C8268","0CEF15","1027F5","105A95","10FEED","147590","148692","14CC20","14CF92","14D864","14E6E4","14EBB6","186945","18A6F7","18D6C7","18F22C","1C3BF3","1C4419","1C61B4","1CFA68","202351","203626","206BE7","20DCE6","20E15D","242FD0","245A5F","246968","282CB2","2887BA","289104","28EE52","2C79BE","306893","30B49E","30B5C2","30DE4B","30FC68","3460F9","349672","34B126","34E894","34F716","388345","3C06A7","3C46D8","3C52A1","3C64CF","3C6A48","3C6AD2","3C7895","3C846A","40169F","403F8C","409595","40AE30","40ED00","446690","44B32D","480EEC","482254","485F08","487D2E","48C381","4C10D5","4C83FE","503DD1","503EAA","5091E3","50BD5F","50C7BF","50D4F7","50FA84","547595","54A703","54AF97","54C80F","54D299","54E6FC","58044F","584120","58D812","5C628B","5C63BF","5C899A","5CA64F","5CA6E6","5CE931","60156F","60292B","6032B1","603A7C","6083E7","60A3E3","60A4B7","60E327","645601","6466B3","646E97","647002","687724","687FF0","68DDB7","68FF7B","6C4CBC","6C5AB0","6CB158","6CE873","704F57","7405A5","743989","74DA88","74EA3A","74FECE","782051","7844FD","78605B","788CB5","78A106","78C05A","7C8BCA","7CB59B","7CC2C6","7CF17E","803C04","808917","808F1D","80AE54","80EA07","8416F9","84B890","84D81B","882593","889986","8C210A","8C86DD","8C902D","8CA6DF","901F94","909A4A","90AE1B","90F652","940C6D","94D9B3","94EF50","98038E","98254A","984827","9897CC","98BA5F","98DAC4","98DED0","9C216A","9C4782","9C5322","9CA2F4","9CA615","A0F3C1","A41A3A","A42BB0","A8154D","A82948","A829DC","A842A1","A8574E","A86E84","AC15A2","AC84C6","ACA7F1","B01921","B0487A","B04E26","B09575","B0958E","B0A7B9","B0BE76","B45BD1","B4B024","B4C0C3","B8F883","B8FBB3","BC071D","BC4699","BCD177","BCD849","C006C3","C025E9","C03A55","C04A00","C06118","C0C9E3","C0E42D","C46E1F","C47154","C4E984","CC08FB","CC32E5","CC3429","CC68B6","CCBABD","D02791","D03745","D05D01","D076E7","D0C7C0","D4016D","D46E0E","D4D6DF","D807B6","D80D17","D8150D","D84489","D84732","D85D4C","D8F12E","DC0077","DC6279","DCFE18","E005C5","E0280A","E0D362","E443CF","E4C32A","E4D332","E4FAC4","E848B8","E894F6","E8DE27","EC086B","EC172F","EC26CA","EC6073","EC750C","EC888F","ECB931","F0090D","F0A731","F0F336","F42A7D","F46D2F","F483CD","F4848D","F4EC38","F4F26D","F4F50B","F81A67","F86FB0","F88C21","F8C903","F8CE21","F8D111","FCD733"]};
+const WL_RM={ruijie:"Ruijie",tplink:"TP-Link"};
+const WL_ANT=[["litebeam","LiteBeam"],["mikrotik","MikroTik"],["airgrid","airGrid"],["otra","Otra"]];
+const WL_FAV0={ruijie:["58B4BB","7085C4"],tplink:["A86E84","30DE4B","3C846A"]};
+const WL_ACTA={firmada:"Acta firmada",menor:"Sin acta: menor de edad",sinadulto:"Sin acta: no había un adulto"};
+function wlFav(m){let l=[];try{l=JSON.parse(lsGet("wlfav."+m)||"null")}catch{}return Array.isArray(l)?l:WL_FAV0[m].slice()}
+function wlFavAdd(m,o){const l=wlFav(m);if(!l.includes(o)){l.push(o);lsSet("wlfav."+m,JSON.stringify(l))}}
+const wlWho=o=>{for(const m in WL_OUI)if(WL_OUI[m].includes(o))return m;return null};
+let wlQ="";
+function wlMacHTML(){
+  const m=cur.wlRMarca||"ruijie",fav=wlFav(m),mh=HEX(cur.wlRMac),largo=!!cur.wlRLargo;
+  const pre=cur.wlROui&&WL_OUI[m].includes(cur.wlROui)?cur.wlROui:(mh.length===12&&WL_OUI[m].includes(mh.slice(0,6))?mh.slice(0,6):fav[0]||WL_OUI[m][0]);
+  const L=WL_OUI[m].filter(o=>o.startsWith(HEX(wlQ)));
+  const oc=o=>`<button class="chip sm mono" data-wloui="${o}" aria-pressed="${!largo&&o===pre}">${fmtMac(o)}${fav.includes(o)?" ⭐":""}</button>`;
+  let st="",cls="";
+  if(mh.length===12){const q=wlWho(mh.slice(0,6));if(q===m){st="✓ "+WL_RM[m];cls="ok"}else if(q){st="⚠️ Ese inicio es de "+WL_RM[q]+", no de "+WL_RM[m];cls="bad"}else{st="⚠️ Inicio no registrado para Ruijie ni TP-Link";cls="bad"}}
+  return `<div class="chips">${Object.entries(WL_RM).map(([k,l])=>`<button class="chip" data-wlrm="${k}" aria-pressed="${k===m}">${l}</button>`).join("")}</div>
+    <p class="muted" style="margin:0">⭐ Tus frecuentes</p><div class="chips">${fav.map(oc).join("")}<button class="chip sm" data-wloui="otro" aria-pressed="${largo}">＋ Otro inicio</button></div>
+    <details class="wl-all"><summary class="muted">📋 Todos los inicios de ${WL_RM[m]} (${WL_OUI[m].length})</summary>
+      <input id="wlFil" class="mono" placeholder="Filtrar (ej. 58)" autocomplete="off" autocapitalize="characters" value="${esc(wlQ)}">
+      <div class="chips wl-list" id="wlList">${L.map(oc).join("")||'<span class="muted">Ninguno empieza así.</span>'}</div></details>
+    ${largo?`<label class="f">MAC completa (12 dígitos)<input id="wlFull" class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="58B4BBF24481" value="${mh.length===12?fmtMac(mh):esc(cur.wlRMac||"")}"></label>`
+      :`<label class="f">MAC: últimos 6<span class="bq"><span class="bq-l mono">${fmtMac(pre)}-</span><input id="wlUlt" class="mono" data-pre="${pre}" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="F24481" maxlength="8" style="width:118px" value="${mh.length===12&&mh.startsWith(pre)?mh.slice(6):""}"></span></label>`}
+    <div class="wl-mac"><span class="mono" id="wlMacV">${mh.length===12?fmtMac(mh):"—"}</span><span class="wl-st ${cls}" id="wlMacS">${st}</span></div>
+    ${inp("wlRSn","SN (completo)",{attrs:'class="mono" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="Opcional"'})}`}
+function wlMacRedraw(){const w=$("wlMac");if(w)w.innerHTML=wlMacHTML()}
+function renderWl(){
+  const tog=(k,l)=>`<button class="chip" data-tog="${k}" aria-pressed="${!!cur[k]}">${l}</button>`;
+  const N='inputmode="decimal" class="mono"';
+  $("app").innerHTML=`
+  <div class="top"><button class="back" data-back>${ICON.back}Actividades</button><span class="saved" id="saved"></span></div>
+  <div class="top"><h1>Soporte inalámbrico</h1><div class="chips">${chip("estado","pendiente","Pendiente","no")}${chip("estado","terminada","Terminada")}</div></div>
+  ${realizHTML()}
+  <section class="sec"><div class="sec-h"><h2>Datos de la actividad</h2><span class="step">01</span></div>
+    <label class="f">Pega aquí el mensaje que te llega<textarea id="f-pegado" data-k="pegado" placeholder="Tecnico, …&#10;soporte, sin internet…&#10;cliente, …&#10;dirección, …&#10;tel. …&#10;ip, …">${esc(cur.pegado)}</textarea></label>
+    <button class="pastebtn" id="pasteBtn">Pegar del portapapeles</button>
+    <div class="grid">
+      ${inp("tecnico","Técnico")}${inp("tecnico2","Segundo técnico (cuadrilla)",{attrs:'placeholder="Opcional"'})}
+      ${inp("soporte","Soporte",{cls:"full"})}
+      ${inp("cliente","Cliente",{cls:"full",attrs:'autocapitalize="characters"'})}
+      ${inp("direccion","Dirección",{cls:"full"})}
+      ${coordInp()}
+      ${inp("tel","Teléfono",{attrs:'inputmode="tel" class="mono"'})}${inp("ip","IP",{attrs:'inputmode="decimal" class="mono" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="192.168.45.30"'})}
+      ${inp("cedula","Cédula",{attrs:'inputmode="numeric" class="mono" placeholder="Opcional"'})}${inp("plan","Plan",{attrs:'placeholder="Opcional"'})}
+      ${inp("correo","Correo",{cls:"full",attrs:'inputmode="email" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Opcional"'})}
+      <div class="chips full" id="telChips"></div>
+    </div></section>
+  <section class="sec wk"><div class="sec-h"><h2>Señal al llegar</h2><span class="step">02</span></div>
+    <div class="list-chk">${chk("wlSinServ","Cliente sin servicio")}</div>
+    <div class="grid" id="wbSigA">${inp("wlSigA","Señal",{unit:"dBm",attrs:N+' placeholder="-77"'})}${inp("wlCcqA","CCQ",{unit:"%",attrs:N+' placeholder="80"'})}</div>
+  </section>
+  <section class="sec wk"><div class="sec-h"><h2>Qué se hizo</h2><span class="step">03</span></div>
+    <p class="muted" style="margin:0">Marca todo lo que hiciste; puedes combinar.</p>
+    <div class="chips">${tog("wlAlinear","Alinear antena")}${tog("wlHaz","Cambio de haz")}${tog("wlAntena","Cambio de antena")}${tog("wlRouter","Cambio de router")}${tog("wlCable","Cable UTP")}${tog("wlPoe","Reconectar PoE")}${tog("wlVista","Despejar línea de vista")}${tog("wlReub","Reubicar antena")}${tog("wlConf","Configurar antena")}${tog("wlCelda","Cambio de celda")}${tog("wlFirm","Actualizar firmware")}${tog("wlRemoto","Acceso remoto")}${tog("wlClave","Cambio de clave")}</div>
+    <div class="box" id="wbAnt" ${cur.wlAntena?"":"hidden"}><h3>Cambio de antena</h3><div class="chips">${WL_ANT.map(([k,l])=>chip("wlAntMarca",k,l)).join("")}</div></div>
+    <div class="box" id="wbRouter" ${cur.wlRouter?"":"hidden"}><h3>Cambio de router</h3><div id="wlMac" class="wl-macw">${wlMacHTML()}</div></div>
+    <div class="box" id="wbCable" ${cur.wlCable?"":"hidden"}><h3>Cable UTP</h3><div class="grid">${inp("wlMetros","Metros nuevos",{unit:"m",attrs:'inputmode="numeric" class="mono" placeholder="0"'})}${inp("wlCableDet","Detalle",{attrs:'placeholder="Ej. de la antena al router"'})}</div></div>
+    <div class="box" id="wbReub" ${cur.wlReub?"":"hidden"}><h3>Reubicar antena</h3><div class="chips">${chip("wlReubEn","tubo","En tubo")}${chip("wlReubEn","abrazadera","Con abrazadera")}${chip("wlReubEn","mastil","En mástil")}</div></div>
+    <div class="box" id="wbCelda" ${cur.wlCelda?"":"hidden"}><h3>Cambio de celda</h3><div class="grid">
+      ${inp("wlCeldaAnt","Celda anterior",{attrs:'autocapitalize="characters" placeholder="RP-BOLIVIA CUMANDA"'})}${inp("wlCeldaAntIp","IP anterior",{attrs:'inputmode="decimal" class="mono" placeholder="Opcional"'})}
+      ${inp("wlCeldaNueva","Celda nueva",{attrs:'autocapitalize="characters" placeholder="RP-BOLIVIA"'})}${inp("wlCeldaIp","IP nueva",{attrs:'inputmode="decimal" class="mono" placeholder="192.168.191.6"'})}</div></div>
+    <div class="box" id="wbClave" ${cur.wlClave?"":"hidden"}><h3>Cambio de clave</h3><div class="grid">${inp("wifiSsid","Nombre de la red (SSID)",{cls:"full",attrs:'autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Opcional"'})}</div></div>
+    <label class="f">Otro trabajo (opcional, una línea por cada punto)<textarea id="f-accOtra" data-k="accOtra" style="min-height:60px" placeholder="Ej. se cortan unas ramas">${esc(cur.accOtra)}</textarea></label>
+  </section>
+  <section class="sec wk"><div class="sec-h"><h2>Cómo quedó</h2><span class="step">04</span></div>
+    <div class="grid">${inp("wlSigD","Señal final",{unit:"dBm",attrs:N+' placeholder="-66"'})}${inp("wlCcqD","CCQ final",{unit:"%",attrs:N+' placeholder="99"'})}
+      ${inp("wlTestCable","Test por cable",{unit:"Mbps",attrs:N+' placeholder="20"'})}${inp("wlTestWifi","Test por wifi",{unit:"Mbps",attrs:N+' placeholder="18"'})}</div>
+    <label class="f">Pendiente (opcional)<input id="f-wlPend" data-k="wlPend" value="${esc(cur.wlPend)}" placeholder="Ej. cambiar la antena cuando haya equipos"></label>
+    <p class="muted" style="margin:0">Acta</p><div class="chips">${Object.entries(WL_ACTA).map(([k,l])=>chip("wlActa",k,l)).join("")}</div>
+    <div class="list-chk">${chk("clienteOk","Cliente comprueba el servicio, todo OK")}${chk("cumplida","✅ Se cumplió con la actividad")}</div>
+  </section>
+  ${notifHTML()}
+  <section class="sec wk"><div class="sec-h"><h2>Checklist y evidencias</h2><span class="progress" id="eprog"></span></div>
+    <p class="muted" style="margin:0">Solo para acordarte; las fotos van al WhatsApp.</p>
+    <div class="list-chk">${EVID_S.map(([k,l,c])=>`<div data-eq="${c||""}" ${c==="eq"?"hidden":""}>${chk(k,l,"","evid")}</div>`).join("")}</div>
+  </section>
+  <section class="sec"><div class="sec-h"><h2>Reporte</h2><span class="step">05</span></div><pre class="report" id="rep"></pre></section>
+  <div class="top"><span class="muted">Creada ${fDay(dayKey(cur.creado))}, ${hhmm(cur.creado)}${quienTxt(cur)}</span><button class="danger" id="del">Borrar actividad</button></div>
+  ${loteNav()}`;
+  $("bar").hidden=false;refresh();
+}
+function reportWl(a){
+  const L=[];const tec=[a.tecnico,a.tecnico2].filter(Boolean).join(" y ");const t=v=>String(v||"").trim();
+  if(tec)L.push("Tecnico, "+tec);
+  L.push("soporte, "+(a.soporte||"soporte inalámbrico"));
+  if(a.cliente)L.push("cliente, "+a.cliente);
+  if(a.direccion)L.push("dirección, "+a.direccion);
+  if(a.coords&&a.coords.trim())L.push("coordenadas, "+a.coords.trim());
+  if(a.tel)L.push("tel. "+a.tel);
+  if(a.ip)L.push("ip, "+a.ip);
+  if(t(a.cedula))L.push("cédula, "+t(a.cedula));
+  if(t(a.correo)&&a.correoEstado!=="no")L.push("correo, "+t(a.correo));
+  if(t(a.plan))L.push("plan, "+t(a.plan));
+  if(a.extra)L.push(...a.extra.split("\n"));
+  const S=[];const sig=(d,c)=>[t(d)?neg(d)+" dBm":"",t(c)?"CCQ "+t(c).replace(/%$/,"")+"%":""].filter(Boolean).join(", ");
+  if(a.wlSinServ)S.push("⚪️Se acude al domicilio y el cliente no cuenta con servicio");
+  else{const x=sig(a.wlSigA,a.wlCcqA);if(x)S.push("⚪️Señal al llegar: "+x)}
+  if(a.wlVista)S.push("⚪️Se despeja la línea de vista");
+  if(a.wlReub)S.push("⚪️Se reubica la antena"+({tubo:" en un tubo",abrazadera:" con abrazadera",mastil:" en un mástil"}[a.wlReubEn]||""));
+  if(a.wlAlinear)S.push("⚪️Se alinea la antena");
+  if(a.wlHaz)S.push("⚪️Se cambia el haz de la antena");
+  if(a.wlAntena){const m=(WL_ANT.find(([k])=>k===a.wlAntMarca)||[])[1];S.push("⚪️Se cambia la antena"+(m&&m!=="Otra"?" ("+m+")":""))}
+  if(a.wlConf)S.push("⚪️Se configuran los parámetros de la antena");
+  if(a.wlCelda){const d=(n,ip)=>[t(n).toUpperCase(),t(ip)].filter(Boolean).join(" ");const an=d(a.wlCeldaAnt,a.wlCeldaAntIp),nu=d(a.wlCeldaNueva,a.wlCeldaIp);
+    S.push("⚪️Se cambia de celda"+(nu?" a "+nu:"")+(an?" (anterior: "+an+")":""))}
+  if(a.wlPoe)S.push("⚪️Se reconecta el PoE");
+  if(a.wlCable){const m=t(a.wlMetros);S.push("⚪️Se pasan "+(m?m+" m de ":"")+"cable UTP nuevo"+(t(a.wlCableDet)?", "+t(a.wlCableDet):""))}
+  if(a.wlRouter){const mh=HEX(a.wlRMac),sn=t(a.wlRSn).toUpperCase();S.push("⚪️Se cambia el router"+(WL_RM[a.wlRMarca||"ruijie"]?" ("+WL_RM[a.wlRMarca||"ruijie"]+")":""));
+    const P=[mh.length===12?"MAC "+fmtMac(mh):"",sn?"SN "+sn:""].filter(Boolean);if(P.length)S.push("⚪️router nuevo: "+P.join(", "))}
+  if(a.wlFirm)S.push("⚪️Se actualiza firmware y configuración");
+  if(a.wlClave)S.push("⚪️Se cambia la clave de la red Wi-Fi"+(t(a.wifiSsid)?" “"+t(a.wifiSsid)+"”":""));
+  if(a.wlRemoto)S.push("⚪️Se activa el acceso remoto al router");
+  for(const x of (a.accOtra||"").split(/\r?\n/)){const y=x.replace(/^[\s⚪️•\-*]+/u,"").trim();if(y)S.push("⚪️"+y)}
+  {const x=sig(a.wlSigD,a.wlCcqD);if(x)S.push("⚪️Señal final: "+x)}
+  {const c=t(a.wlTestCable),w=t(a.wlTestWifi);if(c||w)S.push("⚪️Test de velocidad: "+[c&&"cable "+c+" Mbps",w&&"wifi "+w+" Mbps"].filter(Boolean).join(", "))}
+  if(t(a.wlPend))S.push("⏳Pendiente: "+t(a.wlPend));
+  if(a.clienteOk)S.push("⚪️Cliente comprueba el servicio, todo OK");
+  if(a.wlActa==="firmada")S.push("⚪️Se firma el acta");else if(a.wlActa==="menor")S.push("⚪️No se firma el acta: en el domicilio solo había un menor de edad");else if(a.wlActa==="sinadulto")S.push("⚪️No se firma el acta: no se encontró a una persona adulta");
+  {const n=notifLines(a);if(n.length){S.push("⚪️Notificación al cliente: "+n[0]);for(const x of n.slice(1))S.push("⚪️"+x)}}
+  if(a.cumplida)S.push("✅se cumplió con la actividad");
+  return L.join("\n")+(S.length?"\n\n"+S.join("\n"):"");
+}
+/* eventos del selector de MAC */
+document.addEventListener("click",e=>{if(!cur||cur.tipo!=="inalambrico")return;const b=e.target.closest("[data-wlrm],[data-wloui]");if(!b)return;e.preventDefault();e.stopPropagation();
+  if(b.dataset.wlrm){if(cur.wlRMarca!==b.dataset.wlrm){cur.wlRMarca=b.dataset.wlrm;cur.wlROui="";cur.wlRLargo=false;wlQ=""}}
+  else if(b.dataset.wloui==="otro"){cur.wlRLargo=true}
+  else{const o=b.dataset.wloui;cur.wlRLargo=false;cur.wlROui=o;wlFavAdd(cur.wlRMarca||"ruijie",o);const mh=HEX(cur.wlRMac);if(mh.length===12)cur.wlRMac=fmtMac(o+mh.slice(6))}
+  const op=!!document.querySelector(".wl-all[open]");wlMacRedraw();if(op){const d=document.querySelector(".wl-all");if(d)d.open=true}
+  const f=$(cur.wlRLargo?"wlFull":"wlUlt");if(f)f.focus();refresh();queueSave()},true);
+document.addEventListener("input",e=>{if(!cur||cur.tipo!=="inalambrico")return;const t=e.target;
+  if(t.id==="wlFil"){wlQ=t.value;const m=cur.wlRMarca||"ruijie",fav=wlFav(m),L=WL_OUI[m].filter(o=>o.startsWith(HEX(wlQ)));const pre=cur.wlROui;
+    $("wlList").innerHTML=L.map(o=>`<button class="chip sm mono" data-wloui="${o}" aria-pressed="${!cur.wlRLargo&&o===pre}">${fmtMac(o)}${fav.includes(o)?" ⭐":""}</button>`).join("")||'<span class="muted">Ninguno empieza así.</span>';e.stopPropagation();return}
+  if(t.id==="wlUlt"||t.id==="wlFull"){const h=HEX(t.value);
+    if(t.id==="wlUlt"){cur.wlROui=t.dataset.pre;cur.wlRMac=h.length>=6?fmtMac(t.dataset.pre+h.slice(0,6)):""}
+    else{cur.wlRMac=h.length>=12?fmtMac(h.slice(0,12)):h;if(h.length>=12){const m=cur.wlRMarca||"ruijie";if(wlWho(h.slice(0,6))===m){wlFavAdd(m,h.slice(0,6));cur.wlROui=h.slice(0,6)}}}
+    const mh=HEX(cur.wlRMac),m=cur.wlRMarca||"ruijie";let st="",cls="";
+    if(mh.length===12){const q=wlWho(mh.slice(0,6));if(q===m){st="✓ "+WL_RM[m];cls="ok"}else if(q){st="⚠️ Ese inicio es de "+WL_RM[q]+", no de "+WL_RM[m];cls="bad"}else{st="⚠️ Inicio no registrado para Ruijie ni TP-Link";cls="bad"}}
+    $("wlMacV").textContent=mh.length===12?fmtMac(mh):"—";const s2=$("wlMacS");s2.textContent=st;s2.className="wl-st "+cls;
+    e.stopPropagation();refresh();queueSave()}},true);
 
 /* --- guardar --- */
 function saveLocal(quiet){try{localStorage.setItem(LS,JSON.stringify(acts))}catch(e){throw new Error("storage")}if(!quiet&&typeof syncSoon==="function")syncSoon()}
@@ -1423,10 +1583,10 @@ document.addEventListener("click",async e=>{
   if(b.id==="del"){if(!confirmDel){confirmDel=true;b.textContent="Toca otra vez para borrar";return}
     const id=cur.id;cur=null;try{await remove(id)}catch{}renderList();return}
 });
-const TIPO_TXT={foco_rojo:"Foco rojo",instalacion:"Instalación alámbrica",tv:"App de TV",potencia:"Potencias elevadas",retiro:"Retiro de equipos",soporte:"Soporte"};
+const TIPO_TXT={foco_rojo:"Foco rojo",instalacion:"Instalación alámbrica",tv:"App de TV",potencia:"Potencias elevadas",retiro:"Retiro de equipos",soporte:"Soporte",inalambrico:"Soporte inalámbrico"};
 function actividadTxt(a){
   if(a.soporte&&a.soporte.trim())return a.soporte.trim();
-  return a.tipo==="instalacion"?"instalación nueva":a.tipo==="tv"?"colocar app de TV":a.tipo==="potencia"?"mejorar potencia":a.tipo==="retiro"?"retiro de equipos":a.tipo==="soporte"?"soporte técnico":"foco rojo";
+  return a.tipo==="instalacion"?"instalación nueva":a.tipo==="tv"?"colocar app de TV":a.tipo==="potencia"?"mejorar potencia":a.tipo==="retiro"?"retiro de equipos":a.tipo==="soporte"?"soporte técnico":a.tipo==="inalambrico"?"soporte inalámbrico":"foco rojo";
 }
 function resumenDia(k){
   const list=acts.filter(a=>dayKey(a.creado)===k).sort((a,b)=>a.creado-b.creado);
