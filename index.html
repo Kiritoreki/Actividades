@@ -60,6 +60,11 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
 .pbadge{min-width:30px;height:30px;padding:0 8px;border-radius:99px;display:grid;place-items:center;background:#fbbf24;color:#1a1205;font:800 15px var(--display);box-shadow:0 0 0 0 rgba(251,191,36,.7);animation:pbp 1.8s ease-out infinite}
 @keyframes pbp{0%{box-shadow:0 0 0 0 rgba(251,191,36,.7)}70%{box-shadow:0 0 0 10px rgba(251,191,36,0)}100%{box-shadow:0 0 0 0 rgba(251,191,36,0)}}@media (prefers-reduced-motion:reduce){.pbadge{animation:none}}
 .pend-in{display:grid;gap:10px;padding:0 12px 14px}.pendg .gc{color:#fbbf24}
+.tm-st{font-size:12px;font-weight:700;padding:4px 10px;border-radius:99px;border:1px solid var(--line);color:var(--muted,#b9b3d6)}.tm-st.run{color:#fbbf24;border-color:rgba(251,191,36,.5)}.tm-st.done{color:#34d399;border-color:rgba(52,211,153,.5)}
+.tm-big{font:800 clamp(40px,13vw,56px)/1 ui-monospace,Menlo,monospace;text-align:center;font-variant-numeric:tabular-nums;padding:6px 0;color:var(--muted,#b9b3d6)}.tm-big.run{color:#fbbf24;text-shadow:0 0 18px rgba(251,191,36,.35)}.tm-big.done{color:#34d399;text-shadow:0 0 18px rgba(52,211,153,.35)}
+.tm-rows{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.tm-c{background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius:14px;padding:10px;text-align:center}.tm-c small{display:block;color:var(--muted,#b9b3d6);font-size:12px}.tm-c b{font:700 17px ui-monospace,Menlo,monospace;white-space:nowrap}
+.tm-go,.tm-fin,.tm-conf{width:100%;min-height:52px;border:0;border-radius:16px;font:700 17px var(--sans,system-ui);color:#fff;cursor:pointer}.tm-go{background:linear-gradient(90deg,#7c3aed,#c026d3);box-shadow:0 0 18px rgba(192,38,211,.45)}.tm-fin{background:linear-gradient(90deg,#059669,#10b981);box-shadow:0 0 18px rgba(16,185,129,.4)}.tm-conf{background:linear-gradient(90deg,#b45309,#f59e0b);color:#1a1205}
+.tm-reset{width:100%;min-height:44px;border-radius:14px;background:transparent;border:1.5px solid var(--line);color:var(--muted,#b9b3d6);font-size:14px;cursor:pointer}
 .grp-empty{margin:0;padding:0 16px 16px}.grp>summary::before{display:none!important;content:none}.grp .gt{text-transform:none!important;letter-spacing:-.01em!important;color:#f4f2ff!important;font:700 19px var(--display)!important;-webkit-text-fill-color:#f4f2ff;background:none!important}
 .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 .tile{--c:var(--purple);border-radius:18px;padding:12px 6px 10px;display:grid;justify-items:center;gap:7px;text-align:center;font-weight:700;font-size:13px;line-height:1.15;
@@ -274,7 +279,7 @@ a{color:var(--fuchsia)}
 <script src="config.js"></script>
 <script>
 const $=id=>document.getElementById(id);
-const APP_VER="v65";const UPD={txt:"",reg:null};
+const APP_VER="v66";const UPD={txt:"",reg:null};
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const pad=n=>String(n).padStart(2,"0");
 const dayKey=t=>{const d=new Date(t);return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())};
@@ -544,14 +549,19 @@ const fMes=m=>{const t=new Date(m+"-15T12:00").toLocaleDateString("es-EC",{month
 document.addEventListener("toggle",e=>{const k=e.target.dataset?.k;if(!k)return;
   if(e.target.open){openSet.add(k);openSet.delete("x"+k)}else{openSet.delete(k);openSet.add("x"+k)}},true);
 const isOpen=(key,byDefault,force)=>force||openSet.has(key)||(!openSet.has("x"+key)&&byDefault);
+const tmHM=t=>new Date(t).toLocaleTimeString("es-EC",{hour:"2-digit",minute:"2-digit",hour12:false});
+const tmHMS=ms=>{const s=Math.max(0,Math.floor(ms/1000));return[Math.floor(s/3600),Math.floor(s/60)%60,s%60].map(n=>String(n).padStart(2,"0")).join(":")};
+const tmDur=ms=>{const m=Math.round(ms/60000);return m<60?m+" min":Math.floor(m/60)+" h "+(m%60)+" min"};
+const tmMs=a=>a.tLleg&&a.tFin&&a.tFin>a.tLleg?a.tFin-a.tLleg:0;
+const tmCard=a=>a.tLleg&&!a.tFin?" · ⏱ en curso":tmMs(a)?" · ⏱ "+tmDur(tmMs(a)):"";
 function cardHTML(a){const t=TIPOS[a.tipo]?a.tipo:"foco_rojo";
   return `<button class="item t-${t}" data-open="${a.id}"><span class="ic">${ICON[t]}</span>
-    <span style="min-width:0"><b>${esc(a.cliente||"Sin cliente")}</b><small>${hhmm(a.creado)}${a.ip?" · "+esc(a.ip):""}${a.nap?" · NAP "+esc(a.nap):""}${a.tipo==="potencia"&&a.hilo?" · H"+esc(a.hilo):""}${a.lote?` · ${a.loteIdx}/${a.loteN}`:""}${a.tipo==="retiro"?(n=>n?` · ${n} ${n===1?"equipo":"equipos"}`:"")(RET.filter(([k])=>a["ret_"+k]).length):""}${!a.ip&&!a.nap&&a.tvMarca?" · TV "+esc(a.tvMarca):""}${porOtro(a)?` · <span class="por">${esc(porOtro(a))}</span>`:""}${a.tipo==="potencia"&&(a.potDespues||a.potAntes)?` · <span class="pv ${potCls(a.potDespues||a.potAntes)}">${potNum(a.potDespues||a.potAntes).toFixed(2)}</span>`:""}</small></span>
+    <span style="min-width:0"><b>${esc(a.cliente||"Sin cliente")}</b><small>${hhmm(a.creado)}${tmCard(a)}${a.ip?" · "+esc(a.ip):""}${a.nap?" · NAP "+esc(a.nap):""}${a.tipo==="potencia"&&a.hilo?" · H"+esc(a.hilo):""}${a.lote?` · ${a.loteIdx}/${a.loteN}`:""}${a.tipo==="retiro"?(n=>n?` · ${n} ${n===1?"equipo":"equipos"}`:"")(RET.filter(([k])=>a["ret_"+k]).length):""}${!a.ip&&!a.nap&&a.tvMarca?" · TV "+esc(a.tvMarca):""}${porOtro(a)?` · <span class="por">${esc(porOtro(a))}</span>`:""}${a.tipo==="potencia"&&(a.potDespues||a.potAntes)?` · <span class="pv ${potCls(a.potDespues||a.potAntes)}">${potNum(a.potDespues||a.potAntes).toFixed(2)}</span>`:""}</small></span>
     <span class="st ${a.noRealizada?"no":a.estado==="terminada"?"ok":"wait"}">${a.noRealizada?"No realizada":a.estado==="terminada"?"Lista":"Pendiente"}</span></button>`}
 function dayBlock(k,items,title){return `<section class="day"><div class="day-top"><h2>${title||fDay(k)}</h2><button class="copyday" data-copyday="${k}">${ICON.copy}Copiar resumen</button></div>${items.map(cardHTML).join("")}</section>`}
 function dayDetails(k,it,forceOpen,pfx=""){const hoyK=dayKey(Date.now());const pend=it.filter(a=>a.estado!=="terminada").length;
   const key=pfx+"d"+k,dOpen=isOpen(key,k===hoyK,forceOpen);
-  return `<details class="dayd" data-k="${key}" ${dOpen?"open":""}><summary><span class="l">${esc(fDay(k).replace(/ de \d{4}$/,""))}${k===hoyK?' <span class="today">Hoy</span>':""}<span class="cnt">${it.length} ${it.length===1?"actividad":"actividades"}${pend?` · <em>${pend} ${pend===1?"pendiente":"pendientes"}</em>`:""}</span></span></summary>
+  return `<details class="dayd" data-k="${key}" ${dOpen?"open":""}><summary><span class="l">${esc(fDay(k).replace(/ de \d{4}$/,""))}${k===hoyK?' <span class="today">Hoy</span>':""}<span class="cnt">${it.length} ${it.length===1?"actividad":"actividades"}${pend?` · <em>${pend} ${pend===1?"pendiente":"pendientes"}</em>`:""}${(ms=>ms?` · ⏱ ${tmDur(ms)} en sitio`:"")(it.reduce((n,a)=>n+tmMs(a),0))}</span></span></summary>
     <div class="dbody"><div class="dtools"><button class="copyday" data-copyday="${k}">${ICON.copy}Copiar resumen</button></div>${(()=>{const P=it.filter(a=>a.estado!=="terminada"||a.noRealizada),T=it.filter(a=>!(a.estado!=="terminada"||a.noRealizada));
       return P.length&&T.length?`<div class="grp">Pendientes</div>${P.map(cardHTML).join("")}<div class="grp">Terminadas</div>${T.map(cardHTML).join("")}`:[...P,...T].map(cardHTML).join("")})()}</div></details>`}
 function treeHTML(list,force,pfx){
@@ -719,6 +729,7 @@ function renderEditor(){if(!ACC.ok)return;{const sp=$("syncPill");if(sp)sp.hidde
   $("app").innerHTML=`
   <div class="top"><button class="back" data-back>${ICON.back}Actividades</button><span class="saved" id="saved"></span></div>
   <div class="top"><h1>Foco rojo</h1><div class="chips">${chip("estado","pendiente","Pendiente","no")}${chip("estado","terminada","Terminada")}</div></div>
+  ${timerHTML()}
   ${realizHTML()}
 
   <section class="sec"><div class="sec-h"><h2>Datos de la actividad</h2><span class="step">01</span></div>
@@ -786,6 +797,7 @@ function renderTV(){
   $("app").innerHTML=`
   <div class="top"><button class="back" data-back>${ICON.back}Actividades</button><span class="saved" id="saved"></span></div>
   <div class="top"><h1>App de TV</h1><div class="chips">${chip("estado","pendiente","Pendiente","no")}${chip("estado","terminada","Terminada")}</div></div>
+  ${timerHTML()}
   ${realizHTML()}
   <section class="sec"><div class="sec-h"><h2>Datos de la actividad</h2></div>
     <label class="f">Pega aquí el mensaje que te llega<textarea id="f-pegado" data-k="pegado" placeholder="soporte, colocar app de TV&#10;cliente, …&#10;tel. …&#10;dirección, …">${esc(cur.pegado)}</textarea></label>
@@ -832,6 +844,7 @@ function renderInst(){
   $("app").innerHTML=`
   <div class="top"><button class="back" data-back>${ICON.back}Actividades</button><span class="saved" id="saved"></span></div>
   <div class="top"><h1>Instalación alámbrica</h1><div class="chips">${chip("estado","pendiente","Pendiente","no")}${chip("estado","terminada","Terminada")}</div></div>
+  ${timerHTML()}
   ${realizHTML()}
 
   <section class="sec"><div class="sec-h"><h2>Datos de la oficina</h2><span class="step">01</span></div>
@@ -971,6 +984,7 @@ function renderSop(){
   $("app").innerHTML=`
   <div class="top"><button class="back" data-back>${ICON.back}Actividades</button><span class="saved" id="saved"></span></div>
   <div class="top"><h1>Soporte</h1><div class="chips">${chip("estado","pendiente","Pendiente","no")}${chip("estado","terminada","Terminada")}</div></div>
+  ${timerHTML()}
   ${realizHTML()}
   <section class="sec"><div class="sec-h"><h2>Datos de la actividad</h2><span class="step">01</span></div>
     <label class="f">Pega aquí el mensaje que te llega<textarea id="f-pegado" data-k="pegado" placeholder="Tecnico, …&#10;soporte, cambio de clave / instalar cámara…&#10;cliente, …&#10;dirección, …&#10;tel. …&#10;ip, …">${esc(cur.pegado)}</textarea></label>
@@ -1065,6 +1079,7 @@ function renderPot(){
   $("app").innerHTML=`
   <div class="top"><button class="back" data-back>${ICON.back}Actividades</button><span class="saved" id="saved"></span></div>
   <div class="top"><h1>Potencias elevadas</h1><div class="chips">${chip("estado","pendiente","Pendiente","no")}${chip("estado","terminada","Terminada")}</div></div>
+  ${timerHTML()}
   ${realizHTML()}
   <section class="sec"><div class="sec-h"><h2>Datos de la actividad</h2><span class="step">01</span></div>
     <label class="f">Pega aquí el mensaje que te llega<textarea id="f-pegado" data-k="pegado" placeholder="Técnico, …&#10;Soporte, mejorar potencia&#10;Cliente, …&#10;Nap B00-4 H:1&#10;Potencia actual -33.02dBm&#10;Dirección, …&#10;Tel. …">${esc(cur.pegado)}</textarea></label>
@@ -1119,6 +1134,7 @@ function renderRet(){
   $("app").innerHTML=`
   <div class="top"><button class="back" data-back>${ICON.back}Actividades</button><span class="saved" id="saved"></span></div>
   <div class="top"><h1>Retiro de equipos</h1><div class="chips">${chip("estado","pendiente","Pendiente","no")}${chip("estado","terminada","Terminada")}</div></div>
+  ${timerHTML()}
   ${realizHTML()}
   <section class="sec"><div class="sec-h"><h2>Datos de la actividad</h2><span class="step">01</span></div>
     <label class="f">Pega aquí el mensaje que te llega<textarea id="f-pegado" data-k="pegado" placeholder="Soporte, retirar AP parque&#10;cliente, …&#10;ip, …&#10;tel. …">${esc(cur.pegado)}</textarea></label>
@@ -1147,6 +1163,21 @@ function renderRet(){
   ${loteNav()}`;
   $("bar").hidden=false;refresh();
 }
+/* ⏱️ tiempo en el sitio: solo en pantalla, no va al reporte */
+let tmConf=false,tmConfT=null;
+function timerHTML(){const a=cur,i=a.tLleg,f=a.tFin;const k=f?"done":i?"run":"";
+  return `<section class="sec tm" aria-live="polite"><div class="sec-h"><h2>⏱️ Tiempo en el sitio</h2><span class="tm-st ${k}">${f?"Terminado":i?"En curso":"Sin iniciar"}</span></div>
+    <div class="tm-big ${k}" id="tmBig">${i?tmHMS((f||Date.now())-i):"00:00:00"}</div>
+    <div class="tm-rows"><div class="tm-c"><small>Llegada</small><b>${i?tmHM(i):"—"}</b></div><div class="tm-c"><small>Fin</small><b>${f?tmHM(f):"—"}</b></div><div class="tm-c"><small>Demora</small><b>${i&&f?tmDur(f-i):"—"}</b></div></div>
+    ${!i?'<button class="tm-go" data-tm="go">📍 Llegué al sitio</button>':!f?`<button class="${tmConf?"tm-conf":"tm-fin"}" data-tm="fin">${tmConf?"Toca otra vez para finalizar":"🏁 Finalizar"}</button>`:""}
+    ${i?'<button class="tm-reset" data-tm="reset">Reiniciar tiempo</button>':""}</section>`}
+function tmRedraw(){const o=document.querySelector(".sec.tm");if(o&&cur)o.outerHTML=timerHTML()}
+document.addEventListener("click",e=>{const b=e.target.closest("[data-tm]");if(!b||!cur)return;e.preventDefault();const m=b.dataset.tm;
+  if(m==="go"){cur.tLleg=Date.now();cur.tFin=null}
+  else if(m==="fin"){if(!tmConf){tmConf=true;clearTimeout(tmConfT);tmConfT=setTimeout(()=>{tmConf=false;tmRedraw()},3000)}else{tmConf=false;cur.tFin=Date.now()}}
+  else if(m==="reset"){cur.tLleg=null;cur.tFin=null;tmConf=false}
+  tmRedraw();queueSave()});
+setInterval(()=>{const el=$("tmBig");if(el&&cur&&cur.tLleg&&!cur.tFin)el.textContent=tmHMS(Date.now()-cur.tLleg)},1000);
 function realizHTML(){
   const aus=cur.tipo!=="tv";
   const ausHTML=aus?`<section class="sec aus ${cur.ausente?"on":""}" id="ausSec">
@@ -1272,6 +1303,7 @@ function renderWl(){
   $("app").innerHTML=`
   <div class="top"><button class="back" data-back>${ICON.back}Actividades</button><span class="saved" id="saved"></span></div>
   <div class="top"><h1>Soporte inalámbrico</h1><div class="chips">${chip("estado","pendiente","Pendiente","no")}${chip("estado","terminada","Terminada")}</div></div>
+  ${timerHTML()}
   ${realizHTML()}
   <section class="sec"><div class="sec-h"><h2>Datos de la actividad</h2><span class="step">01</span></div>
     <label class="f">Pega aquí el mensaje que te llega<textarea id="f-pegado" data-k="pegado" placeholder="Tecnico, …&#10;soporte, sin internet…&#10;cliente, …&#10;dirección, …&#10;tel. …&#10;ip, …">${esc(cur.pegado)}</textarea></label>
